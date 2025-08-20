@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, onMounted } from 'vue'
 import { db } from '../firebase'
 import { ref as dbRef, query, orderByKey, get, startAt, endAt } from 'firebase/database'
 
@@ -196,6 +196,17 @@ watch(() => props.stationId, (newId) => {
     fetchWindSpeedData(newId);
   }
 }, { immediate: true }); // run immediately on mount
+
+// Ensure we fetch once on mounted if data is not yet loaded (guard against duplicate fetch)
+onMounted(() => {
+  if (props.stationId && series.value[0].data.length === 0) {
+    fetchWindSpeedData(props.stationId);
+  }
+});
+
+// Expose the fetch function to parent components (so parent can trigger a refresh)
+// e.g. parent can call childRef.fetchWindSpeedData(stationId)
+defineExpose({ fetchWindSpeedData });
 </script>
 
 <style scoped>
