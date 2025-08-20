@@ -98,7 +98,8 @@
                     <div class="text-sm text-blue-600">Humidity</div>
                   </div>
                   <div class="bg-orange-100/60 rounded-xl p-3 text-center">
-                    <div class="text-2xl font-bold text-orange-700">{{ currentStation.data.heatIndex }}°</div>
+                    <div class="text-2xl font-bold text-orange-700">
+                      {{ currentStation.data.heatIndex }}°</div>
                     <div class="text-sm text-orange-600">Heat Index</div>
                   </div>
                 </div>
@@ -131,7 +132,9 @@
                 <span class="text-2xl font-bold text-white-500">{{ currentStation.data.temperature }}°C</span>
               </div>
               <div class="flex justify-between items-center">
+                
                 <span class="text-white-600">Feels like</span>
+                
                 <span class="text-lg font-semibold text-orange-600">{{ currentStation.data.heatIndex }}°C</span>
               </div>
             </div>
