@@ -38,9 +38,14 @@ import 'leaflet-extra-markers/dist/css/leaflet.extra-markers.min.css';
 /* Theme variables */
 import './theme/variables.css';
 
+
+import VueApexCharts from 'vue3-apexcharts';
+
 const app = createApp(App)
   .use(IonicVue)
   .use(router);
+
+app.component('apexchart', VueApexCharts);
 
 router.isReady().then(() => {
   app.mount('#app');

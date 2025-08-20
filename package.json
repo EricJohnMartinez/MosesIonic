@@ -21,11 +21,13 @@
     "@capacitor/status-bar": "7.0.2",
     "@ionic/vue": "^8.0.0",
     "@ionic/vue-router": "^8.0.0",
+    "apexcharts": "^5.3.3",
     "firebase": "^12.1.0",
     "ionicons": "^7.0.0",
     "leaflet-extra-markers": "^1.2.2",
     "vue": "^3.3.0",
-    "vue-router": "^4.2.0"
+    "vue-router": "^4.2.0",
+    "vue3-apexcharts": "^1.8.0"
   },
   "devDependencies": {
     "@capacitor/cli": "7.4.2",
