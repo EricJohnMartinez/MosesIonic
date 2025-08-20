@@ -8,8 +8,8 @@
         </div>
         <div class="current-stats">
           <div class="stat-card">
-            <span class="stat-label">Peak Today</span>
-            <span class="stat-value">{{ peakWindSpeed }} m/s</span>
+            <span class="stat-label">Average Peak Today</span>
+            <span class="stat-value text-center">{{ peakWindSpeed }} m/s</span>
           </div>
         </div>
       </div>
@@ -56,6 +56,8 @@ const chartOptions = ref({
   },
   dataLabels: { enabled: false },
   stroke: { curve: 'smooth' },
+  // Series color and tooltip style for better contrast on dark backgrounds
+  colors: ['#60A5FA'],
   xaxis: {
     categories: [],
     labels: {
@@ -68,6 +70,7 @@ const chartOptions = ref({
     },
   },
   tooltip: {
+  theme: 'dark',
     x: {
       formatter: function (value: any) {
         return value;
@@ -75,7 +78,8 @@ const chartOptions = ref({
     },
   },
   grid: {
-    borderColor: '#90A4AE',
+  
+  borderColor: 'rgba(255,255,255,0.12)',
     strokeDashArray: 5,
   },
 });
@@ -258,7 +262,7 @@ watch(() => props.stationId, (newId) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(255,255,255,0.8);
+  background: rgba(255, 255, 255, 0);
   z-index: 10;
 }
 
@@ -279,7 +283,7 @@ watch(() => props.stationId, (newId) => {
 }
 
 .loading-text {
-  color: #4b5563;
+  color: #fdfeff;
   font-size: 0.875rem;
 }
 

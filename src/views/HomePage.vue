@@ -100,16 +100,16 @@
           <!-- Temperature & Humidity -->
           <div class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-semibold text-gray-700">Temperature</h3>
+              <h3 class="text-lg font-semibold text-white-700">Temperature</h3>
               <span class="text-3xl">🌡️</span>
             </div>
             <div class="space-y-3">
               <div class="flex justify-between items-center">
-                <span class="text-gray-600">Current</span>
+                <span class="text-white-600">Current</span>
                 <span class="text-2xl font-bold text-white-500">{{ currentStation.data.temperature }}°C</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-gray-600">Feels like</span>
+                <span class="text-white-600">Feels like</span>
                 <span class="text-lg font-semibold text-orange-600">{{ currentStation.data.heatIndex }}°C</span>
               </div>
             </div>
@@ -119,16 +119,16 @@
             <!-- Wind -->
           <div class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-semibold text-gray-700">Wind</h3>
+              <h3 class="text-lg font-semibold text-white-700">Wind</h3>
                 <WindCompass :windDirection="currentStation.data.windAngle || 0" :windSpeed="currentStation.data.windSpeed || 0" />
             </div>
             <div class="space-y-3">
               <div class="flex justify-between items-center">
-                <span class="text-gray-600">Speed</span>
+                <span class="text-white-600">Speed</span>
                 <span class="text-2xl font-bold text-white-500">{{ currentStation.data.windSpeed }} m/s</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-gray-600">Direction</span>
+                <span class="text-white-600">Direction</span>
                 <span class="text-lg font-semibold text-blue-600">{{ currentStation.data.windDirection }}</span>
               </div>
             </div>
@@ -137,16 +137,16 @@
           <!-- Precipitation -->
           <div class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-semibold text-gray-700">Precipitation</h3>
+              <h3 class="text-lg font-semibold text-white-700">Precipitation</h3>
               <span class="text-3xl">🌧️</span>
             </div>
             <div class="space-y-3">
               <div class="flex justify-between items-center">
-                <span class="text-gray-600">Rainfall</span>
+                <span class="text-white-600">Rainfall</span>
                 <span class="text-2xl font-bold text-white-500">{{ currentStation.data.rainfall }} mm</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-gray-600">Humidity</span>
+                <span class="text-white-600">Humidity</span>
                 <span class="text-lg font-semibold text-blue-600">{{ currentStation.data.humidity }}%</span>
               </div>
             </div>
@@ -155,16 +155,16 @@
           <!-- Atmospheric -->
           <div class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-semibold text-gray-700">Atmospheric</h3>
+              <h3 class="text-lg font-semibold text-white-700">Atmospheric</h3>
               <span class="text-3xl">🧪</span>
             </div>
             <div class="space-y-3">
               <div class="flex justify-between items-center">
-                <span class="text-gray-600">Pressure</span>
+                <span class="text-white-600">Pressure</span>
                 <span class="text-2xl font-bold text-white-500">{{ currentStation.data.pressure }} hPa</span>
               </div>
               <div class="flex justify-between items-center">
-                <span class="text-gray-600">Solar</span>
+                <span class="text-white-600">Solar</span>
                 <span class="text-lg font-semibold text-yellow-600">{{ currentStation.data.solar }} W/m²</span>
               </div>
             </div>
@@ -178,12 +178,12 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-semibold text-gray-700">Soil Moisture</h3>
+              <h3 class="text-lg font-semibold text-white-700">Soil Moisture</h3>
               <span class="text-3xl">🌱</span>
             </div>
             <div class="text-center">
               <div class="text-4xl font-bold text-green-600 mb-2">{{ currentStation.data.soilMoisture }}%</div>
-              <div class="w-full bg-gray-200 rounded-full h-3">
+              <div class="w-full bg-white-200 rounded-full h-3">
                 <div 
                   class="bg-gradient-to-r from-green-400 to-green-600 h-3 rounded-full transition-all duration-500"
                   :style="{ width: currentStation.data.soilMoisture + '%' }"
@@ -194,23 +194,23 @@
 
           <div class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-semibold text-gray-700">Soil Temperature</h3>
+              <h3 class="text-lg font-semibold text-white-700">Soil Temperature</h3>
               <span class="text-3xl">🌡️</span>
             </div>
             <div class="text-center">
               <div class="text-4xl font-bold text-yellow-600 mb-2">{{ currentStation.data.soilTemp }}°C</div>
-              <div class="text-sm text-gray-600">Underground reading</div>
+              <div class="text-sm text-white-600">Underground reading</div>
             </div>
           </div>
 
           <div class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20">
             <div class="flex items-center justify-between mb-4">
-              <h3 class="text-lg font-semibold text-gray-700">Light Intensity</h3>
+              <h3 class="text-lg font-semibold text-white-700">Light Intensity</h3>
               <span class="text-3xl">💡</span>
             </div>
             <div class="text-center">
               <div class="text-4xl font-bold text-purple-600 mb-2">{{ currentStation.data.illumination }}</div>
-              <div class="text-sm text-gray-600">lux</div>
+              <div class="text-sm text-white-600">lux</div>
             </div>
           </div>
         </div>
