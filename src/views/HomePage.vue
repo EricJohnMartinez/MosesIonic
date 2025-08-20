@@ -1,6 +1,10 @@
 
 <template>
   <IonContent class="relative" fullscreen>
+    <!-- Pull to refresh -->
+    <IonRefresher slot="fixed" @ionRefresh="handleRefresh">
+      <IonRefresherContent pulling-text="Pull to refresh" refreshing-spinner="lines" />
+    </IonRefresher>
     <!-- Weather background image -->
     <div class="fixed inset-0 w-full h-full z-0" :style="bgStyle"></div>
     <!-- Overlay for readability -->
@@ -310,7 +314,7 @@
 <script setup lang="ts">
 import WindSpeedChart from '../components/WindSpeedChart.vue';
 import { ref, computed, onMounted, watch } from 'vue';
-import { IonContent } from '@ionic/vue';
+import { IonContent, IonRefresher, IonRefresherContent } from '@ionic/vue';
 import WindCompass from '../components/WindCompass.vue';
 import { db } from '../firebase';
 import { ref as dbRef, query, orderByKey, limitToLast, onChildAdded } from 'firebase/database';
@@ -466,6 +470,31 @@ watch(selectedStation, (newStation) => {
   console.log('Fetching latest sensors for station:', selectedStation.value);
   console.log('Current sensor values:', sensorValues.value);
 });
+
+// Pull-to-refresh handler
+const handleRefresh = async (event: any) => {
+  console.log('User triggered refresh');
+  try {
+    // Refresh latest sensor values for the currently selected station
+    fetchLatestSensors(selectedStation.value);
+
+    // Optional: re-center the map to the selected station after refresh
+    if (map && currentStation.value) {
+      const st = stations.value.find(s => s.id === selectedStation.value);
+      if (st) {
+        map.setView([st.lat, st.lng], 12);
+      }
+    }
+
+    // Small delay to allow async updates to propagate (adjustable)
+    await new Promise((resolve) => setTimeout(resolve, 700));
+  } catch (err) {
+    console.error('Error during pull-to-refresh:', err);
+  } finally {
+    // Signal Ionic the refresh is complete so it can close the refresher UI
+    try { event.target.complete(); } catch (e) { /* ignore */ }
+  }
+};
 
 let map: any = null;
 const markerMap: { [key: string]: any } = {};
