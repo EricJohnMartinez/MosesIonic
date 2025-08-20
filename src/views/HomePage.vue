@@ -65,7 +65,7 @@
 
     <!-- Main Content -->
     <div class="relative z-10">
-      <main class="max-w-7xl mx-auto px-4 py-6" v-if="currentStation">
+  <main class="max-w-7xl mx-auto px-4 py-6" v-if="currentStation">
         <!-- Current Weather Hero Section -->
         <section class="mb-8">
           <div class="  rounded-3xl p-8  ">
@@ -114,7 +114,7 @@
 
       <!-- Weather Metrics Grid -->
        <div class="mt-6">
-                <WindSpeedChart :stationId="currentStation.id" />
+                <WindSpeedChart ref="windChartRef" :stationId="currentStation.id" />
               </div>
       <section class="mb-8">
         <h2 class="text-2xl font-bold text-white-500 mb-6">Weather Metrics</h2>
@@ -478,6 +478,16 @@ const handleRefresh = async (event: any) => {
     // Refresh latest sensor values for the currently selected station
     fetchLatestSensors(selectedStation.value);
 
+    // Refresh child chart if available
+    try {
+      const child: any = windChartRef.value;
+      if (child && typeof child.fetchWindSpeedData === 'function') {
+        child.fetchWindSpeedData(selectedStation.value);
+      }
+    } catch (e) {
+      console.warn('Wind chart refresh failed or not available yet', e);
+    }
+
     // Optional: re-center the map to the selected station after refresh
     if (map && currentStation.value) {
       const st = stations.value.find(s => s.id === selectedStation.value);
@@ -495,6 +505,9 @@ const handleRefresh = async (event: any) => {
     try { event.target.complete(); } catch (e) { /* ignore */ }
   }
 };
+
+// Template ref for the wind chart component
+const windChartRef = ref(null);
 
 let map: any = null;
 const markerMap: { [key: string]: any } = {};
