@@ -66,6 +66,8 @@ const chartOptions = ref({
   },
   yaxis: {
     labels: {
+      // hide numeric labels on the y-axis (e.g. 1.00, 0.80, ...)
+      show: false,
       style: { colors: '#fff' },
     },
   },

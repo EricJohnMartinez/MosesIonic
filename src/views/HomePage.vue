@@ -7,39 +7,57 @@
     <div class="fixed inset-0 w-full h-full z-10 pointer-events-none" style="background:rgba(0,0,0,0.25);"></div>
     <div class="relative z-20">
   <!-- Header Section -->
-    <header class="sticky top-0 z-50  backdrop-blur-lg ">
-      <div class="max-w-7xl mx-auto px-4 py-4">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-              <span class="text-white text-xl">🌤️</span>
-            </div>
-            <div>
-              <h1 class="text-xl font-bold text-white-500 text-center">Project GENESIS</h1>
-              <p class="text-sm text-gray-500 -mt-3 text-center">Powered by MOSES</p>
-            </div>
-            
-          </div>
-          
-          <!-- Station Selector -->
-          <div class="flex items-center space-x-3">
-            <label for="station-select" class="text-sm font-medium text-gray-600">Station:</label>
-            <div>
-              <select
-                id="station-select"
-                v-model="selectedStation"
-                class="min-w-[160px] bg-blue-500 border  border-gray-200 rounded-xl px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-                aria-label="Select station"
-              >
-                <option v-for="station in stations" :key="station.id" :value="station.id">
-                  {{ station.name }}
-                </option>
-              </select>
-            </div>
-          </div>
+  <header class="sticky top-0 z-50 bg-white-900/80 backdrop-blur-lg">
+  <div class="max-w-7xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <div class="w-12 h-12 ">
+          <img src="\public\images\logo.png" alt="">
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight text-white text-center -mt-1">Project GENESIS</h1>
+          <p class="text-sm font-light text-white-400 -mt-3 text-center lp-1">Powered by MOSES</p>
         </div>
       </div>
-    </header>
+      
+      <div class="relative group">
+        <div
+          class="flex items-center space-x-2 px-4 py-2 rounded-full border border-gray-700 bg-gray-800 text-gray-200 transition-all duration-300 hover:border-blue-500 hover:text-white cursor-pointer"
+        >
+          
+          <span class="font-medium">
+            {{ stations.find(s => s.id === selectedStation)?.name || 'Select a Station' }}
+          </span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-4 w-4 transform transition-transform duration-300 group-hover:rotate-180"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </div>
+        
+        <div class="absolute right-0 mt-2 w-full min-w-[160px] rounded-xl bg-gray-800 border border-gray-700 shadow-xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transform transition-all duration-300 origin-top-right">
+          <ul class="py-2">
+            <li
+              v-for="station in stations"
+              :key="station.id"
+              @click="selectedStation = station.id"
+              class="px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer transition-colors duration-200"
+            >
+              {{ station.name }}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
 
     <!-- Main Content -->
     <div class="relative z-10">
