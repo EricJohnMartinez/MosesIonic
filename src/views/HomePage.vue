@@ -114,9 +114,11 @@
         </section>
 
       <!-- Weather Metrics Grid -->
-       <div class="mt-6">
-                <WindSpeedChart ref="windChartRef" :stationId="currentStation.id" />
-              </div>
+      <transition name="fade">
+        <div v-if="showWindChart" class="mt-6">
+          <WindSpeedChart ref="windChartRef" :stationId="currentStation.id" />
+        </div>
+      </transition>
       <section class="mb-8">
         <h2 class="text-2xl font-bold text-white-500 mb-6">Weather Metrics</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -142,7 +144,15 @@
 
           <!-- Wind -->
             <!-- Wind -->
-          <div class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20">
+          <div
+            class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20 cursor-pointer select-none"
+            role="button"
+            tabindex="0"
+            :aria-expanded="showWindChart"
+            @click="toggleWindChart"
+            @keydown.enter="toggleWindChart"
+            @keydown.space.prevent="toggleWindChart"
+          >
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-semibold text-white-700">Wind</h3>
                 <WindCompass :windDirection="currentStation.data.windAngle || 0" :windSpeed="currentStation.data.windSpeed || 0" />
@@ -333,6 +343,23 @@ const stations = ref([
 
 const selectedStation = ref('station1');
 const showAlert = ref(false);
+// Show/hide wind chart when clicking the Wind card
+const showWindChart = ref(false);
+
+function toggleWindChart() {
+  showWindChart.value = !showWindChart.value;
+  // If opening, try to refresh chart data from child component
+  if (showWindChart.value) {
+    try {
+      const child: any = windChartRef.value;
+      if (child && typeof child.fetchWindSpeedData === 'function') {
+        child.fetchWindSpeedData(selectedStation.value);
+      }
+    } catch (e) {
+      console.warn('Failed to refresh wind chart on toggle', e);
+    }
+  }
+}
 
 // Sensor types and mapping
 const sensorTypes = [
@@ -770,5 +797,16 @@ watch(selectedStation, (newId) => {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
       }
+    }
+
+    /* Fade transition for WindSpeedChart toggle */
+    .fade-enter-active, .fade-leave-active {
+      transition: opacity 0.25s ease;
+    }
+    .fade-enter-from, .fade-leave-to {
+      opacity: 0;
+    }
+    .fade-enter-to, .fade-leave-from {
+      opacity: 1;
     }
     </style>
