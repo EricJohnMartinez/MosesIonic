@@ -1,15 +1,15 @@
 <template>
-  <div class="wind-chart-container">
+  <div class="rain-chart-container">
     <!-- Header Section -->
     <div class="chart-header">
       <div class="header-content">
         <div class="title-section">
-          <h3 class="chart-title mt-4">Wind Speed Monitoring</h3>
+          <h3 class="chart-title mt-4">Rainfall Monitoring</h3>
         </div>
         <div class="current-stats">
           <div class="stat-card">
             <span class="stat-label">Average Peak Today</span>
-            <span class="stat-value text-center">{{ peakWindSpeed }} m/s</span>
+            <span class="stat-value text-center">{{ peakRainfall }} mm</span>
           </div>
         </div>
       </div>
@@ -19,7 +19,7 @@
     <div class="chart-wrapper">
       <div class="loading-overlay" v-if="isLoading">
         <div class="loading-spinner"></div>
-        <p class="loading-text">Loading wind data...</p>
+        <p class="loading-text">Loading rainfall data...</p>
       </div>
       <apexchart 
         v-else
@@ -27,7 +27,7 @@
         height="300" 
         :options="chartOptions" 
         :series="series" 
-        class="wind-chart"
+        class="rain-chart"
       />
     </div>
   </div>
@@ -44,7 +44,7 @@ const isLoading = ref(true)
 const lastUpdated = ref('');
 const series = ref([
   {
-    name: 'Wind Speed',
+    name: 'Rainfall',
     data: [] as number[],
   },
 ]);
@@ -56,7 +56,6 @@ const chartOptions = ref({
   },
   dataLabels: { enabled: false },
   stroke: { curve: 'smooth' },
-  // Series color and tooltip style for better contrast on dark backgrounds
   colors: ['#60A5FA'],
   xaxis: {
     categories: [],
@@ -66,13 +65,12 @@ const chartOptions = ref({
   },
   yaxis: {
     labels: {
-      // hide numeric labels on the y-axis (e.g. 1.00, 0.80, ...)
       show: false,
       style: { colors: '#fff' },
     },
   },
   tooltip: {
-  theme: 'dark',
+    theme: 'dark',
     x: {
       formatter: function (value: any) {
         return value;
@@ -80,47 +78,35 @@ const chartOptions = ref({
     },
   },
   grid: {
-  
-  borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: 'rgba(255,255,255,0.12)',
     strokeDashArray: 5,
   },
 });
 
 // Computed properties
-const currentWindSpeed = computed(() => {
-  const data = series.value[0].data;
-  return data.length > 0 ? data[data.length - 1] : 0;
-});
-
-const peakWindSpeed = computed(() => {
+const peakRainfall = computed(() => {
   const data = series.value[0].data;
   return data.length > 0 ? Math.max(...data) : 0;
 });
 
-// Fetch today's hourly averages only
-async function fetchWindSpeedData(stationId: string) {
+// Fetch today's hourly totals/averages for rainfall (same logic as WindSpeedChart)
+async function fetchRainfallData(stationId: string) {
   isLoading.value = true;
   try {
     const now = new Date();
-
-    // Get today's start (midnight local)
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startEpoch = Math.floor(todayStart.getTime() / 1000); // seconds
-    const endEpoch = Math.floor(now.getTime() / 1000); // now in seconds
+    const startEpoch = Math.floor(todayStart.getTime() / 1000);
+    const endEpoch = Math.floor(now.getTime() / 1000);
 
-  // fetching data between start and end epoch
-
-    // Firebase query: only today's records
-    const wspRef = dbRef(db, `${stationId}/data/sensors/WSP`);
-    const wspQuery = query(
-      wspRef,
+    const rrRef = dbRef(db, `${stationId}/data/sensors/RR`);
+    const rrQuery = query(
+      rrRef,
       orderByKey(),
       startAt(startEpoch.toString()),
       endAt(endEpoch.toString())
     );
-    const snapshot = await get(wspQuery);
+    const snapshot = await get(rrQuery);
 
-    // Prepare hourly buckets
     const currentHour = now.getHours();
     const hourMap: Record<number, number[]> = {};
     for (let h = 0; h <= currentHour; h++) {
@@ -130,18 +116,17 @@ async function fetchWindSpeedData(stationId: string) {
     if (snapshot.exists()) {
       snapshot.forEach(child => {
         const val = child.val();
-        let windSpeed = 0;
+        let rainfall = 0;
         let timestamp = parseInt(child.key || '0');
 
         if (typeof val === 'object' && val !== null) {
-          windSpeed = parseFloat(val.val ?? val.value ?? val) || 0;
+          rainfall = parseFloat(val.val ?? val.value ?? val) || 0;
         } else {
-          windSpeed = parseFloat(val) || 0;
+          rainfall = parseFloat(val) || 0;
         }
 
-        if (windSpeed > 0 && timestamp > 0) {
-          // Convert to local time (GMT+8 adjustment if needed)
-          const localTimestamp = timestamp * 1000; // ms
+        if (rainfall >= 0 && timestamp > 0) {
+          const localTimestamp = timestamp * 1000;
           const date = new Date(localTimestamp);
 
           if (
@@ -151,14 +136,13 @@ async function fetchWindSpeedData(stationId: string) {
           ) {
             const hour = date.getHours();
             if (hour >= 0 && hour <= currentHour) {
-              hourMap[hour].push(windSpeed);
+              hourMap[hour].push(rainfall);
             }
           }
         }
       });
     }
 
-    // Calculate averages
     const data: number[] = [];
     const categories: string[] = [];
 
@@ -170,7 +154,6 @@ async function fetchWindSpeedData(stationId: string) {
         data.push(0);
       }
 
-      // Format category label
       let hour12 = h % 12;
       if (hour12 === 0) hour12 = 12;
       const ampm = h < 12 ? 'AM' : 'PM';
@@ -181,36 +164,30 @@ async function fetchWindSpeedData(stationId: string) {
     (chartOptions.value.xaxis.categories as any) = categories;
     lastUpdated.value = now.toLocaleTimeString();
 
-  // final chart data prepared
-
   } catch (error) {
-    console.error('Error fetching wind speed data:', error);
+    console.error('Error fetching rainfall data:', error);
   } finally {
     isLoading.value = false;
   }
 }
 
-// Auto-fetch when stationId changes
 watch(() => props.stationId, (newId) => {
   if (newId) {
-    fetchWindSpeedData(newId);
+    fetchRainfallData(newId);
   }
-}, { immediate: true }); // run immediately on mount
+}, { immediate: true });
 
-// Ensure we fetch once on mounted if data is not yet loaded (guard against duplicate fetch)
 onMounted(() => {
   if (props.stationId && series.value[0].data.length === 0) {
-    fetchWindSpeedData(props.stationId);
+    fetchRainfallData(props.stationId);
   }
 });
 
-// Expose the fetch function to parent components (so parent can trigger a refresh)
-// e.g. parent can call childRef.fetchWindSpeedData(stationId)
-defineExpose({ fetchWindSpeedData });
+defineExpose({ fetchRainfallData });
 </script>
 
 <style scoped>
-.wind-chart-container {
+.rain-chart-container {
   width: 100%;
   background-color: #00000046;
   border-radius: 0.75rem;
@@ -300,7 +277,7 @@ defineExpose({ fetchWindSpeedData });
   font-size: 0.875rem;
 }
 
-.wind-chart {
+.rain-chart {
   border-radius: 0.5rem;
 }
 </style>

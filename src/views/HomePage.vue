@@ -20,7 +20,7 @@
         </div>
         <div>
           <h1 class="text-2xl font-bold tracking-tight text-white text-center -mt-1">Project GENESIS</h1>
-          <p class="text-sm font-light text-white-400 -mt-3 text-center lp-1">Powered by MOSES</p>
+          <p class="text-sm font-light text-white-400 -mt-1 text-center lp-1">Powered by MOSES</p>
         </div>
       </div>
       
@@ -119,11 +119,17 @@
           <WindSpeedChart ref="windChartRef" :stationId="currentStation.id" />
         </div>
       </transition>
+      <transition name="fade">
+        <div v-if="showRainfallChart" class="mt-6">
+          <RainfallChart ref="rainfallChartRef" :stationId="currentStation.id" />
+        </div>
+      </transition>
+      
       <section class="mb-8">
         <h2 class="text-2xl font-bold text-white-500 mb-6">Weather Metrics</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+  <div id="metrics-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <!-- Temperature & Humidity -->
-          <div class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20">
+          <div data-card-id="Temperature" class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20 card-hover" tabindex="0">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-semibold text-white-700">Temperature</h3>
               <span class="text-3xl">🌡️</span>
@@ -142,10 +148,10 @@
             </div>
           </div>
 
-          <!-- Wind -->
+      
             <!-- Wind -->
-          <div
-            class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20 cursor-pointer select-none"
+          <div data-card-id="Wind"
+            class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20 cursor-pointer select-none card-hover"
             role="button"
             tabindex="0"
             :aria-expanded="showWindChart"
@@ -170,7 +176,15 @@
           </div>
 
           <!-- Precipitation -->
-          <div class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20">
+           <div data-card-id="Precipitation"
+            class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20 cursor-pointer select-none card-hover"
+            role="button"
+            tabindex="0"
+            :aria-expanded="showRainfallChart"
+            @click="toggleRainfallChart"
+            @keydown.enter="toggleRainfallChart"
+            @keydown.space.prevent="toggleRainfallChart"
+          >
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-semibold text-white-700">Precipitation</h3>
               <span class="text-3xl">🌧️</span>
@@ -188,7 +202,7 @@
           </div>
 
           <!-- Atmospheric -->
-          <div class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20">
+          <div data-card-id="Atmospheric" class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20 card-hover">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-semibold text-white-700">Atmospheric</h3>
               <span class="text-3xl">🧪</span>
@@ -211,7 +225,7 @@
       <section class="mb-8">
         <h2 class="text-2xl font-bold text-white-500 mb-6">Soil Monitoring</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20">
+          <div data-card-id="SoilMoisture" class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20 card-hover">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-semibold text-white-700">Soil Moisture</h3>
               <span class="text-3xl">🌱</span>
@@ -227,7 +241,7 @@
             </div>
           </div>
 
-          <div class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20">
+          <div data-card-id="SoilTemp" class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20 card-hover">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-semibold text-white-700">Soil Temperature</h3>
               <span class="text-3xl">🌡️</span>
@@ -238,7 +252,7 @@
             </div>
           </div>
 
-          <div class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20">
+          <div data-card-id="LightIntensity" class="bg-white/20 backdrop-blur-lg rounded-2xl p-6 shadow-lg border border-white/20 card-hover">
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-semibold text-white-700">Light Intensity</h3>
               <span class="text-3xl">💡</span>
@@ -326,7 +340,9 @@
 
 <script setup lang="ts">
 import WindSpeedChart from '../components/WindSpeedChart.vue';
+import RainfallChart from '../components/RainfallChart.vue';
 import { ref, computed, onMounted, watch } from 'vue';
+import Sortable from 'sortablejs';
 import { IonContent, IonRefresher, IonRefresherContent } from '@ionic/vue';
 import WindCompass from '../components/WindCompass.vue';
 import { db } from '../firebase';
@@ -360,7 +376,22 @@ function toggleWindChart() {
     }
   }
 }
-
+// Show/hide rainfall chart (same logic as wind)
+const showRainfallChart = ref(false);
+const rainfallChartRef = ref(null);
+function toggleRainfallChart() {
+  showRainfallChart.value = !showRainfallChart.value;
+  if (showRainfallChart.value) {
+    try {
+      const child: any = rainfallChartRef.value;
+      if (child && typeof child.fetchRainfallData === 'function') {
+        child.fetchRainfallData(selectedStation.value);
+      }
+    } catch (e) {
+      console.warn('Failed to refresh rainfall chart on toggle', e);
+    }
+  }
+}
 // Sensor types and mapping
 const sensorTypes = [
   { key: 'TEM', label: 'temperature' },
@@ -391,6 +422,9 @@ const sensorValues = ref({
 });
 
 // Helper functions for weather display
+
+
+
 function getWeatherIcon(): string {
   if (!currentStation.value) return '⛅';
   
@@ -421,20 +455,15 @@ function getWeatherDescription(): string {
 
 // Helper to compute heat index (Celsius)
 function calculateHeatIndex(T: number, RH: number): number {
-  console.log('calculateHeatIndex called with:', { temperature: T, humidity: RH });
-  
   if (typeof T !== 'number' || typeof RH !== 'number') {
-    console.log('Invalid types - T:', typeof T, 'RH:', typeof RH);
     return 0;
   }
-  
+
   if (T === 0 || RH === 0) {
-    console.log('Zero values detected - T:', T, 'RH:', RH);
     return 0;
   }
-  
+
   if (isNaN(T) || isNaN(RH)) {
-    console.log('NaN values detected - T:', T, 'RH:', RH);
     return 0;
   }
   
@@ -442,12 +471,11 @@ function calculateHeatIndex(T: number, RH: number): number {
   const HI_F = -42.379 + 2.04901523 * T_F + 10.14333127 * RH - 0.22475541 * T_F * RH - 0.00683783 * T_F * T_F - 0.05481717 * RH * RH + 0.00122874 * T_F * T_F * RH + 0.00085282 * T_F * RH * RH - 0.00000199 * T_F * T_F * RH * RH;
   const result = parseFloat((((HI_F) - 32) * 5/9).toFixed(2)) || 0;
   
-  console.log('Heat index calculation:', { T_F, HI_F, result });
+  // heat index computed
   return result;
 }
 
 function fetchLatestSensors(stationId: string) {
-  console.log('Fetching sensors for station:', stationId);
   sensorTypes.forEach(sensor => {
     const sensorRef = dbRef(db, `${stationId}/data/sensors/${sensor.key}`);
     const q = query(sensorRef, orderByKey(), limitToLast(1));
@@ -473,7 +501,7 @@ function fetchLatestSensors(stationId: string) {
       else if (sensor.key === 'WA') sensorValues.value.WA = finalValue;
       else if (sensor.key === 'ATM') sensorValues.value.ATM = finalValue;
       
-      console.log(`Sensor ${sensor.key} (${sensor.label}):`, finalValue, 'Raw value:', val);
+  // sensor value updated for key
     });
   });
 }
@@ -497,13 +525,13 @@ watch(selectedStation, (newStation) => {
   sensorValues.value.ATM = 0;
   
   fetchLatestSensors(newStation);
-  console.log('Fetching latest sensors for station:', selectedStation.value);
-  console.log('Current sensor values:', sensorValues.value);
+  // fetching latest sensors for station
+  // current sensor values updated
 });
 
 // Pull-to-refresh handler
 const handleRefresh = async (event: any) => {
-  console.log('User triggered refresh');
+  // user triggered refresh
   try {
     // Refresh latest sensor values for the currently selected station
     fetchLatestSensors(selectedStation.value);
@@ -539,6 +567,32 @@ const handleRefresh = async (event: any) => {
 // Template ref for the wind chart component
 const windChartRef = ref(null);
 
+// SortableJS: robust drag + touch support for card reordering
+let sortableInstance: Sortable | null = null;
+
+function saveCardOrder() {
+  try {
+    const container = document.querySelector('.grid.grid-cols-1');
+    if (!container) return;
+    const ids = Array.from(container.children).map((c: any) => c.getAttribute('data-card-id') || c.querySelector('h3')?.textContent || 'card');
+    localStorage.setItem('dashboard.cardOrder', JSON.stringify(ids));
+  } catch (e) { /* ignore */ }
+}
+
+function restoreCardOrder() {
+  try {
+    const raw = localStorage.getItem('dashboard.cardOrder');
+    if (!raw) return;
+    const order: string[] = JSON.parse(raw);
+    const container = document.querySelector('.grid.grid-cols-1');
+    if (!container) return;
+    order.forEach((key) => {
+      const match = Array.from(container.children).find((c: any) => (c.getAttribute('data-card-id') || c.querySelector('h3')?.textContent || '').trim() === key.trim());
+      if (match) container.appendChild(match);
+    });
+  } catch (e) { /* ignore */ }
+}
+
 let map: any = null;
 const markerMap: { [key: string]: any } = {};
 
@@ -550,11 +604,7 @@ const currentStation = computed(() => {
   const temperature = sensorValues.value.TEM;
   const humidity = sensorValues.value.HUM;
   
-  console.log('Current sensor values in computed:', {
-    temperature,
-    humidity,
-    allSensorValues: sensorValues.value
-  });
+  // current sensor values in computed are available
   
   let heatIndex = 0;
   if (
@@ -563,25 +613,12 @@ const currentStation = computed(() => {
     !isNaN(temperature) && !isNaN(humidity)
   ) {
     heatIndex = calculateHeatIndex(temperature, humidity);
-    console.log('Heat index calculated:', heatIndex);
+  // heat index calculated
   } else {
-    console.log('Heat index calculation skipped due to invalid values:', {
-      temperature,
-      humidity,
-      tempType: typeof temperature,
-      humType: typeof humidity,
-      tempIsZero: temperature === 0,
-      humIsZero: humidity === 0,
-      tempIsNaN: isNaN(temperature),
-      humIsNaN: isNaN(humidity)
-    });
+  // heat index calculation skipped due to invalid values
   }
   
-  console.log('Final current station data:', {
-    temperature,
-    humidity,
-    heatIndex
-  });
+  // final current station data prepared
   
   return {
     ...station,
@@ -638,7 +675,7 @@ onMounted(async () => {
       // Dynamically import ExtraMarkers JS
       await import('leaflet-extra-markers/dist/js/leaflet.extra-markers.min.js');
     } catch (error) {
-      console.log('ExtraMarkers not available, using default markers');
+  // ExtraMarkers not available, using default markers
     }
     
     // Center of Mindoro: approx 13.2, 121.1, zoom 9 covers the whole island
@@ -668,6 +705,35 @@ onMounted(async () => {
     if (currentStation.value && markerMap[currentStation.value.id]) {
       markerMap[currentStation.value.id].openPopup();
     }
+  }
+
+  // Initialize SortableJS on the metrics grid for drag/reorder with persistence
+  try {
+    const grid = document.getElementById('metrics-grid');
+    if (grid) {
+      // @ts-ignore - Sortable types not installed
+      sortableInstance = Sortable.create(grid as any, {
+        animation: 150,
+        handle: '.card-hover',
+        draggable: '.card-hover',
+        fallbackOnBody: true,
+        touchStartThreshold: 5,
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        onStart: (evt: any) => {
+          try { (evt.item as HTMLElement).classList.add('dragging'); } catch (e) {}
+        },
+        onEnd: () => {
+          // remove transient classes and save
+          document.querySelectorAll('.dragging').forEach(n => n.classList.remove('dragging'));
+          saveCardOrder();
+        }
+      });
+      // restore previous order if any
+      restoreCardOrder();
+    }
+  } catch (e) {
+    // ignore
   }
 });
 
@@ -808,5 +874,47 @@ watch(selectedStation, (newId) => {
     }
     .fade-enter-to, .fade-leave-from {
       opacity: 1;
+    }
+
+    /* Card hover / focus lift effect */
+    .card-hover {
+      transition: transform 180ms cubic-bezier(.2,.8,.2,1), box-shadow 180ms cubic-bezier(.2,.8,.2,1), border-color 180ms;
+      will-change: transform, box-shadow;
+    }
+    .card-hover:hover,
+    .card-hover:focus {
+      transform: translateY(-6px) scale(1.01);
+      box-shadow: 0 12px 30px rgba(15,23,42,0.35);
+      outline: none;
+    }
+    .card-hover:active {
+      transform: translateY(-2px) scale(1.005);
+    }
+    .card-hover:focus-visible {
+      box-shadow: 0 8px 22px rgba(59,130,246,0.18), 0 2px 6px rgba(0,0,0,0.08);
+      border-color: rgba(59,130,246,0.4);
+    }
+
+    /* Drag & drop visual states */
+    .card-hover.dragging {
+      opacity: 0.85;
+      transform: translateY(-8px) scale(1.01) !important;
+      box-shadow: 0 18px 40px rgba(15,23,42,0.45) !important;
+      transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+      z-index: 60;
+      pointer-events: none;
+    }
+    .card-hover.drag-over {
+      outline: 2px dashed rgba(99,102,241,0.22);
+      outline-offset: 6px;
+    }
+    .sortable-ghost {
+      opacity: 0.6 !important;
+      transform: scale(0.995) !important;
+      filter: blur(0.2px);
+    }
+    .sortable-chosen {
+      box-shadow: 0 20px 48px rgba(2,6,23,0.45) !important;
+      z-index: 80;
     }
     </style>

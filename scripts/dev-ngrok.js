@@ -20,12 +20,12 @@ async function startVite() {
 
   await server.listen();
   const info = server.config.server;
-  console.log(`Vite dev server running on port ${VITE_PORT}`);
+  // Vite dev server running on port
   return server;
 }
 
 (async () => {
-  console.log('Starting Vite dev server (in-process)...');
+  // Starting Vite dev server (in-process)
 
   let viteServer;
   try {
@@ -35,13 +35,13 @@ async function startVite() {
     process.exit(1);
   }
 
-  console.log('Vite started. Opening ngrok tunnel to port', VITE_PORT);
+  // Vite started. Opening ngrok tunnel
 
   let url;
   try {
     url = await ngrok.connect({ addr: VITE_PORT });
-    console.log('\nngrok public URL:', url);
-    console.log('Press Ctrl+C to stop.');
+  // ngrok public URL: available
+  // Press Ctrl+C to stop.
   } catch (err) {
     console.error('Failed to start ngrok:', err);
     try {
@@ -51,7 +51,7 @@ async function startVite() {
   }
 
   async function shutdown() {
-    console.log('\nShutting down...');
+  // Shutting down...
     try {
       await ngrok.disconnect();
       await ngrok.kill();
