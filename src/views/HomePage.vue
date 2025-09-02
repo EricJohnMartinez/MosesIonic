@@ -1,85 +1,88 @@
 <template>
-  <IonContent class="relative min-h-screen flex items-center justify-center" fullscreen scrollEvents
-    @ionScroll="handleIonScroll">
+  <IonContent class="ion-no-padding" fullscreen scrollEvents @ionScroll="handleIonScroll">
     <!-- Pull to refresh -->
     <IonRefresher slot="fixed" @ionRefresh="handleRefresh">
       <IonRefresherContent pulling-text="Pull to refresh" refreshing-spinner="lines" />
     </IonRefresher>
-    <!-- Weather background image -->
-    <div class="fixed inset-0 w-full h-full z-0" :style="bgStyle"></div>
-    <!-- Overlay for readability -->
-    <div class="fixed inset-0 w-full h-full z-10 pointer-events-none" style="background:rgba(0,0,0,0.25);"></div>
-    <div class="relative z-20 flex items-center justify-center">
+    <div class="relative min-h-screen flex flex-col">
+      <!-- Weather background image -->
+      <div class="fixed inset-0 w-full h-full z-0" :style="bgStyle"></div>
+      <!-- Overlay for readability -->
+      <div class="fixed inset-0 w-full h-full z-10 pointer-events-none" style="background:rgba(0,0,0,0.25);"></div>
+      
+      <div class="relative z-20 flex-1 overflow-y-auto"
+           :style="{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }">
 
-      <!-- Main Content -->
-      <div class="relative z-10">
+        <!-- Main Content -->
+        <div class="relative z-10">
 
-        <!-- Station selector as left-aligned kebab (three-dots) button -->
-        <div class="relative group absolute top-4 left-80 mt-50 z-50">
-          <button type="button" aria-label="Stations"
-            class="flex items-center justify-center w-10 h-10 rounded-full border border-gray-700 bg-gray-800 text-gray-200 hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200">
-            <!-- vertical three dots icon -->
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"
-              aria-hidden="true">
-              <path
-                d="M10 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
-            </svg>
-          </button>
+          <!-- Station selector - positioned responsively -->
+          <div class="fixed top-4 right-4 z-50 group"
+               :style="{ top: 'calc(env(safe-area-inset-top) + 1rem)' }">
+            <button type="button" aria-label="Stations"
+              class="flex items-center justify-center w-12 h-12 md:w-10 md:h-10 rounded-full border border-gray-700 bg-gray-800/90 backdrop-blur-sm text-gray-200 hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 touch-manipulation">
+              <!-- vertical three dots icon -->
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-5 md:w-5" viewBox="0 0 20 20" fill="currentColor"
+                aria-hidden="true">
+                <path
+                  d="M10 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
+              </svg>
+            </button>
 
-          <div
-            class="absolute left-0 mt-2 min-w-[160px] rounded-xl bg-gray-800 border border-gray-700 shadow-xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transform transition-all duration-200 origin-top-left">
-            <ul class="py-2">
-              <li v-for="station in stations" :key="station.id" @click="selectedStation = station.id"
-                class="px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer transition-colors duration-200">
-                {{ station.name }}
-              </li>
-            </ul>
+            <div
+              class="absolute right-0 mt-2 min-w-[180px] max-w-[280px] rounded-xl bg-gray-800/95 backdrop-blur-md border border-gray-700 shadow-xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transform transition-all duration-200 origin-top-right">
+              <ul class="py-2">
+                <li v-for="station in stations" :key="station.id" @click="selectedStation = station.id"
+                  class="px-4 py-3 text-sm md:text-xs text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer transition-colors duration-200 touch-manipulation">
+                  {{ station.name }}
+                </li>
+              </ul>
+            </div>
           </div>
-        </div>
-        <main class="max-w-7xl mx-auto px-4 py-6" v-if="currentStation">
+        <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" v-if="currentStation">
           <!-- Current Weather Hero Section -->
           <div
-            :class="['w-full flex items-center justify-center min-h-screen lg:min-h-[60vh] -mt-36 -mb-60 transition-all duration-700 ease-in-out', heroHidden ? 'opacity-0 -translate-y-6 pointer-events-none' : 'opacity-100 translate-y-0']"
+            :class="['w-full flex items-center justify-center min-h-[60vh] sm:min-h-[50vh] md:min-h-[45vh] lg:min-h-[40vh] -mt-4 sm:-mt-6 md:-mt-8 lg:-mt-12 -mb-8 sm:-mb-12 md:-mb-16 lg:-mb-20 transition-all duration-700 ease-in-out', heroHidden ? 'opacity-0 -translate-y-6 pointer-events-none' : 'opacity-100 translate-y-0']"
             :style="{ filter: heroHidden ? 'blur(6px) saturate(0.95)' : 'none', willChange: 'opacity, transform, filter' }">
-            <section>
-              <div class="w-full max-w-xl rounded-3xl p-8">
-                <div class="flex flex-col lg:flex-row items-center justify-between">
+            <section class="w-full">
+              <div class="w-full max-w-5xl mx-auto rounded-3xl p-3 sm:p-4 md:p-6 lg:p-8">
+                <div class="flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-6 lg:gap-8">
                   <!-- Main Weather Display -->
-                  <div class="text-center lg:text-right mb-6 lg:mb-0">
-                    <div class="flex items-center justify-center lg:justify-end space-x-4 mb-4">
-                      <div class="text-8xl animate-bounce">
+                  <div class="text-center lg:text-left mb-4 lg:mb-0 flex-1">
+                    <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start space-y-3 sm:space-y-0 sm:space-x-4 mb-3">
+                      <div class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl animate-bounce">
                         {{ getWeatherIcon() }}
                       </div>
-                      <div>
-                        <div class="text-6xl font-bold text-white-500">
+                      <div class="text-center sm:text-left">
+                        <div class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white">
                           {{ currentStation.data.temperature }}°
                         </div>
-                        <div class="text-xl text-white-500 font-medium">
+                        <div class="text-base sm:text-lg md:text-xl text-white font-medium mt-1">
                           {{ currentStation.name }}
                         </div>
                       </div>
                     </div>
 
                     <!-- Weather Description -->
-                    <div class="text-lg text-white-700 mb-4">
+                    <div class="text-sm sm:text-base md:text-lg text-white/90 mb-3 max-w-md mx-auto lg:mx-0">
                       {{ getWeatherDescription() }}
                     </div>
 
                     <!-- Quick Stats -->
-                    <div class="grid grid-cols-2 gap-4 max-w-sm mx-auto lg:mx-0">
-                      <div class="bg-blue-100/60 rounded-xl p-3 text-center">
-                        <div class="text-2xl font-bold text-blue-700">{{ currentStation.data.humidity }}%</div>
-                        <div class="text-sm text-blue-600">Humidity</div>
+                    <div class="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 max-w-xs sm:max-w-sm mx-auto lg:mx-0">
+                      <div class="bg-blue-100/60 backdrop-blur-sm rounded-xl p-2 sm:p-3 text-center">
+                        <div class="text-lg sm:text-xl md:text-2xl font-bold text-blue-700">{{ currentStation.data.humidity }}%</div>
+                        <div class="text-xs sm:text-sm text-blue-600">Humidity</div>
                       </div>
-                      <div class="bg-orange-100/60 rounded-xl p-3 text-center">
-                        <div class="text-2xl font-bold text-orange-700">
+                      <div class="bg-orange-100/60 backdrop-blur-sm rounded-xl p-2 sm:p-3 text-center">
+                        <div class="text-lg sm:text-xl md:text-2xl font-bold text-orange-700">
                           {{ currentStation.data.heatIndex }}°</div>
-                        <div class="text-sm text-orange-600">Heat Index</div>
+                        <div class="text-xs sm:text-sm text-orange-600">Heat Index</div>
                       </div>
                     </div>
                   </div>
                   <!-- Mini Map -->
-                  <div class="w-full lg:w-80 h-64 rounded-2xl overflow-hidden shadow-lg border border-white/20">
+                  <div class="w-full sm:w-72 md:w-80 lg:w-80 h-40 sm:h-48 md:h-56 lg:h-64 rounded-2xl overflow-hidden shadow-lg border border-white/20 flex-shrink-0">
                     <div id="weather-map" class="w-full h-full"></div>
                   </div>
                 </div>
@@ -98,127 +101,127 @@
               <RainfallChart ref="rainfallChartRef" :stationId="currentStation.id" />
             </div>
           </transition>
-          <section class="mb-8">
-            <h2 class="text-2xl font-bold text-white-500 mb-6 mt-10">Weather Metrics</h2>
-            <div id="metrics-grid" class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <section class="mb-6 md:mb-8">
+            <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-white mb-3 sm:mb-4 md:mb-6 mt-4 sm:mt-6 md:mt-10 text-center lg:text-left">Weather Metrics</h2>
+            <div id="metrics-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-4 lg:gap-6 max-w-6xl mx-auto">
               <!-- Temperature & Humidity -->
               <div data-card-id="Temperature"
-                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 shadow-md border border-white/20 card-hover card-transition', heroHidden ? 'card-dark' : '']">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-sm font-semibold text-white-700">Temperature</h3>
-                  <span class="text-2xl">🌡️</span>
+                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-white/20 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
+                <div class="flex items-center justify-between mb-3 md:mb-4">
+                  <h3 class="text-sm font-semibold text-white">Temperature</h3>
+                  <span class="text-xl md:text-2xl">🌡️</span>
                 </div>
-                <div class="space-y-3">
+                <div class="space-y-2 md:space-y-3">
                   <div class="flex justify-between items-center">
-                    <span class="text-white-600">Current</span>
-                    <span class="text-xl font-bold text-white-500">{{ currentStation.data.temperature }}°C</span>
+                    <span class="text-white/80 text-xs md:text-sm">Current</span>
+                    <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{ currentStation.data.temperature }}°C</span>
                   </div>
                   <div class="flex justify-between items-center">
-                    <span class="text-white-600">Feels like</span>
-                    <span class="text-sm font-semibold text-orange-600">{{ currentStation.data.heatIndex }}°C</span>
+                    <span class="text-white/80 text-xs md:text-sm">Feels like</span>
+                    <span class="text-xs md:text-sm font-semibold text-orange-400">{{ currentStation.data.heatIndex }}°C</span>
                   </div>
                 </div>
               </div>
 
               <!-- Wind -->
               <div data-card-id="Wind"
-                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 shadow-md border border-white/20 cursor-pointer select-none card-hover card-transition', heroHidden ? 'card-dark' : '']"
+                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-white/20 cursor-pointer select-none card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']"
                 role="button" :aria-expanded="showWindChart" @click="toggleWindChart" @keydown.enter="toggleWindChart"
                 @keydown.space.prevent="toggleWindChart">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-sm font-semibold text-white-700">Wind</h3>
+                <div class="flex items-center justify-between mb-3 md:mb-4">
+                  <h3 class="text-sm font-semibold text-white">Wind</h3>
                   <WindCompass :windDirection="currentStation.data.windAngle || 0"
                     :windSpeed="currentStation.data.windSpeed || 0" />
                 </div>
-                <div class="space-y-3">
+                <div class="space-y-2 md:space-y-3">
                   <div class="flex justify-between items-center">
-                    <span class="text-white-600">Speed</span>
-                    <span class="text-xl font-bold text-white-500">{{ currentStation.data.windSpeed }} m/s</span>
+                    <span class="text-white/80 text-xs md:text-sm">Speed</span>
+                    <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{ currentStation.data.windSpeed }} m/s</span>
                   </div>
                   <div class="flex justify-between items-center">
-                    <span class="text-white-600">Direction</span>
-                    <span class="text-sm font-semibold text-blue-600">{{ currentStation.data.windDirection }}</span>
+                    <span class="text-white/80 text-xs md:text-sm">Direction</span>
+                    <span class="text-xs md:text-sm font-semibold text-blue-400">{{ currentStation.data.windDirection }}</span>
                   </div>
                 </div>
               </div>
 
               <!-- Precipitation -->
               <div data-card-id="Precipitation"
-                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 shadow-md border border-white/20 cursor-pointer select-none card-hover card-transition', heroHidden ? 'card-dark' : '']"
+                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-white/20 cursor-pointer select-none card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']"
                 role="button" :aria-expanded="showRainfallChart" @click="toggleRainfallChart"
                 @keydown.enter="toggleRainfallChart" @keydown.space.prevent="toggleRainfallChart">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-sm font-semibold text-white-700">Precipitation</h3>
-                  <span class="text-2xl">🌧️</span>
+                <div class="flex items-center justify-between mb-3 md:mb-4">
+                  <h3 class="text-sm font-semibold text-white">Precipitation</h3>
+                  <span class="text-xl md:text-2xl">🌧️</span>
                 </div>
-                <div class="space-y-3">
+                <div class="space-y-2 md:space-y-3">
                   <div class="flex justify-between items-center">
-                    <span class="text-white-600">Rainfall</span>
-                    <span class="text-xl font-bold text-white-500">{{ currentStation.data.rainfall }} mm</span>
+                    <span class="text-white/80 text-xs md:text-sm">Rainfall</span>
+                    <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{ currentStation.data.rainfall }} mm</span>
                   </div>
                   <div class="flex justify-between items-center">
-                    <span class="text-white-600">Humidity</span>
-                    <span class="text-sm font-semibold text-blue-600">{{ currentStation.data.humidity }}%</span>
+                    <span class="text-white/80 text-xs md:text-sm">Humidity</span>
+                    <span class="text-xs md:text-sm font-semibold text-blue-400">{{ currentStation.data.humidity }}%</span>
                   </div>
                 </div>
               </div>
 
               <!-- Atmospheric -->
               <div data-card-id="Atmospheric"
-                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 shadow-md border border-white/20 card-hover card-transition', heroHidden ? 'card-dark' : '']">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-sm font-semibold text-white-700">Atmospheric</h3>
-                  <span class="text-2xl">🧪</span>
+                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-white/20 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
+                <div class="flex items-center justify-between mb-3 md:mb-4">
+                  <h3 class="text-sm font-semibold text-white">Atmospheric</h3>
+                  <span class="text-xl md:text-2xl">🧪</span>
                 </div>
-                <div class="space-y-3">
+                <div class="space-y-2 md:space-y-3">
                   <div class="flex justify-between items-center">
-                    <span class="text-white-600">Pressure</span>
-                    <span class="text-xl font-bold text-white-500">{{ currentStation.data.pressure }} hPa</span>
+                    <span class="text-white/80 text-xs md:text-sm">Pressure</span>
+                    <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{ currentStation.data.pressure }} hPa</span>
                   </div>
                   <div class="flex justify-between items-center">
-                    <span class="text-white-600">Solar</span>
-                    <span class="text-sm font-semibold text-yellow-600">{{ currentStation.data.solar }} W/m²</span>
+                    <span class="text-white/80 text-xs md:text-sm">Solar</span>
+                    <span class="text-xs md:text-sm font-semibold text-yellow-400">{{ currentStation.data.solar }} W/m²</span>
                   </div>
                 </div>
               </div>
               <!-- Soil Moisture -->
               <div data-card-id="SoilMoisture"
-                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 shadow-md border border-white/20 card-hover card-transition', heroHidden ? 'card-dark' : '']">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-sm font-semibold text-white-700">Soil Moisture</h3>
-                  <span class="text-2xl">🌱</span>
+                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-white/20 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
+                <div class="flex items-center justify-between mb-3 md:mb-4">
+                  <h3 class="text-sm font-semibold text-white">Soil Moisture</h3>
+                  <span class="text-xl md:text-2xl">🌱</span>
                 </div>
                 <div class="text-center">
-                  <div class="text-2xl font-bold text-green-600 mb-2">{{ currentStation.data.soilMoisture }}%</div>
-                  <div class="w-full bg-white-200 rounded-full h-3">
+                  <div class="text-lg md:text-xl lg:text-2xl font-bold text-green-400 mb-2">{{ currentStation.data.soilMoisture }}%</div>
+                  <div class="w-full bg-white/20 rounded-full h-2 md:h-3">
                     <div
-                      class="bg-gradient-to-r from-green-400 to-green-600 h-3 rounded-full transition-all duration-500"
+                      class="bg-gradient-to-r from-green-400 to-green-600 h-2 md:h-3 rounded-full transition-all duration-500"
                       :style="{ width: currentStation.data.soilMoisture + '%' }"></div>
                   </div>
                 </div>
               </div>
               <!-- Soil Temperature -->
               <div data-card-id="SoilTemp"
-                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 shadow-md border border-white/20 card-hover card-transition', heroHidden ? 'card-dark' : '']">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-sm font-semibold text-white-700">Soil Temperature</h3>
-                  <span class="text-2xl">🌡️</span>
+                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-white/20 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
+                <div class="flex items-center justify-between mb-3 md:mb-4">
+                  <h3 class="text-sm font-semibold text-white">Soil Temperature</h3>
+                  <span class="text-xl md:text-2xl">🌡️</span>
                 </div>
                 <div class="text-center">
-                  <div class="text-2xl font-bold text-yellow-600 mb-2">{{ currentStation.data.soilTemp }}°C</div>
-                  <div class="text-sm text-white-600">Underground reading</div>
+                  <div class="text-lg md:text-xl lg:text-2xl font-bold text-yellow-400 mb-2">{{ currentStation.data.soilTemp }}°C</div>
+                  <div class="text-xs md:text-sm text-white/80">Underground reading</div>
                 </div>
               </div>
               <!-- Light Intensity -->
               <div data-card-id="LightIntensity"
-                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 shadow-md border border-white/20 card-hover card-transition', heroHidden ? 'card-dark' : '']">
-                <div class="flex items-center justify-between mb-4">
-                  <h3 class="text-sm font-semibold text-white-700">Light Intensity</h3>
-                  <span class="text-2xl">💡</span>
+                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-white/20 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
+                <div class="flex items-center justify-between mb-3 md:mb-4">
+                  <h3 class="text-sm font-semibold text-white">Light Intensity</h3>
+                  <span class="text-xl md:text-2xl">💡</span>
                 </div>
                 <div class="text-center">
-                  <div class="text-2xl font-bold text-purple-600 mb-2">{{ currentStation.data.illumination }}</div>
-                  <div class="text-sm text-white-600">lux</div>
+                  <div class="text-lg md:text-xl lg:text-2xl font-bold text-purple-400 mb-2">{{ currentStation.data.illumination }}</div>
+                  <div class="text-xs md:text-sm text-white/80">lux</div>
                 </div>
               </div>
             </div>
@@ -226,30 +229,32 @@
 
 
           <!-- Action Buttons -->
-          <section class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8">
+          <section class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8 px-4">
             <router-link to="/summary"
-              class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center space-x-2">
+              class="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 sm:px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 touch-manipulation min-h-[44px]">
               <span>📊</span>
               <span>View 7-Day Summary</span>
             </router-link>
 
             <button v-if="currentStation.data.heatIndex > 35" @click="openHeatAlert"
-              class="bg-gradient-to-r from-red-500 to-red-600 text-white px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center space-x-2 animate-pulse">
+              class="w-full sm:w-auto bg-gradient-to-r from-red-500 to-red-600 text-white px-6 sm:px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 animate-pulse touch-manipulation min-h-[44px]">
               <span>🚨</span>
               <span>Heat Alert Active</span>
             </button>
           </section>
         </main>
-      </div>
-      <!-- Heat Alert handled by SweetAlert2 component -->
-      <HeatAlert ref="heatAlertRef" />
+        </div>
+        
+        <!-- Heat Alert handled by SweetAlert2 component -->
+        <HeatAlert ref="heatAlertRef" />
 
-      <!-- Decorative Elements -->
-      <div class="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-30">
-        <div class="absolute -top-40 -right-40 w-80 h-80 bg-blue-200/20 rounded-full blur-3xl"></div>
-        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-200/20 rounded-full blur-3xl"></div>
-        <div
-          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-200/20 rounded-full blur-3xl">
+        <!-- Decorative Elements -->
+        <div class="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-30">
+          <div class="absolute -top-40 -right-40 w-80 h-80 bg-blue-200/20 rounded-full blur-3xl"></div>
+          <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-200/20 rounded-full blur-3xl"></div>
+          <div
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-200/20 rounded-full blur-3xl">
+          </div>
         </div>
       </div>
     </div>
@@ -709,11 +714,15 @@ watch(selectedStation, (newId) => {
 </script>
 
 <style scoped>
-/* Fix scrolling issues */
+/* Fix scrolling issues and improve mobile performance */
 .min-h-screen {
   min-height: 100vh;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  min-height: 100dvh; /* Dynamic viewport height for mobile */
+}
+
+/* Ensure proper scrolling in Ionic */
+ion-content {
+  --overflow: auto;
 }
 
 /* Modern animations */
@@ -740,10 +749,17 @@ watch(selectedStation, (newId) => {
 /* Glassmorphism effects */
 .backdrop-blur-lg {
   backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
 .backdrop-blur-sm {
   backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.backdrop-blur-md {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
 /* Smooth transitions */
@@ -751,9 +767,15 @@ watch(selectedStation, (newId) => {
   transition: all 0.3s ease;
 }
 
-/* Custom scrollbar */
+/* Touch-friendly scrollbar for mobile */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
+}
+
+@media (min-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
 }
 
 ::-webkit-scrollbar-track {
@@ -769,35 +791,79 @@ watch(selectedStation, (newId) => {
   background: rgba(139, 92, 246, 0.5);
 }
 
-/* Enhanced hover effects */
-.transform:hover {
-  transform: translateY(-2px);
-}
-
-/* Ensure station selector works properly */
-ion-select {
-  --background: white;
-  --border-radius: 12px;
-  --border-width: 1px;
-  --border-color: #e5e7eb;
-  --box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  --padding-start: 16px;
-  --padding-end: 16px;
-  --min-height: 44px;
-}
-
-/* Fix mobile scrolling and touch */
-@media (max-width: 768px) {
-  .min-h-screen {
-    min-height: 100vh;
-    height: auto;
-    overflow-x: hidden;
-    overflow-y: auto;
+/* Enhanced hover effects for desktop */
+@media (hover: hover) and (pointer: fine) {
+  .transform:hover {
+    transform: translateY(-2px);
   }
+}
 
-  /* Prevent horizontal scroll */
-  body {
-    overflow-x: hidden;
+/* Touch-friendly enhancements */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Responsive text and spacing */
+@media (max-width: 640px) {
+  .min-h-screen {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  /* Adjust font sizes for mobile */
+  h1 { font-size: 1.875rem; }
+  h2 { font-size: 1.5rem; }
+  h3 { font-size: 1.125rem; }
+  
+  /* Improve touch targets */
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Improve card spacing on mobile */
+  #metrics-grid {
+    gap: 1rem;
+  }
+}
+
+/* Tablet-specific adjustments for better use of space */
+@media (min-width: 768px) and (max-width: 1024px) {
+  #metrics-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    max-width: 800px;
+  }
+  
+  /* More compact cards for tablet */
+  .card-hover {
+    padding: 0.75rem !important;
+  }
+  
+  /* Smaller text in cards for better fit */
+  .card-hover h3 {
+    font-size: 0.875rem;
+  }
+  
+  .card-hover .text-lg,
+  .card-hover .text-xl {
+    font-size: 1rem;
+  }
+  
+  .card-hover .text-2xl {
+    font-size: 1.25rem;
+  }
+}
+
+/* Large tablet/desktop adjustments */
+@media (min-width: 1024px) {
+  #metrics-grid {
+    grid-template-columns: repeat(4, 1fr);
+    max-width: 1200px;
   }
 }
 
@@ -839,21 +905,32 @@ ion-select {
   opacity: 1;
 }
 
-/* Card hover / focus lift effect */
+/* Enhanced card hover / focus lift effect */
 .card-hover {
   transition: transform 180ms cubic-bezier(.2, .8, .2, 1), box-shadow 180ms cubic-bezier(.2, .8, .2, 1), border-color 180ms;
   will-change: transform, box-shadow;
 }
 
-.card-hover:hover,
-.card-hover:focus {
-  transform: translateY(-6px) scale(1.01);
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.35);
-  outline: none;
+/* Desktop hover effects */
+@media (hover: hover) and (pointer: fine) {
+  .card-hover:hover,
+  .card-hover:focus {
+    transform: translateY(-6px) scale(1.01);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.35);
+    outline: none;
+  }
+
+  .card-hover:active {
+    transform: translateY(-2px) scale(1.005);
+  }
 }
 
-.card-hover:active {
-  transform: translateY(-2px) scale(1.005);
+/* Mobile touch feedback */
+@media (hover: none) and (pointer: coarse) {
+  .card-hover:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
 }
 
 .card-hover:focus-visible {
@@ -893,6 +970,52 @@ ion-select {
   transition-duration: 700ms;
   transition-timing-function: cubic-bezier(.22, .9, .32, 1);
   will-change: background-color, color, box-shadow, filter, transform;
+}
+
+/* Safe area adjustments for mobile devices */
+@supports (padding: max(0px)) {
+  .safe-area-inset {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Improve performance on mobile */
+@media (max-width: 768px) {
+  .backdrop-blur-lg,
+  .backdrop-blur-md,
+  .backdrop-blur-sm {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(255, 255, 255, 0.25);
+  }
+  
+  .card-dark .backdrop-blur-lg,
+  .card-dark .backdrop-blur-md,
+  .card-dark .backdrop-blur-sm {
+    background: rgba(8, 10, 15, 0.55);
+  }
+}
+
+/* Specific tablet optimizations */
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* Better spacing for tablet view */
+  .w-full.max-w-4xl {
+    max-width: 100%;
+    padding: 0 2rem;
+  }
+  
+  /* Optimize hero section for tablet */
+  .min-h-\[80vh\] {
+    min-height: 70vh;
+  }
+  
+  /* Better button sizing for tablet */
+  .w-full.sm\:w-auto {
+    width: auto;
+    min-width: 200px;
+  }
 }
 </style>
 <style scoped>

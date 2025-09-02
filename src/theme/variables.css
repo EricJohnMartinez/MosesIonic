@@ -4,3 +4,161 @@ http://ionicframework.com/docs/theming/ */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Mobile-specific improvements */
+@layer base {
+  html {
+    /* Prevent text size adjustment on iOS */
+    -webkit-text-size-adjust: 100%;
+    /* Improve tap highlight */
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  }
+  
+  body {
+    /* Prevent overscroll bounce on iOS */
+    overscroll-behavior-y: none;
+    /* Improve font rendering */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Fix for mobile viewport */
+  .min-h-screen {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+}
+
+@layer components {
+  /* Safe area utilities */
+  .safe-area-inset {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  .pb-safe {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  
+  .pt-safe {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  
+  /* Touch-friendly components */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Improved scroll containers */
+  .scroll-smooth {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Better backdrop blur fallback */
+  .backdrop-blur-fallback {
+    background: rgba(255, 255, 255, 0.8);
+  }
+  
+  .backdrop-blur-fallback.dark {
+    background: rgba(0, 0, 0, 0.8);
+  }
+  
+  @supports (backdrop-filter: blur(10px)) {
+    .backdrop-blur-fallback {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+    }
+    
+    .backdrop-blur-fallback.dark {
+      background: rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+    }
+  }
+}
+
+@layer utilities {
+  /* iOS-specific utilities */
+  .ios-momentum-scroll {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Android-specific utilities */
+  .android-overscroll-none {
+    overscroll-behavior: none;
+  }
+  
+  /* Performance utilities */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+  }
+  
+  /* Text utilities for better mobile readability */
+  .text-mobile-friendly {
+    font-size: 16px; /* Prevents zoom on iOS */
+    line-height: 1.5;
+  }
+  
+  /* Responsive grid helpers */
+  .grid-mobile-cards {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  @media (min-width: 640px) {
+    .grid-mobile-cards {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+  }
+  
+  @media (min-width: 768px) {
+    .grid-mobile-cards {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    .grid-mobile-cards {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+}
+
+/* Ionic-specific overrides for better mobile experience */
+ion-content {
+  --overflow: auto;
+}
+
+ion-content.ion-no-padding {
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --padding-start: 0;
+  --padding-end: 0;
+}
+
+ion-refresher {
+  /* Ensure proper positioning on notched devices */
+  top: env(safe-area-inset-top);
+}
+
+/* Better focus states for accessibility */
+@media (prefers-reduced-motion: no-preference) {
+  *:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+    transition: outline-offset 0.2s ease;
+  }
+}
+
+/* Dark mode improvements */
+@media (prefers-color-scheme: dark) {
+  .backdrop-blur-fallback:not(.light) {
+    background: rgba(0, 0, 0, 0.8);
+  }
+}

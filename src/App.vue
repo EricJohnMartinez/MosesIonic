@@ -1,9 +1,9 @@
 <template>
-  <div class="flex flex-col min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900">
+  <div class="flex flex-col min-h-screen min-h-dvh bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 overflow-hidden">
     <!-- Splash Screen -->
     <div 
       v-if="showSplash" 
-      class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden"
+      class="fixed inset-0 z-50 flex items-center justify-center overflow-hidden safe-area-inset"
       :class="{ 'animate-fade-out': fadeOut }"
     >
       <!-- Animated background particles -->
@@ -11,7 +11,7 @@
         <div 
           v-for="i in 20" 
           :key="i"
-          class="absolute w-2 h-2 bg-blue-400 rounded-full animate-pulse"
+          class="absolute w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-400 rounded-full animate-pulse"
           :style="{
             left: Math.random() * 100 + '%',
             top: Math.random() * 100 + '%',
@@ -22,17 +22,17 @@
       </div>
       
       <!-- Main splash content -->
-      <div class="text-center relative z-10 px-8">
+      <div class="text-center relative z-10 px-6 sm:px-8 max-w-lg mx-auto">
         <!-- Logo container with enhanced animation -->
-        <div class="relative mb-8">
+        <div class="relative mb-6 sm:mb-8">
           <!-- Glowing backdrop -->
-          <div class="absolute inset-0 w-32 h-32 mx-auto bg-blue-500/20 rounded-full blur-xl animate-pulse"></div>
+          <div class="absolute inset-0 w-24 h-24 sm:w-32 sm:h-32 mx-auto bg-blue-500/20 rounded-full blur-xl animate-pulse"></div>
           
           <!-- Logo with enhanced animations -->
-          <div class="relative w-24 h-24 mx-auto mb-2 transform transition-all duration-1000 animate-logo-entrance">
+          <div class="relative w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-2 transform transition-all duration-1000 animate-logo-entrance">
             <!-- Fallback icon if image fails -->
             <!-- <div class="w-full h-full bg-gradient-to-br from-blue-400 to-cyan-300 rounded-2xl flex items-center justify-center shadow-2xl">
-              <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+              <svg class="w-10 h-10 sm:w-12 sm:h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
             </div> -->
@@ -41,48 +41,48 @@
           </div>
           
           <!-- Rotating ring around logo -->
-          <div class="absolute top-1/2 left-1/2 w-32 h-32 -translate-x-1/2 -translate-y-1/2 border-2 border-blue-300/30 rounded-full animate-spin-slow"></div>
+          <div class="absolute top-1/2 left-1/2 w-28 h-28 sm:w-32 sm:h-32 -translate-x-1/2 -translate-y-1/2 border-2 border-blue-300/30 rounded-full animate-spin-slow"></div>
         </div>
 
         <!-- Text content with staggered animations -->
-        <div class="space-y-3">
-          <h1 class="text-5xl font-bold bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent animate-title-slide-up">
+        <div class="space-y-2 sm:space-y-3">
+          <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-white via-blue-100 to-cyan-200 bg-clip-text text-transparent animate-title-slide-up">
             Project GENESIS
           </h1>
           
           <div class="flex items-center justify-center space-x-2 animate-subtitle-fade-in">
-            <span class="w-8 h-px bg-gradient-to-r from-transparent via-blue-400 to-transparent"></span>
-            <p class="text-blue-200 text-lg font-medium tracking-wide">
+            <span class="w-6 sm:w-8 h-px bg-gradient-to-r from-transparent via-blue-400 to-transparent"></span>
+            <p class="text-blue-200 text-base sm:text-lg font-medium tracking-wide">
               Powered by MOSES
             </p>
-            <span class="w-8 h-px bg-gradient-to-r from-transparent via-blue-400 to-transparent"></span>
+            <span class="w-6 sm:w-8 h-px bg-gradient-to-r from-transparent via-blue-400 to-transparent"></span>
           </div>
           
-          <p class="text-blue-100/80 text-base font-light tracking-wider animate-description-slide-up">
+          <p class="text-blue-100/80 text-sm sm:text-base font-light tracking-wider animate-description-slide-up">
             Real-time Weather Monitoring System
           </p>
         </div>
 
         <!-- Loading indicator -->
-        <div class="mt-12 animate-loader-appear">
+        <div class="mt-8 sm:mt-12 animate-loader-appear">
           <div class="flex items-center justify-center space-x-1 mb-3">
-            <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
-            <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
-            <div class="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+            <div class="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
+            <div class="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
+            <div class="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-400 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
           </div>
           
           <!-- Progress bar -->
-          <div class="w-48 h-1 mx-auto bg-blue-900/50 rounded-full overflow-hidden">
+          <div class="w-40 sm:w-48 h-1 mx-auto bg-blue-900/50 rounded-full overflow-hidden">
             <div class="h-full bg-gradient-to-r from-blue-400 to-cyan-300 rounded-full animate-progress"></div>
           </div>
           
-          <p class="text-blue-300/60 text-sm mt-3 animate-pulse">Initializing...</p>
+          <p class="text-blue-300/60 text-xs sm:text-sm mt-3 animate-pulse">Initializing...</p>
         </div>
       </div>
     </div>
 
     <!-- Main Content -->
-    <router-view v-else />
+    <router-view v-else class="flex-1 min-h-0" />
   </div>
 </template>
 
