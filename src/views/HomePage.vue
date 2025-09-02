@@ -1,5 +1,6 @@
 <template>
-  <IonContent class="relative min-h-screen flex items-center justify-center" fullscreen scrollEvents @ionScroll="handleIonScroll">
+  <IonContent class="relative min-h-screen flex items-center justify-center" fullscreen scrollEvents
+    @ionScroll="handleIonScroll">
     <!-- Pull to refresh -->
     <IonRefresher slot="fixed" @ionRefresh="handleRefresh">
       <IonRefresherContent pulling-text="Pull to refresh" refreshing-spinner="lines" />
@@ -8,20 +9,20 @@
     <div class="fixed inset-0 w-full h-full z-0" :style="bgStyle"></div>
     <!-- Overlay for readability -->
     <div class="fixed inset-0 w-full h-full z-10 pointer-events-none" style="background:rgba(0,0,0,0.25);"></div>
-  <div class="relative z-20 flex items-center justify-center">
+    <div class="relative z-20 flex items-center justify-center">
 
       <!-- Main Content -->
       <div class="relative z-10">
-        
-  <!-- Station selector as left-aligned kebab (three-dots) button -->
-  <div class="relative group absolute top-4 left-80 mt-50 z-50">
-          <button
-            type="button"
-            aria-label="Stations"
+
+        <!-- Station selector as left-aligned kebab (three-dots) button -->
+        <div class="relative group absolute top-4 left-80 mt-50 z-50">
+          <button type="button" aria-label="Stations"
             class="flex items-center justify-center w-10 h-10 rounded-full border border-gray-700 bg-gray-800 text-gray-200 hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200">
             <!-- vertical three dots icon -->
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path d="M10 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"
+              aria-hidden="true">
+              <path
+                d="M10 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
             </svg>
           </button>
 
@@ -42,47 +43,47 @@
             :style="{ filter: heroHidden ? 'blur(6px) saturate(0.95)' : 'none', willChange: 'opacity, transform, filter' }">
             <section>
               <div class="w-full max-w-xl rounded-3xl p-8">
-              <div class="flex flex-col lg:flex-row items-center justify-between">
-                <!-- Main Weather Display -->
-                <div class="text-center lg:text-right mb-6 lg:mb-0">
-                  <div class="flex items-center justify-center lg:justify-end space-x-4 mb-4">
-                    <div class="text-8xl animate-bounce">
-                      {{ getWeatherIcon() }}
-                    </div>
-                    <div>
-                      <div class="text-6xl font-bold text-white-500">
-                        {{ currentStation.data.temperature }}°
+                <div class="flex flex-col lg:flex-row items-center justify-between">
+                  <!-- Main Weather Display -->
+                  <div class="text-center lg:text-right mb-6 lg:mb-0">
+                    <div class="flex items-center justify-center lg:justify-end space-x-4 mb-4">
+                      <div class="text-8xl animate-bounce">
+                        {{ getWeatherIcon() }}
                       </div>
-                      <div class="text-xl text-white-500 font-medium">
-                        {{ currentStation.name }}
+                      <div>
+                        <div class="text-6xl font-bold text-white-500">
+                          {{ currentStation.data.temperature }}°
+                        </div>
+                        <div class="text-xl text-white-500 font-medium">
+                          {{ currentStation.name }}
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Weather Description -->
+                    <div class="text-lg text-white-700 mb-4">
+                      {{ getWeatherDescription() }}
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="grid grid-cols-2 gap-4 max-w-sm mx-auto lg:mx-0">
+                      <div class="bg-blue-100/60 rounded-xl p-3 text-center">
+                        <div class="text-2xl font-bold text-blue-700">{{ currentStation.data.humidity }}%</div>
+                        <div class="text-sm text-blue-600">Humidity</div>
+                      </div>
+                      <div class="bg-orange-100/60 rounded-xl p-3 text-center">
+                        <div class="text-2xl font-bold text-orange-700">
+                          {{ currentStation.data.heatIndex }}°</div>
+                        <div class="text-sm text-orange-600">Heat Index</div>
                       </div>
                     </div>
                   </div>
-
-                  <!-- Weather Description -->
-                  <div class="text-lg text-white-700 mb-4">
-                    {{ getWeatherDescription() }}
+                  <!-- Mini Map -->
+                  <div class="w-full lg:w-80 h-64 rounded-2xl overflow-hidden shadow-lg border border-white/20">
+                    <div id="weather-map" class="w-full h-full"></div>
                   </div>
-
-                  <!-- Quick Stats -->
-                  <div class="grid grid-cols-2 gap-4 max-w-sm mx-auto lg:mx-0">
-                    <div class="bg-blue-100/60 rounded-xl p-3 text-center">
-                      <div class="text-2xl font-bold text-blue-700">{{ currentStation.data.humidity }}%</div>
-                      <div class="text-sm text-blue-600">Humidity</div>
-                    </div>
-                    <div class="bg-orange-100/60 rounded-xl p-3 text-center">
-                      <div class="text-2xl font-bold text-orange-700">
-                        {{ currentStation.data.heatIndex }}°</div>
-                      <div class="text-sm text-orange-600">Heat Index</div>
-                    </div>
-                  </div>
-                </div>
-                <!-- Mini Map -->
-                <div class="w-full lg:w-80 h-64 rounded-2xl overflow-hidden shadow-lg border border-white/20">
-                  <div id="weather-map" class="w-full h-full"></div>
                 </div>
               </div>
-            </div>
             </section>
           </div>
 
@@ -98,7 +99,7 @@
             </div>
           </transition>
           <section class="mb-8">
-            <h2 class="text-2xl font-bold text-white-500 mb-6">Weather Metrics</h2>
+            <h2 class="text-2xl font-bold text-white-500 mb-6 mt-10">Weather Metrics</h2>
             <div id="metrics-grid" class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <!-- Temperature & Humidity -->
               <div data-card-id="Temperature"
@@ -232,7 +233,7 @@
               <span>View 7-Day Summary</span>
             </router-link>
 
-    <button v-if="currentStation.data.heatIndex > 35" @click="openHeatAlert"
+            <button v-if="currentStation.data.heatIndex > 35" @click="openHeatAlert"
               class="bg-gradient-to-r from-red-500 to-red-600 text-white px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center space-x-2 animate-pulse">
               <span>🚨</span>
               <span>Heat Alert Active</span>
@@ -240,8 +241,8 @@
           </section>
         </main>
       </div>
-  <!-- Heat Alert handled by SweetAlert2 component -->
-  <HeatAlert ref="heatAlertRef" />
+      <!-- Heat Alert handled by SweetAlert2 component -->
+      <HeatAlert ref="heatAlertRef" />
 
       <!-- Decorative Elements -->
       <div class="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-30">
@@ -890,7 +891,7 @@ ion-select {
 .card-transition {
   transition-property: background-color, color, box-shadow, border-color, transform, filter;
   transition-duration: 700ms;
-  transition-timing-function: cubic-bezier(.22,.9,.32,1);
+  transition-timing-function: cubic-bezier(.22, .9, .32, 1);
   will-change: background-color, color, box-shadow, filter, transform;
 }
 </style>
@@ -898,18 +899,31 @@ ion-select {
 /* Dark card variant for hero/metrics */
 .card-dark {
   background: rgba(8, 10, 15, 0.55) !important;
-  border-color: rgba(255,255,255,0.06) !important;
-  box-shadow: 0 12px 30px rgba(2,6,23,0.6) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.6) !important;
   color: #e6eef8 !important;
   backdrop-filter: blur(10px) saturate(1.05) !important;
 }
+
 .card-dark h3 {
   color: #e6eef8 !important;
 }
-.card-dark span, .card-dark .text-white-600, .card-dark .text-white-500 {
-  color: rgba(230,238,248,0.95) !important;
+
+.card-dark span,
+.card-dark .text-white-600,
+.card-dark .text-white-500 {
+  color: rgba(230, 238, 248, 0.95) !important;
 }
-.card-dark .text-sm { color: rgba(200,210,220,0.8) !important; }
-.card-dark .text-2xl { color: #9fb7ff !important; }
-.card-dark .text-orange-600 { color: #ffb37a !important; }
+
+.card-dark .text-sm {
+  color: rgba(200, 210, 220, 0.8) !important;
+}
+
+.card-dark .text-2xl {
+  color: #9fb7ff !important;
+}
+
+.card-dark .text-orange-600 {
+  color: #ffb37a !important;
+}
 </style>
