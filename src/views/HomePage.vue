@@ -10,7 +10,7 @@
 
         <!-- Main Content -->
         <div class="relative z-10">
-
+ 
           <!-- Station selector - positioned responsively -->
           <div class="fixed top-4 right-4 z-50 group"
                :style="{ top: 'calc(env(safe-area-inset-top) + 1rem)' }">
@@ -37,9 +37,79 @@
         <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" v-if="currentStation">
           <!-- Current Weather Hero Section -->
           <div
-            :class="['w-full flex items-center justify-center min-h-[60vh] sm:min-h-[50vh] md:min-h-[45vh] lg:min-h-[40vh] -mt-4 sm:-mt-6 md:-mt-8 lg:-mt-12 -mb-8 sm:-mb-12 md:-mb-16 lg:-mb-20 transition-all duration-700 ease-in-out', heroHidden ? 'opacity-0 -translate-y-6 pointer-events-none' : 'opacity-100 translate-y-0']"
+            :class="['w-full flex items-center justify-center min-h-[60vh] sm:min-h-[50vh] md:min-h-[45vh] lg:min-h-[40vh] -mt-4 sm:-mt-6 md:-mt-8 lg:-mt-12 -mb-8 sm:-mb-12 md:-mb-16 lg:-mb-20 transition-all duration-700 ease-in-out relative overflow-hidden', heroHidden ? 'opacity-0 -translate-y-6 pointer-events-none' : 'opacity-100 translate-y-0']"
             :style="{ filter: heroHidden ? 'blur(6px) saturate(0.95)' : 'none', willChange: 'opacity, transform, filter' }">
-            <section class="w-full">
+            
+            <!-- Cloud Background Animation - Only for Cloudy Weather -->
+            <div v-if="isCloudyWeather()" class="absolute inset-0 pointer-events-none z-0">
+              <!-- Extra Large clouds - Layer 1 -->
+              <img src="/images/Clouds/cloud1.png" 
+                   alt="Cloud" 
+                   class="cloud-animation-xl absolute top-[5%] left-0 w-80 sm:w-96 md:w-[32rem] lg:w-[40rem] xl:w-[48rem] opacity-35 pointer-events-none"
+                   style="transform: translateX(-100%)" />
+              
+              <img src="/images/Clouds/Cloud2.png" 
+                   alt="Cloud" 
+                   class="cloud-animation-xl-slow absolute top-[15%] left-0 w-72 sm:w-88 md:w-[28rem] lg:w-[36rem] xl:w-[44rem] opacity-30 pointer-events-none"
+                   style="transform: translateX(-120%); animation-delay: 10s;" />
+              
+              <!-- Large clouds - Layer 2 -->
+              <img src="/images/Clouds/Cloud3.png" 
+                   alt="Cloud" 
+                   class="cloud-animation-large absolute top-[25%] left-0 w-64 sm:w-80 md:w-96 lg:w-[32rem] xl:w-[40rem] opacity-28 pointer-events-none"
+                   style="transform: translateX(-110%); animation-delay: 20s;" />
+              
+              <img src="/images/Clouds/cloud1.png" 
+                   alt="Cloud" 
+                   class="cloud-animation-large-reverse absolute top-[8%] right-0 w-68 sm:w-84 md:w-[30rem] lg:w-[38rem] xl:w-[46rem] opacity-25 pointer-events-none"
+                   style="transform: translateX(100%); animation-delay: 5s;" />
+              
+              <!-- Medium clouds - Layer 3 -->
+              <img src="/images/Clouds/Cloud2.png" 
+                   alt="Cloud" 
+                   class="cloud-animation-medium absolute top-[35%] left-0 w-56 sm:w-72 md:w-88 lg:w-[28rem] xl:w-[36rem] opacity-22 pointer-events-none"
+                   style="transform: translateX(-130%); animation-delay: 30s;" />
+              
+              <img src="/images/Clouds/Cloud3.png" 
+                   alt="Cloud" 
+                   class="cloud-animation-medium-reverse absolute top-[12%] right-0 w-60 sm:w-76 md:w-92 lg:w-[30rem] xl:w-[38rem] opacity-20 pointer-events-none"
+                   style="transform: translateX(110%); animation-delay: 15s;" />
+              
+              <!-- Small accent clouds - Layer 4 -->
+              <img src="/images/Clouds/cloud1.png" 
+                   alt="Cloud" 
+                   class="cloud-animation-small absolute top-[45%] left-0 w-48 sm:w-64 md:w-80 lg:w-96 xl:w-[32rem] opacity-18 pointer-events-none"
+                   style="transform: translateX(-140%); animation-delay: 40s;" />
+              
+              <img src="/images/Clouds/Cloud2.png" 
+                   alt="Cloud" 
+                   class="cloud-animation-small-reverse absolute top-[20%] right-0 w-44 sm:w-60 md:w-76 lg:w-92 xl:w-[30rem] opacity-16 pointer-events-none"
+                   style="transform: translateX(120%); animation-delay: 25s;" />
+              
+              <!-- Extra small clouds - Layer 5 -->
+              <img src="/images/Clouds/Cloud3.png" 
+                   alt="Cloud" 
+                   class="cloud-animation-drift absolute top-[50%] left-0 w-40 sm:w-56 md:w-72 lg:w-88 xl:w-[28rem] opacity-14 pointer-events-none"
+                   style="transform: translateX(-150%); animation-delay: 50s;" />
+              
+              <img src="/images/Clouds/cloud1.png" 
+                   alt="Cloud" 
+                   class="cloud-animation-drift-reverse absolute top-[3%] right-0 w-36 sm:w-52 md:w-68 lg:w-84 xl:w-[26rem] opacity-12 pointer-events-none"
+                   style="transform: translateX(130%); animation-delay: 35s;" />
+              
+              <!-- Additional frequent clouds for density -->
+              <img src="/images/Clouds/Cloud2.png" 
+                   alt="Cloud" 
+                   class="cloud-animation-frequent1 absolute top-[30%] left-0 w-52 sm:w-68 md:w-84 lg:w-[26rem] xl:w-[34rem] opacity-15 pointer-events-none"
+                   style="transform: translateX(-160%); animation-delay: 60s;" />
+              
+              <img src="/images/Clouds/Cloud3.png" 
+                   alt="Cloud" 
+                   class="cloud-animation-frequent2 absolute top-[40%] right-0 w-48 sm:w-64 md:w-80 lg:w-96 xl:w-[32rem] opacity-17 pointer-events-none"
+                   style="transform: translateX(140%); animation-delay: 45s;" />
+            </div>
+            
+            <section class="w-full relative z-10">
               <div class="w-full max-w-5xl mx-auto rounded-3xl p-3 sm:p-4 md:p-6 lg:p-8">
                 <div class="flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-6 lg:gap-8">
                   <!-- Main Weather Display -->
@@ -76,9 +146,14 @@
                       </div>
                     </div>
                   </div>
-                  <!-- Mini Map -->
-                  <div class="w-full sm:w-72 md:w-80 lg:w-80 h-40 sm:h-48 md:h-56 lg:h-64 rounded-2xl overflow-hidden shadow-lg border border-slate-700/50 flex-shrink-0">
-                    <div id="weather-map" class="w-full h-full"></div>
+                  <!-- Open Map Button -->
+                  <div class="w-full sm:w-72 md:w-80 lg:w-80 h-40 sm:h-48 md:h-56 lg:h-64 rounded-2xl overflow-hidden shadow-lg border border-slate-700/50 flex-shrink-0 flex items-center justify-center bg-slate-800/60 backdrop-blur-lg">
+                    <button @click="openMapModal" 
+                      class="w-full h-full flex flex-col items-center justify-center gap-3 hover:bg-slate-700/50 transition-all duration-300 text-white">
+                      <div class="text-4xl">🗺️</div>
+                      <div class="text-lg font-semibold">Open Map</div>
+                      <div class="text-sm text-gray-300">View all stations</div>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -317,6 +392,23 @@
         
         <!-- Heat Alert handled by SweetAlert2 component -->
         <HeatAlert ref="heatAlertRef" />
+
+        <!-- Map Modal -->
+        <IonModal ref="mapModal" :is-open="isMapModalOpen" @willDismiss="closeMapModal">
+          <IonHeader>
+            <IonToolbar>
+              <IonTitle>Weather Stations Map</IonTitle>
+              <IonButtons slot="end">
+                <IonButton @click="closeMapModal">Close</IonButton>
+              </IonButtons>
+            </IonToolbar>
+          </IonHeader>
+          <IonContent class="ion-padding">
+            <div class="w-full h-full min-h-[70vh]">
+              <div id="modal-weather-map" class="w-full h-full rounded-lg"></div>
+            </div>
+          </IonContent>
+        </IonModal>
       </div>
     </div>
   </IonContent>
@@ -328,7 +420,7 @@ import RainfallChart from '../components/RainfallChart.vue';
 import HeatAlert from '../components/HeatAlert.vue';
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import Sortable from 'sortablejs';
-import { IonContent, IonRefresher, IonRefresherContent } from '@ionic/vue';
+import { IonContent, IonRefresher, IonRefresherContent, IonModal, IonHeader, IonToolbar, IonTitle, IonButton, IonButtons } from '@ionic/vue';
 import WindCompass from '../components/WindCompass.vue';
 import { db } from '../firebase';
 import { ref as dbRef, query, orderByKey, limitToLast, onChildAdded, onValue, startAt } from 'firebase/database';
@@ -345,6 +437,9 @@ const stations = ref([
 const selectedStation = ref('station1');
 // Heat alert component ref (SweetAlert2)
 const heatAlertRef = ref<any>(null);
+// Map modal state
+const isMapModalOpen = ref(false);
+const mapModal = ref<any>(null);
 // Show/hide wind chart when clicking the Wind card
 const showWindChart = ref(false);
 
@@ -387,6 +482,135 @@ function openHeatAlert() {
     }
   } catch (e) {
     console.warn('Failed to open heat alert', e);
+  }
+}
+
+// Map modal functions
+function openMapModal() {
+  isMapModalOpen.value = true;
+  // Initialize map after modal is opened
+  setTimeout(() => {
+    initializeModalMap();
+  }, 300);
+}
+
+function closeMapModal() {
+  isMapModalOpen.value = false;
+  // Clean up the modal map when closing
+  if (modalMap) {
+    try {
+      modalMap.remove();
+      modalMap = null;
+      // Clear modal markers
+      Object.keys(modalMarkerMap).forEach(key => {
+        delete modalMarkerMap[key];
+      });
+    } catch (error) {
+      console.warn('Error cleaning up modal map:', error);
+    }
+  }
+}
+
+// Function to get weather icon based on temperature for station popups
+function getStationWeatherIcon(temperature: number): string {
+  if (temperature > 32) return '☀️';
+  if (temperature > 25) return '🌤️';
+  if (temperature > 20) return '⛅';
+  return '🌫️';  
+}
+
+// Initialize the modal map
+function initializeModalMap() {
+  if (!window.L) return;
+
+  const mapContainer = document.getElementById('modal-weather-map');
+  if (!mapContainer) return;
+
+  // Clean up existing map if it exists
+  if (modalMap) {
+    try {
+      modalMap.remove();
+      modalMap = null;
+      // Clear modal markers
+      Object.keys(modalMarkerMap).forEach(key => {
+        delete modalMarkerMap[key];
+      });
+    } catch (error) {
+      console.warn('Error cleaning up existing modal map:', error);
+    }
+  }
+
+  try {
+    // Create the modal map
+    modalMap = window.L.map('modal-weather-map').setView([13.2, 121.1], 9);
+    window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(modalMap);
+
+    const svgIconUrl = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><circle cx='12' cy='9' r='2.5' fill='%230a37fd' fill-opacity='0'><animate fill='freeze' attributeName='fill-opacity' begin='0.935s' dur='0.165s' values='0;1'/></circle><path fill='%230a37fd' fill-opacity='0' stroke='%230a37fd' stroke-dasharray='48' stroke-dashoffset='48' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.2' d='M12 20.5c0 0 -6 -7 -6 -11.5c0 -3.31 2.69 -6 6 -6c3.31 0 6 2.69 6 6c0 4.5 -6 11.5 -6 11.5Z'><animate fill='freeze' attributeName='fill-opacity' begin='0.77s' dur='0.165s' values='0;0.15'/><animate fill='freeze' attributeName='stroke-dashoffset' dur='0.66s' values='48;0'/><animateTransform attributeName='transform' dur='3.3s' keyTimes='0;0.3;0.4;0.54;0.6;0.68;0.7;1' repeatCount='indefinite' type='rotate' values='0 12 20.5;0 12 20.5;-8 12 20.5;0 12 20.5;5 12 20.5;-2 12 20.5;0 12 20.5;0 12 20.5'/></path></svg>";
+
+    // Add station markers with enhanced popups
+    stations.value.forEach((station) => {
+      const icon = window.L.icon({
+        iconUrl: svgIconUrl,
+        iconSize: [40, 40],
+        iconAnchor: [20, 40],
+        popupAnchor: [0, -40],
+      });
+
+      // Get current station data for popup
+      const stationData = station.id === selectedStation.value ? currentStation.value?.data : null;
+      const temperature = stationData?.temperature || 0;
+      const weatherIcon = getStationWeatherIcon(temperature);
+
+      const popupContent = `
+        <div class="flex flex-col items-center p-2 min-w-[150px]">
+          <div class="text-2xl mb-2">${weatherIcon}</div>
+          <div class="font-semibold text-lg text-center">${station.name}</div>
+          <div class="text-xl font-bold text-blue-600">${temperature}°C</div>
+          <div class="text-sm text-gray-600 mt-1">Current Temperature</div>
+        </div>
+      `;
+
+      const marker = window.L.marker([station.lat, station.lng], { icon }).addTo(modalMap)
+        .bindPopup(popupContent);
+      
+      marker.on('click', () => {
+        selectedStation.value = station.id;
+        // Update popup content when station is selected
+        setTimeout(() => {
+          const updatedData = currentStation.value?.data;
+          const updatedTemp = updatedData?.temperature || 0;
+          const updatedIcon = getStationWeatherIcon(updatedTemp);
+          
+          const updatedPopupContent = `
+            <div class="flex flex-col items-center p-2 min-w-[150px]">
+              <div class="text-2xl mb-2">${updatedIcon}</div>
+              <div class="font-semibold text-lg text-center">${station.name}</div>
+              <div class="text-xl font-bold text-blue-600">${updatedTemp}°C</div>
+              <div class="text-sm text-gray-600 mt-1">Current Temperature</div>
+            </div>
+          `;
+          marker.setPopupContent(updatedPopupContent);
+        }, 500);
+      });
+      
+      modalMarkerMap[station.id] = marker;
+    });
+
+    // Open popup for the currently selected station
+    if (currentStation.value && modalMarkerMap[currentStation.value.id]) {
+      modalMarkerMap[currentStation.value.id].openPopup();
+    }
+
+    // Force map to resize after initialization
+    setTimeout(() => {
+      if (modalMap) {
+        modalMap.invalidateSize();
+      }
+    }, 100);
+  } catch (error) {
+    console.error('Error initializing modal map:', error);
   }
 }
 
@@ -447,29 +671,76 @@ const sensorValues = ref({
 function getWeatherIcon(): string {
   if (!currentStation.value) return '⛅';
 
-  const { heatIndex, rainfall, temperature } = currentStation.value.data;
-
-  if (heatIndex > 35) return '🔥';
-  if (rainfall > 5) return '🌧️';
-  if (temperature > 32) return '☀️';
-  if (temperature > 25) return '🌤️';
-  if (temperature > 20) return '⛅';
-  return '🌫️';
+  const weatherCondition = determineWeatherCondition(currentStation.value.data);
+  
+  // Return emoji based on weather condition
+  if (weatherCondition.wType.includes('Intense') || weatherCondition.wType.includes('Torrential')) return '🌊';
+  if (weatherCondition.wType.includes('Heavy')) return '🌧️';
+  if (weatherCondition.wType.includes('Moderate')) return '🌦️';
+  if (weatherCondition.wType.includes('Light Rain')) return '🌧️';
+  if (weatherCondition.wType.includes('Cloudy')) return '☁️';
+  if (weatherCondition.wType.includes('Partly Cloudy')) return '⛅';
+  if (weatherCondition.wType.includes('Sunny')) return '☀️';
+  return '⛅';
 }
 
 function getWeatherDescription(): string {
   if (!currentStation.value) return 'Loading weather data...';
 
-  const { heatIndex, rainfall, temperature, humidity } = currentStation.value.data;
+  const weatherCondition = determineWeatherCondition(currentStation.value.data);
+  return weatherCondition.wType;
+}
 
-  if (heatIndex > 35) return 'Extremely hot - Heat index warning in effect';
-  if (rainfall > 10) return 'Heavy rainfall - Stay indoors if possible';
-  if (rainfall > 5) return 'Moderate rainfall - Carry an umbrella';
-  if (temperature > 32) return 'Very hot and sunny - Stay hydrated';
-  if (temperature > 28) return 'Warm and pleasant weather';
-  if (temperature > 20) return 'Comfortable temperature';
-  if (humidity > 80) return 'High humidity - May feel muggy';
-  return 'Pleasant weather conditions';
+function determineWeatherCondition(weather: any) {
+  const rr = parseFloat(weather['rainfall'] || weather['RR']) || 0;
+  const lux = parseFloat(weather['lux'] || weather['LUX']) || 0;
+
+  const intenseRainIcon = '/images/torrential-rain.png';
+  const heavyRainIcon = '/images/heavy-intense-rain.png';
+  const moderateRainIcon = '/images/moderate-heavy-rain.png';
+  const lightRainIcon = '/images/light-rain.png';
+  const cloudyIcon = '/images/cloudy-icon.png';
+  const partlyCloudyIcon = '/images/partly-cloudy.png';
+  const sunnyIcon = '/images/sunny-icon.png';
+
+  let wType = '';
+  let condition = '';
+
+  // Determine weather type based on rainfall and light levels
+  if (rr > 200) { 
+    wType = 'Intense to Torrential Rain';
+    condition = intenseRainIcon;
+  } else if (rr > 100 && rr <= 200) {
+    wType = 'Heavy to Intense Rain';
+    condition = heavyRainIcon;
+  } else if (rr > 50 && rr <= 100) {
+    wType = 'Moderate to Heavy Rain';
+    condition = moderateRainIcon;
+  } else if (rr > 0 && rr <= 50) {
+    wType = 'Light Rain';
+    condition = lightRainIcon;
+  } else if (rr === 0 && lux <= 2000) {
+    wType = 'Cloudy';
+    condition = cloudyIcon;
+  } else if (rr === 0 && lux > 2000 && lux <= 3000) {
+    wType = 'Partly Cloudy';
+    condition = partlyCloudyIcon;
+  } else if (rr === 0 && lux > 3000) {
+    wType = 'Sunny';
+    condition = sunnyIcon;
+  } else {
+    // Fallback for any edge case
+    wType = 'Unknown';
+    condition = cloudyIcon;
+  }
+  
+  return { condition, wType };
+}
+
+function isCloudyWeather(): boolean {
+  if (!currentStation.value) return false;
+  const weatherCondition = determineWeatherCondition(currentStation.value.data);
+  return weatherCondition.wType.includes('Cloudy');
 }
 
 // Helper to compute heat index (Celsius)
@@ -534,7 +805,20 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  // no-op: using IonContent scroll events
+  // Clean up maps when component unmounts
+  if (modalMap) {
+    try {
+      modalMap.remove();
+      modalMap = null;
+    } catch (error) {
+      console.warn('Error cleaning up modal map on unmount:', error);
+    }
+  }
+  
+  // Clear marker references
+  Object.keys(modalMarkerMap).forEach(key => {
+    delete modalMarkerMap[key];
+  });
 });
 
 watch(selectedStation, (newStation) => {
@@ -575,11 +859,24 @@ const handleRefresh = async (event: any) => {
       console.warn('Wind chart refresh failed or not available yet', e);
     }
 
-    // Optional: re-center the map to the selected station after refresh
-    if (map && currentStation.value) {
+    // Update modal map if it's open
+    if (modalMap && currentStation.value) {
       const st = stations.value.find(s => s.id === selectedStation.value);
-      if (st) {
-        map.setView([st.lat, st.lng], 12);
+      if (st && modalMarkerMap[st.id]) {
+        // Update popup with latest data
+        const updatedData = currentStation.value.data;
+        const updatedTemp = updatedData?.temperature || 0;
+        const updatedIcon = getStationWeatherIcon(updatedTemp);
+        
+        const updatedPopupContent = `
+          <div class="flex flex-col items-center p-2 min-w-[150px]">
+            <div class="text-2xl mb-2">${updatedIcon}</div>
+            <div class="font-semibold text-lg text-center">${st.name}</div>
+            <div class="text-xl font-bold text-blue-600">${updatedTemp}°C</div>
+            <div class="text-sm text-gray-600 mt-1">Current Temperature</div>
+          </div>
+        `;
+        modalMarkerMap[st.id].setPopupContent(updatedPopupContent);
       }
     }
 
@@ -705,7 +1002,9 @@ function restoreCardOrder() {
 }
 
 let map: any = null;
+let modalMap: any = null;
 const markerMap: { [key: string]: any } = {};
+const modalMarkerMap: { [key: string]: any } = {};
 
 const currentStation = computed(() => {
   const station = stations.value.find((s) => s.id === selectedStation.value);
@@ -758,34 +1057,6 @@ onMounted(async () => {
     } catch (error) {
       // ExtraMarkers not available, using default markers
     }
-
-    // Center of Mindoro: approx 13.2, 121.1, zoom 9 covers the whole island
-    map = window.L.map('weather-map').setView([13.2, 121.1], 9);
-    window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '  '
-    }).addTo(map);
-
-    const svgIconUrl = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><circle cx='12' cy='9' r='2.5' fill='%230a37fd' fill-opacity='0'><animate fill='freeze' attributeName='fill-opacity' begin='0.935s' dur='0.165s' values='0;1'/></circle><path fill='%230a37fd' fill-opacity='0' stroke='%230a37fd' stroke-dasharray='48' stroke-dashoffset='48' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.2' d='M12 20.5c0 0 -6 -7 -6 -11.5c0 -3.31 2.69 -6 6 -6c3.31 0 6 2.69 6 6c0 4.5 -6 11.5 -6 11.5Z'><animate fill='freeze' attributeName='fill-opacity' begin='0.77s' dur='0.165s' values='0;0.15'/><animate fill='freeze' attributeName='stroke-dashoffset' dur='0.66s' values='48;0'/><animateTransform attributeName='transform' dur='3.3s' keyTimes='0;0.3;0.4;0.54;0.6;0.68;0.7;1' repeatCount='indefinite' type='rotate' values='0 12 20.5;0 12 20.5;-8 12 20.5;0 12 20.5;5 12 20.5;-2 12 20.5;0 12 20.5;0 12 20.5'/></path></svg>";
-
-    stations.value.forEach((station) => {
-      const icon = window.L.icon({
-        iconUrl: svgIconUrl,
-        iconSize: [40, 40],
-        iconAnchor: [20, 40],
-        popupAnchor: [0, -40],
-      });
-      const marker = window.L.marker([station.lat, station.lng], { icon }).addTo(map)
-        .bindPopup(station.name);
-      marker.on('click', () => {
-        selectedStation.value = station.id;
-      });
-      markerMap[station.id] = marker;
-    });
-
-    // Open popup for the initially selected station
-    if (currentStation.value && markerMap[currentStation.value.id]) {
-      markerMap[currentStation.value.id].openPopup();
-    }
   }
 
   // Initialize SortableJS on the metrics grid for drag/reorder with persistence
@@ -818,14 +1089,14 @@ onMounted(async () => {
   }
 });
 
-// Open popup for selected station and center map
+// Update modal map when station selection changes
 watch(selectedStation, (newId) => {
-  if (map && window.L) {
+  if (modalMap && window.L && modalMarkerMap) {
     const station = stations.value.find(s => s.id === newId);
     if (station) {
-      map.setView([station.lat, station.lng], 12);
-      if (markerMap && markerMap[station.id]) {
-        markerMap[station.id].openPopup();
+      modalMap.setView([station.lat, station.lng], 12);
+      if (modalMarkerMap[station.id]) {
+        modalMarkerMap[station.id].openPopup();
       }
     }
   }
@@ -1127,6 +1398,309 @@ ion-content {
   .w-full.sm\:w-auto {
     width: auto;
     min-width: 200px;
+  }
+}
+
+/* Map Modal Styles */
+#modal-weather-map {
+  height: 70vh;
+  min-height: 500px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  #modal-weather-map {
+    height: 60vh;
+    min-height: 400px;
+  }
+}
+
+/* Custom popup styles for Leaflet */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.leaflet-popup-content {
+  margin: 8px !important;
+  font-family: inherit !important;
+}
+
+/* Cloud Animation */
+@keyframes cloudFadeIn {
+  0% {
+    transform: translateX(10%);
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateX(calc(100vw + 100%));
+    opacity: 0;
+  }
+}
+
+.cloud-animation {
+  animation: cloudFadeIn 80s linear infinite;
+  animation-delay: 5s;
+}
+
+.cloud-animation-slow {
+  animation: cloudFadeInSlow 90s linear infinite;
+  animation-delay: 15s;
+}
+
+/* Extra Large Clouds */
+.cloud-animation-xl {
+  animation: cloudFadeInXL 100s linear infinite;
+  animation-delay: 0s;
+}
+
+.cloud-animation-xl-slow {
+  animation: cloudFadeInXLSlow 110s linear infinite;
+  animation-delay: 10s;
+}
+
+/* Large Clouds */
+.cloud-animation-large {
+  animation: cloudFadeInLarge 95s linear infinite;
+  animation-delay: 20s;
+}
+
+.cloud-animation-large-reverse {
+  animation: cloudFadeInLargeReverse 105s linear infinite;
+  animation-delay: 5s;
+}
+
+.cloud-animation-medium {
+  animation: cloudFadeInMedium 120s linear infinite;
+  animation-delay: 30s;
+}
+
+.cloud-animation-medium-reverse {
+  animation: cloudFadeInMediumReverse 115s linear infinite;
+  animation-delay: 15s;
+}
+
+.cloud-animation-small {
+  animation: cloudFadeInSmall 130s linear infinite;
+  animation-delay: 40s;
+}
+
+.cloud-animation-small-reverse {
+  animation: cloudFadeInSmallReverse 125s linear infinite;
+  animation-delay: 25s;
+}
+
+.cloud-animation-drift {
+  animation: cloudFadeInDrift 140s linear infinite;
+  animation-delay: 50s;
+}
+
+.cloud-animation-drift-reverse {
+  animation: cloudFadeInDriftReverse 135s linear infinite;
+  animation-delay: 35s;
+}
+
+/* Frequent clouds for density */
+.cloud-animation-frequent1 {
+  animation: cloudFadeInFrequent1 150s linear infinite;
+  animation-delay: 60s;
+}
+
+.cloud-animation-frequent2 {
+  animation: cloudFadeInFrequent2 145s linear infinite;
+  animation-delay: 45s;
+}
+
+/* Additional cloud variations for more natural movement */
+@keyframes cloudFadeInSlow {
+  0% {
+    transform: translateX(20%);
+    opacity: 0.2;
+  }
+  40% {
+    opacity: 0.2;
+  }
+  100% {
+    transform: translateX(calc(100vw + 120%));
+    opacity: 0;
+  }
+}
+
+/* Extra Large Cloud Animations */
+@keyframes cloudFadeInXL {
+  0% {
+    transform: translateX(5%);
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: translateX(calc(100vw + 100%));
+    opacity: 0;
+  }
+}
+
+@keyframes cloudFadeInXLSlow {
+  0% {
+    transform: translateX(15%);
+    opacity: 0.30;
+  }
+  45% {
+    opacity: 0.30;
+  }
+  100% {
+    transform: translateX(calc(100vw + 120%));
+    opacity: 0;
+  }
+}
+
+/* Large Cloud Animations */
+@keyframes cloudFadeInLarge {
+  0% {
+    transform: translateX(25%);
+    opacity: 0.28;
+  }
+  48% {
+    opacity: 0.28;
+  }
+  100% {
+    transform: translateX(calc(100vw + 110%));
+    opacity: 0;
+  }
+}
+
+@keyframes cloudFadeInLargeReverse {
+  0% {
+    transform: translateX(80%);
+    opacity: 0.25;
+  }
+  52% {
+    opacity: 0.25;
+  }
+  100% {
+    transform: translateX(calc(-100vw - 100%));
+    opacity: 0;
+  }
+}
+
+/* Medium cloud animation */
+@keyframes cloudFadeInMedium {
+  0% {
+    transform: translateX(35%);
+    opacity: 0.22;
+  }
+  45% {
+    opacity: 0.22;
+  }
+  100% {
+    transform: translateX(calc(100vw + 130%));
+    opacity: 0;
+  }
+}
+
+@keyframes cloudFadeInMediumReverse {
+  0% {
+    transform: translateX(70%);
+    opacity: 0.20;
+  }
+  50% {
+    opacity: 0.20;
+  }
+  100% {
+    transform: translateX(calc(-100vw - 110%));
+    opacity: 0;
+  }
+}
+
+/* Small cloud animation */
+@keyframes cloudFadeInSmall {
+  0% {
+    transform: translateX(45%);
+    opacity: 0.18;
+  }
+  35% {
+    opacity: 0.18;
+  }
+  100% {
+    transform: translateX(calc(100vw + 140%));
+    opacity: 0;
+  }
+}
+
+@keyframes cloudFadeInSmallReverse {
+  0% {
+    transform: translateX(60%);
+    opacity: 0.16;
+  }
+  40% {
+    opacity: 0.16;
+  }
+  100% {
+    transform: translateX(calc(-100vw - 120%));
+    opacity: 0;
+  }
+}
+
+/* Drift cloud animation */
+@keyframes cloudFadeInDrift {
+  0% {
+    transform: translateX(50%);
+    opacity: 0.14;
+  }
+  30% {
+    opacity: 0.14;
+  }
+  100% {
+    transform: translateX(calc(100vw + 150%));
+    opacity: 0;
+  }
+}
+
+@keyframes cloudFadeInDriftReverse {
+  0% {
+    transform: translateX(65%);
+    opacity: 0.12;
+  }
+  35% {
+    opacity: 0.12;
+  }
+  100% {
+    transform: translateX(calc(-100vw - 130%));
+    opacity: 0;
+  }
+}
+
+/* Frequent cloud animations for density */
+@keyframes cloudFadeInFrequent1 {
+  0% {
+    transform: translateX(30%);
+    opacity: 0.15;
+  }
+  42% {
+    opacity: 0.15;
+  }
+  100% {
+    transform: translateX(calc(100vw + 160%));
+    opacity: 0;
+  }
+}
+
+@keyframes cloudFadeInFrequent2 {
+  0% {
+    transform: translateX(75%);
+    opacity: 0.17;
+  }
+  46% {
+    opacity: 0.17;
+  }
+  100% {
+    transform: translateX(calc(-100vw - 140%));
+    opacity: 0;
   }
 }
 </style>
