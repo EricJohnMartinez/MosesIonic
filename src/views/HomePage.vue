@@ -4,12 +4,7 @@
     <IonRefresher slot="fixed" @ionRefresh="handleRefresh">
       <IonRefresherContent pulling-text="Pull to refresh" refreshing-spinner="lines" />
     </IonRefresher>
-    <div class="relative min-h-screen flex flex-col">
-      <!-- Weather background image -->
-      <div class="fixed inset-0 w-full h-full z-0" :style="bgStyle"></div>
-      <!-- Overlay for readability -->
-      <div class="fixed inset-0 w-full h-full z-10 pointer-events-none" style="background:rgba(0,0,0,0.25);"></div>
-      
+    <div class="relative min-h-screen flex flex-col bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900">
       <div class="relative z-20 flex-1 overflow-y-auto"
            :style="{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }">
 
@@ -70,19 +65,19 @@
 
                     <!-- Quick Stats -->
                     <div class="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 max-w-xs sm:max-w-sm mx-auto lg:mx-0">
-                      <div class="bg-blue-100/60 backdrop-blur-sm rounded-xl p-2 sm:p-3 text-center">
-                        <div class="text-lg sm:text-xl md:text-2xl font-bold text-blue-700">{{ currentStation.data.humidity }}%</div>
-                        <div class="text-xs sm:text-sm text-blue-600">Humidity</div>
+                      <div class="bg-slate-800/80 backdrop-blur-sm rounded-xl p-2 sm:p-3 text-center border border-slate-700/50">
+                        <div class="text-lg sm:text-xl md:text-2xl font-bold text-blue-400">{{ currentStation.data.humidity }}%</div>
+                        <div class="text-xs sm:text-sm text-blue-300">Humidity</div>
                       </div>
-                      <div class="bg-orange-100/60 backdrop-blur-sm rounded-xl p-2 sm:p-3 text-center">
-                        <div class="text-lg sm:text-xl md:text-2xl font-bold text-orange-700">
+                      <div class="bg-slate-800/80 backdrop-blur-sm rounded-xl p-2 sm:p-3 text-center border border-slate-700/50">
+                        <div class="text-lg sm:text-xl md:text-2xl font-bold text-orange-400">
                           {{ currentStation.data.heatIndex }}°</div>
-                        <div class="text-xs sm:text-sm text-orange-600">Heat Index</div>
+                        <div class="text-xs sm:text-sm text-orange-300">Heat Index</div>
                       </div>
                     </div>
                   </div>
                   <!-- Mini Map -->
-                  <div class="w-full sm:w-72 md:w-80 lg:w-80 h-40 sm:h-48 md:h-56 lg:h-64 rounded-2xl overflow-hidden shadow-lg border border-white/20 flex-shrink-0">
+                  <div class="w-full sm:w-72 md:w-80 lg:w-80 h-40 sm:h-48 md:h-56 lg:h-64 rounded-2xl overflow-hidden shadow-lg border border-slate-700/50 flex-shrink-0">
                     <div id="weather-map" class="w-full h-full"></div>
                   </div>
                 </div>
@@ -103,72 +98,11 @@
           </transition>
           <section class="mb-6 md:mb-8">
             <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-white mb-3 sm:mb-4 md:mb-6 mt-4 sm:mt-6 md:mt-10 text-center lg:text-left">Weather Metrics</h2>
-            <div id="metrics-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-4 lg:gap-6 max-w-6xl mx-auto">
+            <div id="metrics-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-4 lg:gap-6 max-w-6xl mx-auto">
               <!-- Temperature & Humidity -->
-              <div data-card-id="Temperature"
-                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-white/20 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
-                <div class="flex items-center justify-between mb-3 md:mb-4">
-                  <h3 class="text-sm font-semibold text-white">Temperature</h3>
-                  <span class="text-xl md:text-2xl">🌡️</span>
-                </div>
-                <div class="space-y-2 md:space-y-3">
-                  <div class="flex justify-between items-center">
-                    <span class="text-white/80 text-xs md:text-sm">Current</span>
-                    <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{ currentStation.data.temperature }}°C</span>
-                  </div>
-                  <div class="flex justify-between items-center">
-                    <span class="text-white/80 text-xs md:text-sm">Feels like</span>
-                    <span class="text-xs md:text-sm font-semibold text-orange-400">{{ currentStation.data.heatIndex }}°C</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Wind -->
-              <div data-card-id="Wind"
-                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-white/20 cursor-pointer select-none card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']"
-                role="button" :aria-expanded="showWindChart" @click="toggleWindChart" @keydown.enter="toggleWindChart"
-                @keydown.space.prevent="toggleWindChart">
-                <div class="flex items-center justify-between mb-3 md:mb-4">
-                  <h3 class="text-sm font-semibold text-white">Wind</h3>
-                  <WindCompass :windDirection="currentStation.data.windAngle || 0"
-                    :windSpeed="currentStation.data.windSpeed || 0" />
-                </div>
-                <div class="space-y-2 md:space-y-3">
-                  <div class="flex justify-between items-center">
-                    <span class="text-white/80 text-xs md:text-sm">Speed</span>
-                    <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{ currentStation.data.windSpeed }} m/s</span>
-                  </div>
-                  <div class="flex justify-between items-center">
-                    <span class="text-white/80 text-xs md:text-sm">Direction</span>
-                    <span class="text-xs md:text-sm font-semibold text-blue-400">{{ currentStation.data.windDirection }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Precipitation -->
-              <div data-card-id="Precipitation"
-                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-white/20 cursor-pointer select-none card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']"
-                role="button" :aria-expanded="showRainfallChart" @click="toggleRainfallChart"
-                @keydown.enter="toggleRainfallChart" @keydown.space.prevent="toggleRainfallChart">
-                <div class="flex items-center justify-between mb-3 md:mb-4">
-                  <h3 class="text-sm font-semibold text-white">Precipitation</h3>
-                  <span class="text-xl md:text-2xl">🌧️</span>
-                </div>
-                <div class="space-y-2 md:space-y-3">
-                  <div class="flex justify-between items-center">
-                    <span class="text-white/80 text-xs md:text-sm">Rainfall</span>
-                    <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{ currentStation.data.rainfall }} mm</span>
-                  </div>
-                  <div class="flex justify-between items-center">
-                    <span class="text-white/80 text-xs md:text-sm">Humidity</span>
-                    <span class="text-xs md:text-sm font-semibold text-blue-400">{{ currentStation.data.humidity }}%</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Enhanced Rainfall Card -->
+                   <!-- Enhanced Rainfall Card -->
               <div data-card-id="RainfallIntensity"
-                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-white/20 card-hover card-transition touch-manipulation col-span-1 sm:col-span-2 md:col-span-3', heroHidden ? 'card-dark' : '']">
+                :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation col-span-2 sm:col-span-2 md:col-span-3', heroHidden ? 'card-dark' : '']">
                 <div class="flex items-center justify-between mb-3 md:mb-4">
                   <h3 class="text-sm font-semibold text-white">Rainfall Intensity & Warnings</h3>
                   <img src="/images/rainfall.png" class="w-8 h-8 md:w-10 md:h-10 object-contain" alt="Rainfall" />
@@ -190,11 +124,11 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                       <div>
                         <p class="text-xs md:text-sm text-white/80">Daily Total</p>
-                        <h1 class="text-lg md:text-xl font-bold text-white">{{ todayTotalRain.toFixed(2) }} mm</h1>
+                        <h1 class="text-xl md:text-lg font-bold text-white">{{ todayTotalRain.toFixed(2) }} mm</h1>
                       </div>
                       <div>
                         <p class="text-xs md:text-sm text-white/80">Category</p>
-                        <h1 class="text-xs md:text-sm text-white font-semibold">{{ getRainfallCategory() }}</h1>
+                        <h1 class="text-xl md:text-lg text-white font-semibold">{{ getRainfallCategory() }}</h1>
                       </div>
                     </div>
                     
@@ -239,10 +173,72 @@
                   </div>
                 </div>
               </div>
+              <div data-card-id="Temperature"
+                :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
+                <div class="flex items-center justify-between mb-3 md:mb-4">
+                  <h3 class="text-sm font-semibold text-white">Temperature</h3>
+                  <span class="text-xl md:text-2xl">🌡️</span>
+                </div>
+                <div class="space-y-2 md:space-y-3">
+                  <div class="flex justify-between items-center">
+                    <span class="text-white/80 text-xs md:text-sm">Current</span>
+                    <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{ currentStation.data.temperature }}°C</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-white/80 text-xs md:text-sm">Feels like</span>
+                    <span class="text-xs md:text-sm font-semibold text-orange-400">{{ currentStation.data.heatIndex }}°C</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Wind -->
+              <div data-card-id="Wind"
+                :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 cursor-pointer select-none card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']"
+                role="button" :aria-expanded="showWindChart" @click="toggleWindChart" @keydown.enter="toggleWindChart"
+                @keydown.space.prevent="toggleWindChart">
+                <div class="flex items-center justify-between mb-3 md:mb-4">
+                  <h3 class="text-sm font-semibold text-white">Wind</h3>
+                  <WindCompass :windDirection="currentStation.data.windAngle || 0"
+                    :windSpeed="currentStation.data.windSpeed || 0" />
+                </div>
+                <div class="space-y-2 md:space-y-3">
+                  <div class="flex justify-between items-center">
+                    <span class="text-white/80 text-xs md:text-sm">Speed</span>
+                    <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{ currentStation.data.windSpeed }} m/s</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-white/80 text-xs md:text-sm">Direction</span>
+                    <span class="text-xs md:text-sm font-semibold text-blue-400">{{ currentStation.data.windDirection }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Precipitation -->
+              <div data-card-id="Precipitation"
+                :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 cursor-pointer select-none card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']"
+                role="button" :aria-expanded="showRainfallChart" @click="toggleRainfallChart"
+                @keydown.enter="toggleRainfallChart" @keydown.space.prevent="toggleRainfallChart">
+                <div class="flex items-center justify-between mb-3 md:mb-4">
+                  <h3 class="text-sm font-semibold text-white">Precipitation</h3>
+                  <span class="text-xl md:text-2xl">🌧️</span>
+                </div>
+                <div class="space-y-2 md:space-y-3">
+                  <div class="flex justify-between items-center">
+                    <span class="text-white/80 text-xs md:text-sm">Rainfall</span>
+                    <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{ currentStation.data.rainfall }} mm</span>
+                  </div>
+                  <div class="flex justify-between items-center">
+                    <span class="text-white/80 text-xs md:text-sm">Humidity</span>
+                    <span class="text-xs md:text-sm font-semibold text-blue-400">{{ currentStation.data.humidity }}%</span>
+                  </div>
+                </div>
+              </div>
+
+          
 
               <!-- Atmospheric -->
               <div data-card-id="Atmospheric"
-                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-white/20 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
+                :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
                 <div class="flex items-center justify-between mb-3 md:mb-4">
                   <h3 class="text-sm font-semibold text-white">Atmospheric</h3>
                   <span class="text-xl md:text-2xl">🧪</span>
@@ -260,14 +256,14 @@
               </div>
               <!-- Soil Moisture -->
               <div data-card-id="SoilMoisture"
-                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-white/20 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
+                :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
                 <div class="flex items-center justify-between mb-3 md:mb-4">
                   <h3 class="text-sm font-semibold text-white">Soil Moisture</h3>
                   <span class="text-xl md:text-2xl">🌱</span>
                 </div>
                 <div class="text-center">
                   <div class="text-lg md:text-xl lg:text-2xl font-bold text-green-400 mb-2">{{ currentStation.data.soilMoisture }}%</div>
-                  <div class="w-full bg-white/20 rounded-full h-2 md:h-3">
+                  <div class="w-full bg-slate-700/50 rounded-full h-2 md:h-3">
                     <div
                       class="bg-gradient-to-r from-green-400 to-green-600 h-2 md:h-3 rounded-full transition-all duration-500"
                       :style="{ width: currentStation.data.soilMoisture + '%' }"></div>
@@ -276,7 +272,7 @@
               </div>
               <!-- Soil Temperature -->
               <div data-card-id="SoilTemp"
-                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-white/20 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
+                :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
                 <div class="flex items-center justify-between mb-3 md:mb-4">
                   <h3 class="text-sm font-semibold text-white">Soil Temperature</h3>
                   <span class="text-xl md:text-2xl">🌡️</span>
@@ -288,7 +284,7 @@
               </div>
               <!-- Light Intensity -->
               <div data-card-id="LightIntensity"
-                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-white/20 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
+                :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
                 <div class="flex items-center justify-between mb-3 md:mb-4">
                   <h3 class="text-sm font-semibold text-white">Light Intensity</h3>
                   <span class="text-xl md:text-2xl">💡</span>
@@ -321,15 +317,6 @@
         
         <!-- Heat Alert handled by SweetAlert2 component -->
         <HeatAlert ref="heatAlertRef" />
-
-        <!-- Decorative Elements -->
-        <div class="fixed top-0 left-0 w-full h-full pointer-events-none overflow-hidden z-30">
-          <div class="absolute -top-40 -right-40 w-80 h-80 bg-blue-200/20 rounded-full blur-3xl"></div>
-          <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-200/20 rounded-full blur-3xl"></div>
-          <div
-            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-200/20 rounded-full blur-3xl">
-          </div>
-        </div>
       </div>
     </div>
   </IonContent>
@@ -763,36 +750,6 @@ const currentStation = computed(() => {
   };
 });
 
-// Compute background image style based on current weather and time of day
-const bgStyle = computed(() => {
-  const data = currentStation.value?.data;
-  const hour = new Date().getHours();
-  const isNight = hour < 6 || hour >= 18;
-
-  // Safe defaults
-  const temperature = data?.temperature ?? 0;
-  const humidity = data?.humidity ?? 0;
-  const rainfall = data?.rainfall ?? 0;
-  const heatIndex = data?.heatIndex ?? 0;
-
-  let img = '/images/sunny-bg.jpg';
-
-  if (rainfall > 10) img = '/images/rainy-bg.jpg';
-  else if (rainfall > 5) img = '/images/rainy-bg.jpg';
-  else if (heatIndex > 35) img = '/images/sunny-bg.jpg';
-  else if (temperature > 32) img = '/images/sunny-bg.jpg';
-  else if (temperature > 25) img = '/images/cloudy-bg.jpg';
-  else if (humidity > 80) img = '/images/cloudy-bg.jpg';
-  else if (isNight) img = '/images/night-bg.jpg';
-
-  return {
-    backgroundImage: `url(${img})`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat'
-  } as Record<string, string>;
-});
-
 onMounted(async () => {
   if (window.L) {
     try {
@@ -1148,15 +1105,8 @@ ion-content {
   .backdrop-blur-lg,
   .backdrop-blur-md,
   .backdrop-blur-sm {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background: rgba(255, 255, 255, 0.25);
-  }
-  
-  .card-dark .backdrop-blur-lg,
-  .card-dark .backdrop-blur-md,
-  .card-dark .backdrop-blur-sm {
-    background: rgba(8, 10, 15, 0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 }
 
