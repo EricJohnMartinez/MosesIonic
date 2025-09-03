@@ -166,6 +166,80 @@
                 </div>
               </div>
 
+              <!-- Enhanced Rainfall Card -->
+              <div data-card-id="RainfallIntensity"
+                :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-white/20 card-hover card-transition touch-manipulation col-span-1 sm:col-span-2 md:col-span-3', heroHidden ? 'card-dark' : '']">
+                <div class="flex items-center justify-between mb-3 md:mb-4">
+                  <h3 class="text-sm font-semibold text-white">Rainfall Intensity & Warnings</h3>
+                  <img src="/images/rainfall.png" class="w-8 h-8 md:w-10 md:h-10 object-contain" alt="Rainfall" />
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <!-- Rainfall Icon and Current Reading -->
+                  <div class="flex items-center justify-center sm:col-span-1">
+                    <div class="text-center">
+                      <div class="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-1">
+                        {{ currentStation.data.rainfall }}<span class="text-sm md:text-base">mm</span>
+                      </div>
+                      <div class="text-xs md:text-sm text-white/80">Current Intensity</div>
+                    </div>
+                  </div>
+                  
+                  <!-- Rainfall Details -->
+                  <div class="sm:col-span-2 space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+                      <div>
+                        <p class="text-xs md:text-sm text-white/80">Daily Total</p>
+                        <h1 class="text-lg md:text-xl font-bold text-white">{{ todayTotalRain.toFixed(2) }} mm</h1>
+                      </div>
+                      <div>
+                        <p class="text-xs md:text-sm text-white/80">Category</p>
+                        <h1 class="text-xs md:text-sm text-white font-semibold">{{ getRainfallCategory() }}</h1>
+                      </div>
+                    </div>
+                    
+                    <!-- Rainfall Warning Levels -->
+                    <div class="space-y-2">
+                      <p class="text-xs text-white/80">Warning Levels</p>
+                      <div class="flex gap-1">
+                        <!-- Yellow Warning -->
+                        <div 
+                          :class="todayTotalRain >= 50.0 && todayTotalRain <= 100.0 ? 'w-full bg-yellow-500 transition-all duration-300' : 'bg-gray-600/50 w-8'"
+                          class="h-4 flex items-center justify-center rounded-l-lg rounded-r-sm relative">
+                          <p 
+                            :class="todayTotalRain >= 50.0 && todayTotalRain <= 100.0 ? 'text-white text-[10px] md:text-xs opacity-100' : 'hidden'"
+                            class="absolute inset-0 flex items-center justify-center font-bold">
+                            YELLOW (50-100mm)
+                          </p>
+                        </div>
+                        
+                        <!-- Orange Warning -->
+                        <div 
+                          :class="todayTotalRain >= 101.0 && todayTotalRain <= 200.0 ? 'w-full bg-orange-600 transition-all duration-300' : 'bg-gray-600/50 w-8'"
+                          class="h-4 flex items-center justify-center rounded-sm relative">
+                          <p 
+                            :class="todayTotalRain >= 101.0 && todayTotalRain <= 200.0 ? 'text-white text-[10px] md:text-xs opacity-100' : 'hidden'"
+                            class="absolute inset-0 flex items-center justify-center font-bold">
+                            ORANGE (101-200mm)
+                          </p>
+                        </div>
+                        
+                        <!-- Red Warning -->
+                        <div 
+                          :class="todayTotalRain >= 201.0 ? 'w-full bg-red-700 transition-all duration-300' : 'bg-gray-600/50 w-8'"
+                          class="h-4 flex items-center justify-center rounded-r-lg rounded-l-sm relative">
+                          <p 
+                            :class="todayTotalRain >= 201.0 ? 'text-white text-[10px] md:text-xs opacity-100' : 'hidden'"
+                            class="absolute inset-0 flex items-center justify-center font-bold">
+                            RED (201mm+)
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Atmospheric -->
               <div data-card-id="Atmospheric"
                 :class="['bg-white/20 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-white/20 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
@@ -270,7 +344,7 @@ import Sortable from 'sortablejs';
 import { IonContent, IonRefresher, IonRefresherContent } from '@ionic/vue';
 import WindCompass from '../components/WindCompass.vue';
 import { db } from '../firebase';
-import { ref as dbRef, query, orderByKey, limitToLast, onChildAdded } from 'firebase/database';
+import { ref as dbRef, query, orderByKey, limitToLast, onChildAdded, onValue, startAt } from 'firebase/database';
 
 // @ts-ignore
 declare global { interface Window { L: any } }
@@ -449,7 +523,10 @@ function fetchLatestSensors(stationId: string) {
       // Type-safe assignment
       if (sensor.key === 'TEM') sensorValues.value.TEM = finalValue;
       else if (sensor.key === 'HUM') sensorValues.value.HUM = finalValue;
-      else if (sensor.key === 'RR') sensorValues.value.RR = finalValue;
+      else if (sensor.key === 'RR') {
+        sensorValues.value.RR = finalValue;
+        console.log('Rainfall data received:', finalValue);
+      }
       else if (sensor.key === 'WSP') sensorValues.value.WSP = finalValue;
       else if (sensor.key === 'WD') sensorValues.value.WD = finalValue;
       else if (sensor.key === 'SMD') sensorValues.value.SMD = finalValue;
@@ -466,6 +543,7 @@ function fetchLatestSensors(stationId: string) {
 
 onMounted(() => {
   fetchLatestSensors(selectedStation.value);
+  fetchTodayRainfallTotal(selectedStation.value);
 });
 
 onUnmounted(() => {
@@ -487,6 +565,7 @@ watch(selectedStation, (newStation) => {
   sensorValues.value.ATM = 0;
 
   fetchLatestSensors(newStation);
+  fetchTodayRainfallTotal(newStation);
   // fetching latest sensors for station
   // current sensor values updated
 });
@@ -497,6 +576,7 @@ const handleRefresh = async (event: any) => {
   try {
     // Refresh latest sensor values for the currently selected station
     fetchLatestSensors(selectedStation.value);
+    fetchTodayRainfallTotal(selectedStation.value);
 
     // Refresh child chart if available
     try {
@@ -528,6 +608,88 @@ const handleRefresh = async (event: any) => {
 
 // Template ref for the wind chart component
 const windChartRef = ref(null);
+
+// Rainfall calculations and warnings
+const dailyRainfallTotal = ref(0);
+
+// Function to fetch and calculate today's total rainfall
+async function fetchTodayRainfallTotal(stationId: string) {
+  try {
+    // Reset the daily total
+    dailyRainfallTotal.value = 0;
+    
+    // Calculate start of today with timezone adjustment (like your working code)
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    // Add 8 hours timezone offset (matching your working code's addHours(startOfDay(new Date()), 8))
+    startOfToday.setHours(8, 0, 0, 0);
+    const startTime = Math.floor(startOfToday.getTime() / 1000); // Convert to Unix timestamp in seconds
+    
+    console.log('Fetching today\'s rainfall data from timestamp:', startTime, new Date(startTime * 1000).toISOString());
+    console.log('Station path:', `station${stationId}/data/sensors/RR/`);
+    
+    // Query Firebase for today's rainfall data (matching your working code structure exactly)
+    const collectionRef = dbRef(db, `station${stationId}/data/sensors/RR/`);
+    const q = query(collectionRef, orderByKey(), startAt(startTime.toString()));
+    
+    let accumulatedTotal = 0;
+    let readingCount = 0;
+    
+    // Use onChildAdded to accumulate all rainfall readings for today (same as working code)
+    const unsubscribe = onChildAdded(q, (snapshot) => {
+      const newData = snapshot.val();
+      
+      // Handle the data structure like your working code
+      let rainfall = 0;
+      if (newData && typeof newData === 'object' && newData.val !== undefined) {
+        rainfall = parseFloat(newData.val);
+      } else if (typeof newData === 'number') {
+        rainfall = newData;
+      } else if (typeof newData === 'string') {
+        rainfall = parseFloat(newData);
+      }
+      
+      // Only add valid rainfall values (same validation as working code)
+      if (!isNaN(rainfall) && rainfall >= 0) {
+        accumulatedTotal += rainfall;
+        readingCount++;
+        
+        // Update the daily total
+        dailyRainfallTotal.value = accumulatedTotal;
+        
+        const timestamp = snapshot.key;
+        if (timestamp) {
+          const readingTime = new Date(parseInt(timestamp) * 1000);
+          console.log(`Rainfall reading #${readingCount} at ${readingTime.toLocaleString()}: ${rainfall}mm. Running total: ${accumulatedTotal.toFixed(2)}mm`);
+        } else {
+          console.log(`Rainfall reading #${readingCount}: ${rainfall}mm. Running total: ${accumulatedTotal.toFixed(2)}mm`);
+        }
+      }
+    });
+    
+    // Log completion after a short delay to see the final result
+    setTimeout(() => {
+      console.log(`Daily rainfall calculation complete: ${readingCount} readings, total: ${dailyRainfallTotal.value.toFixed(2)}mm`);
+    }, 2000);
+    
+  } catch (error) {
+    console.error('Error fetching daily rainfall total:', error);
+    dailyRainfallTotal.value = 0;
+  }
+}
+
+const todayTotalRain = computed(() => {
+  // Use the fetched daily total instead of current rainfall intensity
+  return dailyRainfallTotal.value;
+});
+
+function getRainfallCategory(): string {
+  const total = todayTotalRain.value;
+  if (total >= 201) return 'RED Warning - Heavy to Intense';
+  if (total >= 101) return 'ORANGE Warning - Moderate to Heavy'; 
+  if (total >= 50) return 'YELLOW Warning - Light to Moderate';
+  return 'Normal';
+}
 
 // SortableJS: robust drag + touch support for card reordering
 let sortableInstance: any = null;
