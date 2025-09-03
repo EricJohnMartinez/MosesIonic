@@ -108,6 +108,14 @@
                    class="cloud-animation-frequent2 absolute top-[40%] right-0 w-48 sm:w-64 md:w-80 lg:w-96 xl:w-[32rem] opacity-17 pointer-events-none"
                    style="transform: translateX(140%); animation-delay: 45s;" />
             </div>
+
+            <!-- Rain Canvas Animation - Only for Rainy Weather -->
+            <canvas 
+              v-if="isRainingWeather()" 
+              ref="rainCanvas" 
+              class="absolute inset-0 pointer-events-none z-5"
+              :style="{ width: '100%', height: '100%' }">
+            </canvas>
             
             <section class="w-full relative z-10">
               <div class="w-full max-w-5xl mx-auto rounded-3xl p-3 sm:p-4 md:p-6 lg:p-8">
@@ -151,8 +159,8 @@
                     <button @click="openMapModal" 
                       class="w-full h-full flex flex-col items-center justify-center gap-3 hover:bg-slate-700/50 transition-all duration-300 text-white">
                       <div class="text-4xl">🗺️</div>
-                      <div class="text-lg font-semibold">Open Map</div>
-                      <div class="text-sm text-gray-300">View all stations</div>
+                      <div class="text-lg font-semibold">View All Stations</div>
+                      <div class="text-sm text-gray-300">Open Map</div>
                     </button>
                   </div>
                 </div>
@@ -381,7 +389,7 @@
               <span>View 7-Day Summary</span>
             </router-link>
 
-            <button v-if="currentStation.data.heatIndex > 35" @click="openHeatAlert"
+            <button v-if="currentStation && currentStation.data.heatIndex > 35" @click="openHeatAlert"
               class="w-full sm:w-auto bg-gradient-to-r from-red-500 to-red-600 text-white px-6 sm:px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 animate-pulse touch-manipulation min-h-[44px]">
               <span>🚨</span>
               <span>Heat Alert Active</span>
@@ -440,6 +448,8 @@ const heatAlertRef = ref<any>(null);
 // Map modal state
 const isMapModalOpen = ref(false);
 const mapModal = ref<any>(null);
+// Rain canvas ref
+const rainCanvas = ref<HTMLCanvasElement | null>(null);
 // Show/hide wind chart when clicking the Wind card
 const showWindChart = ref(false);
 
@@ -669,7 +679,7 @@ const sensorValues = ref({
 
 
 function getWeatherIcon(): string {
-  if (!currentStation.value) return '⛅';
+  if (!currentStation.value || !currentStation.value.data) return '⛅';
 
   const weatherCondition = determineWeatherCondition(currentStation.value.data);
   
@@ -685,7 +695,7 @@ function getWeatherIcon(): string {
 }
 
 function getWeatherDescription(): string {
-  if (!currentStation.value) return 'Loading weather data...';
+  if (!currentStation.value || !currentStation.value.data) return 'Loading weather data...';
 
   const weatherCondition = determineWeatherCondition(currentStation.value.data);
   return weatherCondition.wType;
@@ -693,7 +703,18 @@ function getWeatherDescription(): string {
 
 function determineWeatherCondition(weather: any) {
   const rr = parseFloat(weather['rainfall'] || weather['RR']) || 0;
-  const lux = parseFloat(weather['lux'] || weather['LUX']) || 0;
+  // Check all possible LUX field names from your data structure
+  const lux = parseFloat(weather['illumination'] || weather['LUX'] || weather['lux']) || 0;
+
+  // Debug logging
+  console.log('Weather condition debug:', {
+    weather: weather,
+    rr: rr,
+    lux: lux,
+    rawIllumination: weather['illumination'],
+    rawLux: weather['LUX'],
+    allKeys: Object.keys(weather)
+  });
 
   const intenseRainIcon = '/images/torrential-rain.png';
   const heavyRainIcon = '/images/heavy-intense-rain.png';
@@ -719,13 +740,13 @@ function determineWeatherCondition(weather: any) {
   } else if (rr > 0 && rr <= 50) {
     wType = 'Light Rain';
     condition = lightRainIcon;
-  } else if (rr === 0 && lux <= 2000) {
+  } else if (rr === 0 && lux <= 10000) {
     wType = 'Cloudy';
     condition = cloudyIcon;
-  } else if (rr === 0 && lux > 2000 && lux <= 3000) {
+  } else if (rr === 0 && lux > 10000 && lux <= 30000) {
     wType = 'Partly Cloudy';
     condition = partlyCloudyIcon;
-  } else if (rr === 0 && lux > 3000) {
+  } else if (rr === 0 && lux > 30000) {
     wType = 'Sunny';
     condition = sunnyIcon;
   } else {
@@ -734,13 +755,30 @@ function determineWeatherCondition(weather: any) {
     condition = cloudyIcon;
   }
   
+  console.log('Weather condition result:', { wType, condition, rr, lux });
   return { condition, wType };
 }
 
 function isCloudyWeather(): boolean {
-  if (!currentStation.value) return false;
+  if (!currentStation.value || !currentStation.value.data) return false;
   const weatherCondition = determineWeatherCondition(currentStation.value.data);
   return weatherCondition.wType.includes('Cloudy');
+}
+
+function isRainingWeather(): boolean {
+  if (!currentStation.value || !currentStation.value.data) return false;
+  const weatherCondition = determineWeatherCondition(currentStation.value.data);
+  return weatherCondition.wType.includes('Rain');
+}
+
+function getRainIntensity(): string {
+  if (!currentStation.value || !currentStation.value.data) return 'none';
+  const weatherCondition = determineWeatherCondition(currentStation.value.data);
+  if (weatherCondition.wType.includes('Intense')) return 'intense';
+  if (weatherCondition.wType.includes('Heavy')) return 'heavy';
+  if (weatherCondition.wType.includes('Moderate')) return 'moderate';
+  if (weatherCondition.wType.includes('Light')) return 'light';
+  return 'none';
 }
 
 // Helper to compute heat index (Celsius)
@@ -765,11 +803,226 @@ function calculateHeatIndex(T: number, RH: number): number {
   return result;
 }
 
+// Store Firebase listeners for cleanup
+const firebaseListeners = ref<(() => void)[]>([]);
+
+// Rain Particle System
+interface RainDrop {
+  x: number;
+  y: number;
+  length: number;
+  speed: number;
+  opacity: number;
+  width: number;
+}
+
+class RainParticleSystem {
+  private canvas: HTMLCanvasElement;
+  private ctx: CanvasRenderingContext2D;
+  private drops: RainDrop[] = [];
+  private animationId: number | null = null;
+  private intensity: string = 'none';
+  private windEffect: number = 0;
+
+  constructor(canvas: HTMLCanvasElement) {
+    this.canvas = canvas;
+    this.ctx = canvas.getContext('2d')!;
+    this.resizeCanvas();
+    this.setupEventListeners();
+  }
+
+  private resizeCanvas() {
+    const rect = this.canvas.getBoundingClientRect();
+    this.canvas.width = rect.width * window.devicePixelRatio;
+    this.canvas.height = rect.height * window.devicePixelRatio;
+    this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    this.canvas.style.width = rect.width + 'px';
+    this.canvas.style.height = rect.height + 'px';
+  }
+
+  private setupEventListeners() {
+    window.addEventListener('resize', () => this.resizeCanvas());
+  }
+
+  private getDropCount(): number {
+    const area = this.canvas.width * this.canvas.height;
+    const baseCount = area / 50000; // Base density
+    
+    switch(this.intensity) {
+      case 'light': return Math.floor(baseCount * 0.3);
+      case 'moderate': return Math.floor(baseCount * 0.6);
+      case 'heavy': return Math.floor(baseCount * 1.0);
+      case 'intense': return Math.floor(baseCount * 1.5);
+      default: return 0;
+    }
+  }
+
+  private createDrop(): RainDrop {
+    const canvas = this.canvas;
+    let speed, length, width, opacity;
+
+    switch(this.intensity) {
+      case 'light':
+        speed = 2 + Math.random() * 3;
+        length = 10 + Math.random() * 10;
+        width = 0.5 + Math.random() * 0.5;
+        opacity = 0.3 + Math.random() * 0.3;
+        break;
+      case 'moderate':
+        speed = 4 + Math.random() * 4;
+        length = 15 + Math.random() * 15;
+        width = 0.8 + Math.random() * 0.7;
+        opacity = 0.4 + Math.random() * 0.4;
+        break;
+      case 'heavy':
+        speed = 6 + Math.random() * 6;
+        length = 20 + Math.random() * 20;
+        width = 1 + Math.random() * 1;
+        opacity = 0.5 + Math.random() * 0.4;
+        break;
+      case 'intense':
+        speed = 8 + Math.random() * 8;
+        length = 25 + Math.random() * 25;
+        width = 1.2 + Math.random() * 1.3;
+        opacity = 0.6 + Math.random() * 0.4;
+        break;
+      default:
+        speed = 0; length = 0; width = 0; opacity = 0;
+    }
+
+    return {
+      x: Math.random() * (canvas.width + 100) - 50,
+      y: -length,
+      length,
+      speed,
+      opacity,
+      width
+    };
+  }
+
+  private updateDrop(drop: RainDrop) {
+    drop.y += drop.speed;
+    drop.x += this.windEffect;
+    
+    // Reset drop when it goes off screen
+    if (drop.y > this.canvas.height + drop.length) {
+      Object.assign(drop, this.createDrop());
+    }
+    
+    // Handle horizontal wrapping for wind effect
+    if (drop.x > this.canvas.width + 50) {
+      drop.x = -50;
+    } else if (drop.x < -50) {
+      drop.x = this.canvas.width + 50;
+    }
+  }
+
+  private drawDrop(drop: RainDrop) {
+    this.ctx.save();
+    this.ctx.globalAlpha = drop.opacity;
+    this.ctx.strokeStyle = `rgba(200, 220, 255, ${drop.opacity})`;
+    this.ctx.lineWidth = drop.width;
+    this.ctx.lineCap = 'round';
+    
+    this.ctx.beginPath();
+    this.ctx.moveTo(drop.x, drop.y);
+    this.ctx.lineTo(drop.x - this.windEffect * 0.5, drop.y + drop.length);
+    this.ctx.stroke();
+    this.ctx.restore();
+  }
+
+  private animate = () => {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    // Update wind effect based on intensity
+    this.windEffect = this.intensity === 'intense' ? Math.sin(Date.now() * 0.001) * 2 : 0;
+    
+    // Update and draw drops
+    this.drops.forEach(drop => {
+      this.updateDrop(drop);
+      this.drawDrop(drop);
+    });
+    
+    this.animationId = requestAnimationFrame(this.animate);
+  };
+
+  public start(intensity: string) {
+    this.intensity = intensity;
+    
+    // Create drops based on intensity
+    const dropCount = this.getDropCount();
+    this.drops = [];
+    for (let i = 0; i < dropCount; i++) {
+      this.drops.push(this.createDrop());
+    }
+    
+    // Start animation
+    if (this.animationId) {
+      cancelAnimationFrame(this.animationId);
+    }
+    this.animate();
+  }
+
+  public stop() {
+    if (this.animationId) {
+      cancelAnimationFrame(this.animationId);
+      this.animationId = null;
+    }
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.drops = [];
+  }
+
+  public updateIntensity(newIntensity: string) {
+    if (newIntensity !== this.intensity) {
+      this.intensity = newIntensity;
+      if (newIntensity === 'none') {
+        this.stop();
+      } else {
+        this.start(newIntensity);
+      }
+    }
+  }
+
+  public destroy() {
+    this.stop();
+    window.removeEventListener('resize', () => this.resizeCanvas());
+  }
+}
+
+// Rain system instance
+let rainSystem: RainParticleSystem | null = null;
+
+function initializeRainSystem() {
+  if (rainCanvas.value) {
+    rainSystem = new RainParticleSystem(rainCanvas.value);
+    updateRainSystem();
+  }
+}
+
+function updateRainSystem() {
+  if (rainSystem) {
+    const intensity = getRainIntensity();
+    rainSystem.updateIntensity(intensity);
+  }
+}
+
 function fetchLatestSensors(stationId: string) {
+  // Clean up previous listeners first
+  firebaseListeners.value.forEach(unsubscribe => {
+    try {
+      unsubscribe();
+    } catch (error) {
+      console.warn('Error unsubscribing from Firebase listener:', error);
+    }
+  });
+  firebaseListeners.value = [];
+
   sensorTypes.forEach(sensor => {
     const sensorRef = dbRef(db, `${stationId}/data/sensors/${sensor.key}`);
     const q = query(sensorRef, orderByKey(), limitToLast(1));
-    onChildAdded(q, (snapshot) => {
+    
+    // Store the unsubscribe function
+    const unsubscribe = onChildAdded(q, (snapshot) => {
       const val = snapshot.val();
       let finalValue: any = val?.val ?? val ?? 0;
 
@@ -783,28 +1036,45 @@ function fetchLatestSensors(stationId: string) {
       else if (sensor.key === 'HUM') sensorValues.value.HUM = finalValue;
       else if (sensor.key === 'RR') {
         sensorValues.value.RR = finalValue;
-        console.log('Rainfall data received:', finalValue);
+        console.log('Rainfall data received for', stationId, ':', finalValue);
       }
       else if (sensor.key === 'WSP') sensorValues.value.WSP = finalValue;
       else if (sensor.key === 'WD') sensorValues.value.WD = finalValue;
       else if (sensor.key === 'SMD') sensorValues.value.SMD = finalValue;
       else if (sensor.key === 'STD') sensorValues.value.STD = finalValue;
-      else if (sensor.key === 'LUX') sensorValues.value.LUX = finalValue;
+      else if (sensor.key === 'LUX') {
+        sensorValues.value.LUX = finalValue;
+        console.log('LUX data received for', stationId, ':', finalValue);
+      }
       else if (sensor.key === 'TSR') sensorValues.value.TSR = finalValue;
       else if (sensor.key === 'WA') sensorValues.value.WA = finalValue;
       else if (sensor.key === 'ATM') sensorValues.value.ATM = finalValue;
 
       // sensor value updated for key
     });
+
+    // Store the unsubscribe function for cleanup
+    firebaseListeners.value.push(unsubscribe);
   });
 }
 
-onMounted(() => {
-  fetchLatestSensors(selectedStation.value);
-  fetchTodayRainfallTotal(selectedStation.value);
-});
-
 onUnmounted(() => {
+  // Clean up rain system
+  if (rainSystem) {
+    rainSystem.destroy();
+    rainSystem = null;
+  }
+
+  // Clean up Firebase listeners
+  firebaseListeners.value.forEach(unsubscribe => {
+    try {
+      unsubscribe();
+    } catch (error) {
+      console.warn('Error unsubscribing from Firebase listener on unmount:', error);
+    }
+  });
+  firebaseListeners.value = [];
+
   // Clean up maps when component unmounts
   if (modalMap) {
     try {
@@ -837,6 +1107,11 @@ watch(selectedStation, (newStation) => {
 
   fetchLatestSensors(newStation);
   fetchTodayRainfallTotal(newStation);
+  
+  // Update rain system when station changes
+  setTimeout(() => {
+    updateRainSystem();
+  }, 500);
   // fetching latest sensors for station
   // current sensor values updated
 });
@@ -1049,7 +1324,21 @@ const currentStation = computed(() => {
   };
 });
 
+// Watch for weather condition changes to update rain
+watch(() => {
+  if (currentStation.value) {
+    return getRainIntensity();
+  }
+  return 'none';
+}, (newIntensity) => {
+  updateRainSystem();
+}, { immediate: false });
+
 onMounted(async () => {
+  // Fetch initial data first
+  fetchLatestSensors(selectedStation.value);
+  fetchTodayRainfallTotal(selectedStation.value);
+
   if (window.L) {
     try {
       // Dynamically import ExtraMarkers JS
@@ -1058,6 +1347,11 @@ onMounted(async () => {
       // ExtraMarkers not available, using default markers
     }
   }
+
+  // Initialize rain system when component mounts
+  setTimeout(() => {
+    initializeRainSystem();
+  }, 100);
 
   // Initialize SortableJS on the metrics grid for drag/reorder with persistence
   try {
