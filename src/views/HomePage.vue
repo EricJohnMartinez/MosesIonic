@@ -521,12 +521,21 @@ function closeMapModal() {
   }
 }
 
-// Function to get weather icon based on temperature for station popups
-function getStationWeatherIcon(temperature: number): string {
-  if (temperature > 32) return '☀️';
-  if (temperature > 25) return '🌤️';
-  if (temperature > 20) return '⛅';
-  return '🌫️';  
+// Function to get weather icon based on weather conditions for station popups
+function getStationWeatherIcon(stationData: any): string {
+  if (!stationData) return '⛅';
+  
+  const weatherCondition = determineWeatherCondition(stationData);
+  
+  // Return emoji based on weather condition (same logic as main weather icon)
+  if (weatherCondition.wType.includes('Intense') || weatherCondition.wType.includes('Torrential')) return '🌊';
+  if (weatherCondition.wType.includes('Heavy')) return '🌧️';
+  if (weatherCondition.wType.includes('Moderate')) return '🌦️';
+  if (weatherCondition.wType.includes('Light Rain')) return '�️';
+  if (weatherCondition.wType.includes('Cloudy')) return '☁️';
+  if (weatherCondition.wType.includes('Partly Cloudy')) return '⛅';
+  if (weatherCondition.wType.includes('Sunny')) return '☀️';
+  return '⛅';
 }
 
 // Initialize the modal map
@@ -571,14 +580,14 @@ function initializeModalMap() {
       // Get current station data for popup
       const stationData = station.id === selectedStation.value ? currentStation.value?.data : null;
       const temperature = stationData?.temperature || 0;
-      const weatherIcon = getStationWeatherIcon(temperature);
+      const weatherIcon = getStationWeatherIcon(stationData);
 
       const popupContent = `
-        <div class="flex flex-col items-center p-2 min-w-[150px]">
-          <div class="text-2xl mb-2">${weatherIcon}</div>
-          <div class="font-semibold text-lg text-center">${station.name}</div>
+        <div class="flex flex-col items-center p-2 min-w-[100px]">
+          <div class="text-5xl mb-2">${weatherIcon}</div>
+          <div class="font-semibold text-lg text-center -mt-2">${station.name}</div>
           <div class="text-xl font-bold text-blue-600">${temperature}°C</div>
-          <div class="text-sm text-gray-600 mt-1">Current Temperature</div>
+         
         </div>
       `;
 
@@ -591,14 +600,13 @@ function initializeModalMap() {
         setTimeout(() => {
           const updatedData = currentStation.value?.data;
           const updatedTemp = updatedData?.temperature || 0;
-          const updatedIcon = getStationWeatherIcon(updatedTemp);
+          const updatedIcon = getStationWeatherIcon(updatedData);
           
           const updatedPopupContent = `
-            <div class="flex flex-col items-center p-2 min-w-[150px]">
-              <div class="text-2xl mb-2">${updatedIcon}</div>
-              <div class="font-semibold text-lg text-center">${station.name}</div>
+            <div class="flex flex-col items-center p-2 min-w-[100px]">
+              <div class="text-5xl mb-2">${updatedIcon}</div>
+              <div class="font-semibold text-lg text-center -mt-2">${station.name}</div>
               <div class="text-xl font-bold text-blue-600">${updatedTemp}°C</div>
-              <div class="text-sm text-gray-600 mt-1">Current Temperature</div>
             </div>
           `;
           marker.setPopupContent(updatedPopupContent);
@@ -1141,14 +1149,13 @@ const handleRefresh = async (event: any) => {
         // Update popup with latest data
         const updatedData = currentStation.value.data;
         const updatedTemp = updatedData?.temperature || 0;
-        const updatedIcon = getStationWeatherIcon(updatedTemp);
+        const updatedIcon = getStationWeatherIcon(updatedData);
         
         const updatedPopupContent = `
           <div class="flex flex-col items-center p-2 min-w-[150px]">
-            <div class="text-2xl mb-2">${updatedIcon}</div>
-            <div class="font-semibold text-lg text-center">${st.name}</div>
+            <div class="text-5xl mb-2">${updatedIcon}</div>
+            <div class="font-semibold text-lg text-center -mt-2">${st.name}</div>
             <div class="text-xl font-bold text-blue-600">${updatedTemp}°C</div>
-            <div class="text-sm text-gray-600 mt-1">Current Temperature</div>
           </div>
         `;
         modalMarkerMap[st.id].setPopupContent(updatedPopupContent);
