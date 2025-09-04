@@ -179,6 +179,16 @@
               <RainfallChart ref="rainfallChartRef" :stationId="currentStation.id" />
             </div>
           </transition>
+          <transition name="fade">
+            <div v-if="showTemperatureTable" class="mt-6">
+              <TemperatureTable ref="temperatureTableRef" :stationId="currentStation.id" :currentTemperature="currentStation.data.temperature" />
+            </div>
+          </transition>
+          
+          <!-- Temporary Debug Component -->
+          <!-- <div class="mt-6">
+            <FirebaseDebug :stationId="selectedStation" />
+          </div> -->
           <section class="mb-6 md:mb-8">
             <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-white mb-3 sm:mb-4 md:mb-6 mt-4 sm:mt-6 md:mt-10 text-center lg:text-left">Weather Metrics</h2>
             <div id="metrics-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-4 lg:gap-6 max-w-6xl mx-auto">
@@ -257,7 +267,9 @@
                 </div>
               </div>
               <div data-card-id="Temperature"
-                :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
+                :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 cursor-pointer select-none card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']"
+                role="button" :aria-expanded="showTemperatureTable" @click="toggleTemperatureTable" @keydown.enter="toggleTemperatureTable"
+                @keydown.space.prevent="toggleTemperatureTable">
                 <div class="flex items-center justify-between mb-3 md:mb-4">
                   <h3 class="text-sm font-semibold text-white">Temperature</h3>
                   <span class="text-xl md:text-2xl">🌡️</span>
@@ -425,6 +437,8 @@
 <script setup lang="ts">
 import WindSpeedChart from '../components/WindSpeedChart.vue';
 import RainfallChart from '../components/RainfallChart.vue';
+import TemperatureTable from '../components/TemperatureTable.vue';
+import FirebaseDebug from '../components/FirebaseDebug.vue';
 import HeatAlert from '../components/HeatAlert.vue';
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import Sortable from 'sortablejs';
@@ -470,6 +484,9 @@ function toggleWindChart() {
 // Show/hide rainfall chart (same logic as wind)
 const showRainfallChart = ref(false);
 const rainfallChartRef = ref(null);
+// Show/hide temperature table
+const showTemperatureTable = ref(false);
+const temperatureTableRef = ref(null);
 function toggleRainfallChart() {
   showRainfallChart.value = !showRainfallChart.value;
   if (showRainfallChart.value) {
@@ -480,6 +497,20 @@ function toggleRainfallChart() {
       }
     } catch (e) {
       console.warn('Failed to refresh rainfall chart on toggle', e);
+    }
+  }
+}
+
+function toggleTemperatureTable() {
+  showTemperatureTable.value = !showTemperatureTable.value;
+  if (showTemperatureTable.value) {
+    try {
+      const child: any = temperatureTableRef.value;
+      if (child && typeof child.fetchTemperatureData === 'function') {
+        child.fetchTemperatureData(selectedStation.value);
+      }
+    } catch (e) {
+      console.warn('Failed to refresh temperature table on toggle', e);
     }
   }
 }
@@ -1140,6 +1171,16 @@ const handleRefresh = async (event: any) => {
       }
     } catch (e) {
       console.warn('Wind chart refresh failed or not available yet', e);
+    }
+
+    // Refresh temperature table if available
+    try {
+      const tempChild: any = temperatureTableRef.value;
+      if (tempChild && typeof tempChild.fetchTemperatureData === 'function') {
+        tempChild.fetchTemperatureData(selectedStation.value);
+      }
+    } catch (e) {
+      console.warn('Temperature table refresh failed or not available yet', e);
     }
 
     // Update modal map if it's open
