@@ -345,7 +345,7 @@ async function fetchTemperatureData(stationId: string) {
     lastUpdated.value = format(now, 'hh:mm:ss a')
 
   } catch (error: any) {
-    console.error('Error fetching temperature data:', error)
+    
    
   } finally {
     isLoading.value = false

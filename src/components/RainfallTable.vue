@@ -240,7 +240,7 @@ async function fetchRainfallData(stationId: string) {
   isLoading.value = true
   
   try {
-    console.log('Fetching rainfall data for station:', stationId)
+
     
     // Initialize data with empty slots
     rainfallData.value = generateHourlySlots()
@@ -252,10 +252,7 @@ async function fetchRainfallData(stationId: string) {
     const todayStartLocal = getTodayStartTimestamp()
     const todayStartUTC = todayStartLocal + (8 * 60 * 60) // Add 8 hours to convert to UTC
     
-    console.log('Date range (accounting for UTC storage):')
-    console.log('- Today start (local):', new Date(todayStartLocal * 1000).toLocaleString())
-    console.log('- Today start (UTC for query):', new Date(todayStartUTC * 1000).toLocaleString())
-    console.log('- Querying RR sensor')
+  
     
     const todayQuery = query(rainfallRef, orderByKey(), startAt(todayStartUTC.toString()))
     const snapshot = await get(todayQuery)
@@ -296,8 +293,7 @@ async function fetchRainfallData(stationId: string) {
         }
       })
       
-      console.log(`Processed ${totalEntries} total entries, ${validEntries} valid entries`)
-      console.log('Hour distribution:', Object.keys(hourMap).map(h => `${h}:${hourMap[parseInt(h)].length}`).join(', '))
+     
       
       // Calculate average rainfall for each hour
       rainfallData.value.forEach(entry => {
@@ -308,13 +304,13 @@ async function fetchRainfallData(stationId: string) {
       })
       
     } else {
-      console.log('No rainfall data found for today')
+      
     }
 
     lastUpdated.value = format(now, 'hh:mm:ss a')
 
   } catch (error: any) {
-    console.error('Error fetching rainfall data:', error)
+   
   } finally {
     isLoading.value = false
   }

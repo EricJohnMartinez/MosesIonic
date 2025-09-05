@@ -254,7 +254,7 @@ async function fetchWindData(stationId: string) {
   isLoading.value = true
   
   try {
-    console.log('Fetching wind data for station:', stationId)
+    
     
     // Initialize data with empty slots
     windData.value = generateHourlySlots()
@@ -267,10 +267,7 @@ async function fetchWindData(stationId: string) {
     const todayStartLocal = getTodayStartTimestamp()
     const todayStartUTC = todayStartLocal + (8 * 60 * 60) // Add 8 hours to convert to UTC
     
-    console.log('Date range (accounting for UTC storage):')
-    console.log('- Today start (local):', new Date(todayStartLocal * 1000).toLocaleString())
-    console.log('- Today start (UTC for query):', new Date(todayStartUTC * 1000).toLocaleString())
-    console.log('- Querying WSP and WD sensors')
+ 
     
     const todaySpeedQuery = query(windSpeedRef, orderByKey(), startAt(todayStartUTC.toString()))
     const todayDirectionQuery = query(windDirectionRef, orderByKey(), startAt(todayStartUTC.toString()))
@@ -350,9 +347,7 @@ async function fetchWindData(stationId: string) {
       })
     }
     
-    console.log(`Processed ${totalEntries} total entries, ${validEntries} valid entries`)
-    console.log('Speed hour distribution:', Object.keys(hourSpeedMap).map(h => `${h}:${hourSpeedMap[parseInt(h)].length}`).join(', '))
-    console.log('Direction hour distribution:', Object.keys(hourDirectionMap).map(h => `${h}:${hourDirectionMap[parseInt(h)].length}`).join(', '))
+
     
     // Calculate average values for each hour
     windData.value.forEach(entry => {
@@ -370,7 +365,7 @@ async function fetchWindData(stationId: string) {
     lastUpdated.value = format(now, 'hh:mm:ss a')
 
   } catch (error: any) {
-    console.error('Error fetching wind data:', error)
+    
   } finally {
     isLoading.value = false
   }
