@@ -748,15 +748,7 @@ function determineWeatherCondition(weather: any) {
   // Check all possible LUX field names from your data structure
   const lux = parseFloat(weather['illumination'] || weather['LUX'] || weather['lux']) || 0;
 
-  // Debug logging
-  console.log('Weather condition debug:', {
-    weather: weather,
-    rr: rr,
-    lux: lux,
-    rawIllumination: weather['illumination'],
-    rawLux: weather['LUX'],
-    allKeys: Object.keys(weather)
-  });
+
 
   const intenseRainIcon = '/images/torrential-rain.png';
   const heavyRainIcon = '/images/heavy-intense-rain.png';
@@ -797,7 +789,7 @@ function determineWeatherCondition(weather: any) {
     condition = cloudyIcon;
   }
   
-  console.log('Weather condition result:', { wType, condition, rr, lux });
+  
   return { condition, wType };
 }
 
@@ -1078,7 +1070,7 @@ function fetchLatestSensors(stationId: string) {
       else if (sensor.key === 'HUM') sensorValues.value.HUM = finalValue;
       else if (sensor.key === 'RR') {
         sensorValues.value.RR = finalValue;
-        console.log('Rainfall data received for', stationId, ':', finalValue);
+        
       }
       else if (sensor.key === 'WSP') sensorValues.value.WSP = finalValue;
       else if (sensor.key === 'WD') sensorValues.value.WD = finalValue;
@@ -1086,7 +1078,7 @@ function fetchLatestSensors(stationId: string) {
       else if (sensor.key === 'STD') sensorValues.value.STD = finalValue;
       else if (sensor.key === 'LUX') {
         sensorValues.value.LUX = finalValue;
-        console.log('LUX data received for', stationId, ':', finalValue);
+        
       }
       else if (sensor.key === 'TSR') sensorValues.value.TSR = finalValue;
       else if (sensor.key === 'WA') sensorValues.value.WA = finalValue;
@@ -1235,8 +1227,7 @@ async function fetchTodayRainfallTotal(stationId: string) {
     startOfToday.setHours(8, 0, 0, 0);
     const startTime = Math.floor(startOfToday.getTime() / 1000); // Convert to Unix timestamp in seconds
     
-    console.log('Fetching today\'s rainfall data from timestamp:', startTime, new Date(startTime * 1000).toISOString());
-    console.log('Station path:', `station${stationId}/data/sensors/RR/`);
+    
     
     // Query Firebase for today's rainfall data (matching your working code structure exactly)
     const collectionRef = dbRef(db, `station${stationId}/data/sensors/RR/`);
@@ -1270,16 +1261,16 @@ async function fetchTodayRainfallTotal(stationId: string) {
         const timestamp = snapshot.key;
         if (timestamp) {
           const readingTime = new Date(parseInt(timestamp) * 1000);
-          console.log(`Rainfall reading #${readingCount} at ${readingTime.toLocaleString()}: ${rainfall}mm. Running total: ${accumulatedTotal.toFixed(2)}mm`);
+     
         } else {
-          console.log(`Rainfall reading #${readingCount}: ${rainfall}mm. Running total: ${accumulatedTotal.toFixed(2)}mm`);
+         
         }
       }
     });
     
     // Log completion after a short delay to see the final result
     setTimeout(() => {
-      console.log(`Daily rainfall calculation complete: ${readingCount} readings, total: ${dailyRainfallTotal.value.toFixed(2)}mm`);
+      
     }, 2000);
     
   } catch (error) {

@@ -232,7 +232,7 @@ async function fetchTemperatureData(stationId: string) {
   isLoading.value = true
   
   try {
-    console.log('Fetching temperature data for station:', stationId)
+   
     
     // Initialize data with empty slots
     temperatureData.value = generateHourlySlots()
@@ -246,10 +246,7 @@ async function fetchTemperatureData(stationId: string) {
     const todayStartLocal = getTodayStartTimestamp()
     const todayStartUTC = todayStartLocal + (8 * 60 * 60) // Add 8 hours to convert to UTC
     
-    console.log('Date range (accounting for UTC storage):')
-    console.log('- Today start (local):', new Date(todayStartLocal * 1000).toLocaleString())
-    console.log('- Today start (UTC for query):', new Date(todayStartUTC * 1000).toLocaleString())
-    console.log('- Query timestamp:', todayStartUTC)
+  
     
     const todayQuery = query(tempRef, orderByKey(), startAt(todayStartUTC.toString()))
     const snapshot = await get(todayQuery)
@@ -291,34 +288,33 @@ async function fetchTemperatureData(stationId: string) {
             if (!hourMap[hour]) hourMap[hour] = []
             hourMap[hour].push(temperature)
             
-            console.log(`Entry: ${date.toLocaleString()} -> adjusted: ${adjustedDate.toLocaleString()} (hour ${hour}) -> ${temperature}°C`)
+            
           } else {
-            console.log(`Skipping entry from different day: ${adjustedDate.toLocaleString()}`)
+          
           }
         }
       })
       
-      console.log(`Processed ${totalEntries} total entries, ${validEntries} valid entries`)
-      console.log('Hour distribution:', Object.keys(hourMap).map(h => `${h}:${hourMap[parseInt(h)].length}`).join(', '))
+     
       
       // Calculate average temperature for each hour
       temperatureData.value.forEach(entry => {
         if (hourMap[entry.hour] && hourMap[entry.hour].length > 0) {
           const avg = hourMap[entry.hour].reduce((a, b) => a + b, 0) / hourMap[entry.hour].length
           entry.temperature = Math.round(avg * 10) / 10
-          console.log(`Hour ${entry.hour} (${entry.time12h}): ${hourMap[entry.hour].length} readings, avg: ${entry.temperature}°C`)
+          
         }
       })
       
     } else {
-      console.log('No data found for today')
+      
     }
 
     lastUpdated.value = format(now, 'hh:mm:ss a')
 
   } catch (error: any) {
     console.error('Error fetching temperature data:', error)
-    console.log('Error details:', error.message || 'Unknown error')
+   
   } finally {
     isLoading.value = false
   }
