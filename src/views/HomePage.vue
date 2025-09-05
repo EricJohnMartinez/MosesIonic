@@ -117,7 +117,7 @@
               :style="{ width: '100%', height: '100%' }">
             </canvas>
             
-            <section class="w-full relative z-10">
+            <section class="w-full relative z-10 lg:mt-24 md:mt-24 sm:mt-2">
               <div class="w-full max-w-5xl mx-auto rounded-3xl p-3 sm:p-4 md:p-6 lg:p-8">
                 <div class="flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-6 lg:gap-8">
                   <!-- Main Weather Display -->
@@ -167,8 +167,9 @@
               </div>
             </section>
           </div>
-
-          <!-- Weather Metrics Grid -->
+          
+          <section class="lg:mt-24 md:mt-24 sm:mt-2">
+                   <!-- Weather Metrics Grid -->
           <transition name="fade">
             <div v-if="showWindChart" class="mt-6">
               <WindSpeedChart ref="windChartRef" :stationId="currentStation.id" />
@@ -179,18 +180,20 @@
               <RainfallChart ref="rainfallChartRef" :stationId="currentStation.id" />
             </div>
           </transition>
-          <transition name="fade">
+                <transition name="fade">
             <div v-if="showTemperatureTable" class="mt-6">
               <TemperatureTable ref="temperatureTableRef" :stationId="currentStation.id" :currentTemperature="currentStation.data.temperature" />
             </div>
           </transition>
+          </section>
+    
           
           <!-- Temporary Debug Component -->
           <!-- <div class="mt-6">
             <FirebaseDebug :stationId="selectedStation" />
           </div> -->
-          <section class="mb-6 md:mb-8">
-            <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-white mb-3 sm:mb-4 md:mb-6 mt-4 sm:mt-6 md:mt-10 text-center lg:text-left">Weather Metrics</h2>
+          <section class="lg:mt-1 md:mt-8 mt-10">
+            <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-white mb-3 sm:mb-4 md:mb-6 -mt-1 sm:mt-6 md:mt-10 text-center lg:text-left">Weather Metrics</h2>
             <div id="metrics-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-4 lg:gap-6 max-w-6xl mx-auto">
               <!-- Temperature & Humidity -->
                    <!-- Enhanced Rainfall Card -->
@@ -392,9 +395,9 @@
             </div>
           </section>
 
-
+          
           <!-- Action Buttons -->
-          <section class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8 px-4">
+          <section class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8 mt-6 px-4">
             <router-link to="/summary"
               class="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 sm:px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 touch-manipulation min-h-[44px]">
               <span>📊</span>

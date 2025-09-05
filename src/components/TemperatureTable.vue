@@ -1,24 +1,7 @@
 <template>
   <div class="temperature-table-container">
     <!-- Header Section -->
-    <div class="chart-header">
-      <div class="header-content">
-        <div class="title-section">
-          <h3 class="chart-title mt-4">Temperature Table</h3>
-          <p class="subtitle">Hourly Temperature Data</p>
-        </div>
-        <div class="current-stats">
-          <div class="stat-card">
-            <span class="stat-label">Current Temp</span>
-            <span class="stat-value text-center">{{ currentTemperature }}°C</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-label">Avg Today</span>
-            <span class="stat-value text-center">{{ averageTemperature }}°C</span>
-          </div>
-        </div>
-      </div>
-    </div>
+
 
     <!-- Carousel Container -->
     <div class="carousel-wrapper">
@@ -102,10 +85,7 @@
           <span class="footer-label">Max Today:</span>
           <span class="footer-value">{{ maxTemperature }}°C</span>
         </div>
-        <div class="footer-stat">
-          <span class="footer-label">Last Updated:</span>
-          <span class="footer-value">{{ lastUpdated }}</span>
-        </div>
+   
       </div>
     </div>
   </div>
