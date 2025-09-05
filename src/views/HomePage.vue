@@ -180,9 +180,16 @@
               <RainfallChart ref="rainfallChartRef" :stationId="currentStation.id" />
             </div>
           </transition>
-                <transition name="fade">
+          <transition name="fade">
             <div v-if="showTemperatureTable" class="mt-6">
-              <TemperatureTable ref="temperatureTableRef" :stationId="currentStation.id" :currentTemperature="currentStation.data.temperature" />
+              <TemperatureTable 
+                ref="temperatureTableRef" 
+                :stationId="currentStation.id" 
+                :currentTemperature="currentStation.data.temperature"
+                :isTransforming="isTransformingTemperature"
+                @animation-complete="onTemperatureAnimationComplete"
+                @close-table="toggleTemperatureTable"
+              />
             </div>
           </transition>
           </section>
@@ -270,9 +277,30 @@
                 </div>
               </div>
               <div data-card-id="Temperature"
-                :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 cursor-pointer select-none card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']"
+                :class="[
+                  'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 cursor-pointer select-none card-hover card-transition touch-manipulation transition-all duration-500 ease-in-out',
+                  heroHidden ? 'card-dark' : '',
+                  isTransformingTemperature ? 'transform-to-table' : '',
+                  showTemperatureTable ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'
+                ]"
                 role="button" :aria-expanded="showTemperatureTable" @click="toggleTemperatureTable" @keydown.enter="toggleTemperatureTable"
                 @keydown.space.prevent="toggleTemperatureTable">
+                
+                <!-- Card to Table Transformation Overlay -->
+                <div v-if="isTransformingTemperature" class="transform-overlay">
+                  <div class="transform-particles">
+                    <div v-for="n in 12" :key="n" class="particle" :style="{ animationDelay: `${n * 0.1}s` }"></div>
+                  </div>
+                  <div class="transform-text">
+                    <svg class="transform-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path v-if="!showTemperatureTable" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                      <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                    </svg>
+                    <span v-if="!showTemperatureTable">Expanding to table...</span>
+                    <span v-else>Collapsing to card...</span>
+                  </div>
+                </div>
+                
                 <div class="flex items-center justify-between mb-3 md:mb-4">
                   <h3 class="text-sm font-semibold text-white">Temperature</h3>
                   <span class="text-xl md:text-2xl">🌡️</span>
@@ -490,6 +518,7 @@ const rainfallChartRef = ref(null);
 // Show/hide temperature table
 const showTemperatureTable = ref(false);
 const temperatureTableRef = ref(null);
+const isTransformingTemperature = ref(false);
 function toggleRainfallChart() {
   showRainfallChart.value = !showRainfallChart.value;
   if (showRainfallChart.value) {
@@ -505,17 +534,50 @@ function toggleRainfallChart() {
 }
 
 function toggleTemperatureTable() {
-  showTemperatureTable.value = !showTemperatureTable.value;
-  if (showTemperatureTable.value) {
-    try {
-      const child: any = temperatureTableRef.value;
-      if (child && typeof child.fetchTemperatureData === 'function') {
-        child.fetchTemperatureData(selectedStation.value);
-      }
-    } catch (e) {
-      console.warn('Failed to refresh temperature table on toggle', e);
+  if (!showTemperatureTable.value) {
+    // Starting transformation - show animation
+    isTransformingTemperature.value = true;
+    
+    // After a delay, show the table and hide transformation
+    setTimeout(() => {
+      showTemperatureTable.value = true;
+      isTransformingTemperature.value = false;
+      
+      // Trigger data fetch
+      setTimeout(() => {
+        try {
+          const child: any = temperatureTableRef.value;
+          if (child && typeof child.fetchTemperatureData === 'function') {
+            child.fetchTemperatureData(selectedStation.value);
+          }
+        } catch (e) {
+          console.warn('Failed to refresh temperature table on toggle', e);
+        }
+      }, 100);
+    }, 800); // Duration of transformation animation
+  } else {
+    // Closing table - start reverse transformation
+    isTransformingTemperature.value = true;
+    
+    // First hide the table with exit animation
+    const child: any = temperatureTableRef.value;
+    if (child && child.$el) {
+      child.$el.classList.add('table-exiting');
     }
+    
+    // After table exit animation, show card transformation
+    setTimeout(() => {
+      showTemperatureTable.value = false;
+      // Keep transformation overlay for reverse effect
+      setTimeout(() => {
+        isTransformingTemperature.value = false;
+      }, 600); // Reverse transformation duration
+    }, 400); // Table exit duration
   }
+}
+
+function onTemperatureAnimationComplete() {
+  isTransformingTemperature.value = false;
 }
 
 function openHeatAlert() {
@@ -2070,5 +2132,181 @@ ion-content {
 
 .card-dark .text-orange-600 {
   color: #ffb37a !important;
+}
+
+/* Temperature Card to Table Transformation Styles */
+.transform-to-table {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(59, 130, 246, 0.5) !important;
+  box-shadow: 0 0 30px rgba(59, 130, 246, 0.3) !important;
+}
+
+.transform-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1));
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  animation: transformOverlay 0.8s ease-in-out;
+}
+
+/* Reverse transformation when closing */
+.transform-overlay.reverse {
+  animation: transformOverlayReverse 0.6s ease-in-out;
+}
+
+.transform-particles {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: rgba(59, 130, 246, 0.8);
+  border-radius: 50%;
+  animation: particleFloat 2s infinite ease-in-out;
+}
+
+/* Reverse particle animation */
+.transform-overlay.reverse .particle {
+  animation: particleFloatReverse 0.6s ease-in-out;
+}
+
+.particle:nth-child(1) { top: 20%; left: 10%; animation-delay: 0s; }
+.particle:nth-child(2) { top: 15%; left: 80%; animation-delay: 0.1s; }
+.particle:nth-child(3) { top: 40%; left: 15%; animation-delay: 0.2s; }
+.particle:nth-child(4) { top: 60%; left: 85%; animation-delay: 0.3s; }
+.particle:nth-child(5) { top: 80%; left: 25%; animation-delay: 0.4s; }
+.particle:nth-child(6) { top: 75%; left: 75%; animation-delay: 0.5s; }
+.particle:nth-child(7) { top: 30%; left: 50%; animation-delay: 0.6s; }
+.particle:nth-child(8) { top: 50%; left: 60%; animation-delay: 0.7s; }
+.particle:nth-child(9) { top: 25%; left: 40%; animation-delay: 0.8s; }
+.particle:nth-child(10) { top: 65%; left: 30%; animation-delay: 0.9s; }
+.particle:nth-child(11) { top: 85%; left: 55%; animation-delay: 1.0s; }
+.particle:nth-child(12) { top: 45%; left: 70%; animation-delay: 1.1s; }
+
+.transform-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  color: white;
+  text-align: center;
+  z-index: 2;
+  animation: transformText 0.8s ease-in-out;
+}
+
+.transform-text.reverse {
+  animation: transformTextReverse 0.6s ease-in-out;
+}
+
+.transform-icon {
+  width: 2rem;
+  height: 2rem;
+  color: #3b82f6;
+  animation: iconPulse 1s infinite ease-in-out;
+}
+
+.transform-text span {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes transformOverlay {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  50% {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
+  100% {
+    opacity: 0.8;
+    backdrop-filter: blur(6px);
+  }
+}
+
+@keyframes transformOverlayReverse {
+  0% {
+    opacity: 0.8;
+    backdrop-filter: blur(6px);
+  }
+  50% {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+  }
+  100% {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+}
+
+@keyframes particleFloat {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateY(-10px) scale(1.2);
+    opacity: 1;
+  }
+}
+
+@keyframes particleFloatReverse {
+  0% {
+    transform: translateY(-10px) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(0.5);
+    opacity: 0;
+  }
+}
+
+@keyframes transformText {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes transformTextReverse {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.8);
+  }
+}
+
+@keyframes iconPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
 }
 </style>

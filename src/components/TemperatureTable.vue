@@ -1,6 +1,26 @@
 <template>
-  <div class="temperature-table-container">
-    <!-- Header Section -->
+  <div :class="[
+    'temperature-table-container',
+    isTransforming ? 'table-transforming' : 'table-ready'
+  ]">
+    <!-- Header Section with enhanced animation -->
+    <div class="table-header">
+      <div class="header-content">
+        <div class="title-section">
+          <h3 class="table-title">Temperature Timeline</h3>
+          <p class="table-subtitle">Hourly data from 12mn to 11pm</p>
+        </div>
+        <button 
+          @click="closeTable" 
+          class="close-button "
+          aria-label="Close temperature table"
+        >
+          <svg class="close-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
 
 
     <!-- Carousel Container -->
@@ -100,6 +120,12 @@ import { addHours, getUnixTime, startOfDay, format, fromUnixTime } from 'date-fn
 const props = defineProps<{ 
   stationId: string
   currentTemperature?: number 
+  isTransforming?: boolean
+}>()
+
+const emit = defineEmits<{
+  'animation-complete': []
+  'close-table': []
 }>()
 
 interface TemperatureEntry {
@@ -227,6 +253,11 @@ function getTemperatureStatus(temp: number | null): { text: string; class: strin
   return { text: 'Very Hot', class: 'status-red' }
 }
 
+// Close table function
+function closeTable() {
+  emit('close-table')
+}
+
 // Fetch temperature data for today
 async function fetchTemperatureData(stationId: string) {
   isLoading.value = true
@@ -330,6 +361,11 @@ onMounted(() => {
   if (props.stationId) {
     fetchTemperatureData(props.stationId)
   }
+  
+  // Emit animation complete after mount animation
+  setTimeout(() => {
+    emit('animation-complete')
+  }, 1000)
 })
 
 defineExpose({ fetchTemperatureData })
@@ -342,6 +378,82 @@ defineExpose({ fetchTemperatureData })
   border-radius: 0.75rem;
   overflow: hidden;
   border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.table-header {
+  background-color: #0000002d;
+  padding: 1.5rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.title-section {
+  flex: 1;
+  min-width: 200px;
+}
+
+.table-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.25rem;
+}
+
+.table-subtitle {
+  font-size: 0.875rem;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+.close-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 0.5rem;
+  color: #3b82f6;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+}
+
+.close-button:hover {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.5);
+  color: #60a5fa;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.close-icon {
+  width: 1rem;
+  height: 1rem;
+  transition: transform 0.3s ease;
+}
+
+.close-button:hover .close-icon {
+  transform: rotate(90deg);
+}
+
+.close-text {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .close-text {
+    display: inline;
+  }
 }
 
 .chart-header {
@@ -753,6 +865,139 @@ defineExpose({ fetchTemperatureData })
   .scroll-icon {
     width: 14px;
     height: 14px;
+  }
+}
+
+/* Table Transformation Animation Styles */
+.temperature-table-container {
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.table-transforming {
+  opacity: 0;
+  transform: scale(0.8) translateY(20px);
+  filter: blur(4px);
+}
+
+.table-ready {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  filter: blur(0px);
+  animation: tableEntrance 1s ease-out;
+}
+
+.table-exiting {
+  animation: tableExit 0.4s ease-in both;
+}
+
+@keyframes tableEntrance {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(30px) rotateX(10deg);
+    filter: blur(8px);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.02) translateY(-5px) rotateX(2deg);
+    filter: blur(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0) rotateX(0deg);
+    filter: blur(0px);
+  }
+}
+
+@keyframes tableExit {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.95) translateY(-20px);
+    filter: blur(4px);
+  }
+}
+
+/* Enhanced carousel entrance animation */
+.temperature-carousel {
+  animation: carouselSlideIn 0.8s ease-out 0.2s both;
+}
+
+@keyframes carouselSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-100px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Staggered card animations */
+.temp-card {
+  animation: cardSlideUp 0.6s ease-out both;
+}
+
+.temp-card:nth-child(1) { animation-delay: 0.1s; }
+.temp-card:nth-child(2) { animation-delay: 0.15s; }
+.temp-card:nth-child(3) { animation-delay: 0.2s; }
+.temp-card:nth-child(4) { animation-delay: 0.25s; }
+.temp-card:nth-child(5) { animation-delay: 0.3s; }
+.temp-card:nth-child(6) { animation-delay: 0.35s; }
+.temp-card:nth-child(7) { animation-delay: 0.4s; }
+.temp-card:nth-child(8) { animation-delay: 0.45s; }
+.temp-card:nth-child(9) { animation-delay: 0.5s; }
+.temp-card:nth-child(10) { animation-delay: 0.55s; }
+.temp-card:nth-child(11) { animation-delay: 0.6s; }
+.temp-card:nth-child(12) { animation-delay: 0.65s; }
+
+@keyframes cardSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Enhanced temperature bar animation */
+.temp-bar {
+  animation: barFillUp 1.2s ease-out both;
+}
+
+@keyframes barFillUp {
+  0% {
+    height: 0%;
+    opacity: 0.5;
+  }
+  60% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Reduce animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .temperature-table-container,
+  .temp-card,
+  .temp-bar,
+  .temperature-carousel {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .table-transforming {
+    opacity: 1;
+    transform: none;
+    filter: none;
   }
 }
 
