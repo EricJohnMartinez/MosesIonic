@@ -6,19 +6,18 @@
     </IonRefresher>
     <div class="relative min-h-screen flex flex-col bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900">
       <div class="relative z-20 flex-1 overflow-y-auto"
-           :style="{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }">
+        :style="{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }">
 
         <!-- Main Content -->
         <div class="relative z-10">
- 
+
           <!-- Station selector - positioned responsively -->
-          <div class="fixed top-4 right-4 z-50 group"
-               :style="{ top: 'calc(env(safe-area-inset-top) + 1rem)' }">
+          <div class="fixed top-4 right-4 z-50 group" :style="{ top: 'calc(env(safe-area-inset-top) + 1rem)' }">
             <button type="button" aria-label="Stations"
               class="flex items-center justify-center w-12 h-12 md:w-10 md:h-10 rounded-full border border-gray-700 bg-gray-800/90 backdrop-blur-sm text-gray-200 hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 touch-manipulation">
               <!-- vertical three dots icon -->
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-5 md:w-5" viewBox="0 0 20 20" fill="currentColor"
-                aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-5 md:w-5" viewBox="0 0 20 20"
+                fill="currentColor" aria-hidden="true">
                 <path
                   d="M10 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
               </svg>
@@ -34,413 +33,475 @@
               </ul>
             </div>
           </div>
-        <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" v-if="currentStation">
-          <!-- Current Weather Hero Section -->
-          <div
-            :class="['w-full flex items-center justify-center min-h-[60vh] sm:min-h-[50vh] md:min-h-[45vh] lg:min-h-[40vh] -mt-4 sm:-mt-6 md:-mt-8 lg:-mt-12 -mb-8 sm:-mb-12 md:-mb-16 lg:-mb-20 transition-all duration-700 ease-in-out relative overflow-hidden', heroHidden ? 'opacity-0 -translate-y-6 pointer-events-none' : 'opacity-100 translate-y-0']"
-            :style="{ filter: heroHidden ? 'blur(6px) saturate(0.95)' : 'none', willChange: 'opacity, transform, filter' }">
-            
-            <!-- Cloud Background Animation - Only for Cloudy Weather -->
-            <div v-if="isCloudyWeather()" class="absolute inset-0 pointer-events-none z-0">
-              <!-- Extra Large clouds - Layer 1 -->
-              <img src="/images/Clouds/cloud1.png" 
-                   alt="Cloud" 
-                   class="cloud-animation-xl absolute top-[5%] left-0 w-80 sm:w-96 md:w-[32rem] lg:w-[40rem] xl:w-[48rem] opacity-35 pointer-events-none"
-                   style="transform: translateX(-100%)" />
-              
-              <img src="/images/Clouds/Cloud2.png" 
-                   alt="Cloud" 
-                   class="cloud-animation-xl-slow absolute top-[15%] left-0 w-72 sm:w-88 md:w-[28rem] lg:w-[36rem] xl:w-[44rem] opacity-30 pointer-events-none"
-                   style="transform: translateX(-120%); animation-delay: 10s;" />
-              
-              <!-- Large clouds - Layer 2 -->
-              <img src="/images/Clouds/Cloud3.png" 
-                   alt="Cloud" 
-                   class="cloud-animation-large absolute top-[25%] left-0 w-64 sm:w-80 md:w-96 lg:w-[32rem] xl:w-[40rem] opacity-28 pointer-events-none"
-                   style="transform: translateX(-110%); animation-delay: 20s;" />
-              
-              <img src="/images/Clouds/cloud1.png" 
-                   alt="Cloud" 
-                   class="cloud-animation-large-reverse absolute top-[8%] right-0 w-68 sm:w-84 md:w-[30rem] lg:w-[38rem] xl:w-[46rem] opacity-25 pointer-events-none"
-                   style="transform: translateX(100%); animation-delay: 5s;" />
-              
-              <!-- Medium clouds - Layer 3 -->
-              <img src="/images/Clouds/Cloud2.png" 
-                   alt="Cloud" 
-                   class="cloud-animation-medium absolute top-[35%] left-0 w-56 sm:w-72 md:w-88 lg:w-[28rem] xl:w-[36rem] opacity-22 pointer-events-none"
-                   style="transform: translateX(-130%); animation-delay: 30s;" />
-              
-              <img src="/images/Clouds/Cloud3.png" 
-                   alt="Cloud" 
-                   class="cloud-animation-medium-reverse absolute top-[12%] right-0 w-60 sm:w-76 md:w-92 lg:w-[30rem] xl:w-[38rem] opacity-20 pointer-events-none"
-                   style="transform: translateX(110%); animation-delay: 15s;" />
-              
-              <!-- Small accent clouds - Layer 4 -->
-              <img src="/images/Clouds/cloud1.png" 
-                   alt="Cloud" 
-                   class="cloud-animation-small absolute top-[45%] left-0 w-48 sm:w-64 md:w-80 lg:w-96 xl:w-[32rem] opacity-18 pointer-events-none"
-                   style="transform: translateX(-140%); animation-delay: 40s;" />
-              
-              <img src="/images/Clouds/Cloud2.png" 
-                   alt="Cloud" 
-                   class="cloud-animation-small-reverse absolute top-[20%] right-0 w-44 sm:w-60 md:w-76 lg:w-92 xl:w-[30rem] opacity-16 pointer-events-none"
-                   style="transform: translateX(120%); animation-delay: 25s;" />
-              
-              <!-- Extra small clouds - Layer 5 -->
-              <img src="/images/Clouds/Cloud3.png" 
-                   alt="Cloud" 
-                   class="cloud-animation-drift absolute top-[50%] left-0 w-40 sm:w-56 md:w-72 lg:w-88 xl:w-[28rem] opacity-14 pointer-events-none"
-                   style="transform: translateX(-150%); animation-delay: 50s;" />
-              
-              <img src="/images/Clouds/cloud1.png" 
-                   alt="Cloud" 
-                   class="cloud-animation-drift-reverse absolute top-[3%] right-0 w-36 sm:w-52 md:w-68 lg:w-84 xl:w-[26rem] opacity-12 pointer-events-none"
-                   style="transform: translateX(130%); animation-delay: 35s;" />
-              
-              <!-- Additional frequent clouds for density -->
-              <img src="/images/Clouds/Cloud2.png" 
-                   alt="Cloud" 
-                   class="cloud-animation-frequent1 absolute top-[30%] left-0 w-52 sm:w-68 md:w-84 lg:w-[26rem] xl:w-[34rem] opacity-15 pointer-events-none"
-                   style="transform: translateX(-160%); animation-delay: 60s;" />
-              
-              <img src="/images/Clouds/Cloud3.png" 
-                   alt="Cloud" 
-                   class="cloud-animation-frequent2 absolute top-[40%] right-0 w-48 sm:w-64 md:w-80 lg:w-96 xl:w-[32rem] opacity-17 pointer-events-none"
-                   style="transform: translateX(140%); animation-delay: 45s;" />
-            </div>
+          <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" v-if="currentStation">
+            <!-- Current Weather Hero Section -->
+            <div
+              :class="['w-full flex items-center justify-center min-h-[60vh] sm:min-h-[50vh] md:min-h-[45vh] lg:min-h-[40vh] -mt-4 sm:-mt-6 md:-mt-8 lg:-mt-12 -mb-8 sm:-mb-12 md:-mb-16 lg:-mb-20 transition-all duration-700 ease-in-out relative overflow-hidden', heroHidden ? 'opacity-0 -translate-y-6 pointer-events-none' : 'opacity-100 translate-y-0']"
+              :style="{ filter: heroHidden ? 'blur(6px) saturate(0.95)' : 'none', willChange: 'opacity, transform, filter' }">
 
-            <!-- Rain Canvas Animation - Only for Rainy Weather -->
-            <canvas 
-              v-if="isRainingWeather()" 
-              ref="rainCanvas" 
-              class="absolute inset-0 pointer-events-none z-5"
-              :style="{ width: '100%', height: '100%' }">
-            </canvas>
-            
-            <section class="w-full relative z-10 lg:mt-24 md:mt-24 sm:mt-2">
-              <div class="w-full max-w-5xl mx-auto rounded-3xl p-3 sm:p-4 md:p-6 lg:p-8">
-                <div class="flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-6 lg:gap-8">
-                  <!-- Main Weather Display -->
-                  <div class="text-center lg:text-left mb-4 lg:mb-0 flex-1">
-                    <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start space-y-3 sm:space-y-0 sm:space-x-4 mb-3">
-                      <div class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl animate-bounce">
-                        {{ getWeatherIcon() }}
-                      </div>
-                      <div class="text-center sm:text-left">
-                        <div class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white">
-                          {{ currentStation.data.temperature }}°
+              <!-- Cloud Background Animation - Only for Cloudy Weather -->
+              <div v-if="isCloudyWeather()" class="absolute inset-0 pointer-events-none z-0">
+                <!-- Extra Large clouds - Layer 1 -->
+                <img src="/images/Clouds/cloud1.png" alt="Cloud"
+                  class="cloud-animation-xl absolute top-[5%] left-0 w-80 sm:w-96 md:w-[32rem] lg:w-[40rem] xl:w-[48rem] opacity-35 pointer-events-none"
+                  style="transform: translateX(-100%)" />
+
+                <img src="/images/Clouds/Cloud2.png" alt="Cloud"
+                  class="cloud-animation-xl-slow absolute top-[15%] left-0 w-72 sm:w-88 md:w-[28rem] lg:w-[36rem] xl:w-[44rem] opacity-30 pointer-events-none"
+                  style="transform: translateX(-120%); animation-delay: 10s;" />
+
+                <!-- Large clouds - Layer 2 -->
+                <img src="/images/Clouds/Cloud3.png" alt="Cloud"
+                  class="cloud-animation-large absolute top-[25%] left-0 w-64 sm:w-80 md:w-96 lg:w-[32rem] xl:w-[40rem] opacity-28 pointer-events-none"
+                  style="transform: translateX(-110%); animation-delay: 20s;" />
+
+                <img src="/images/Clouds/cloud1.png" alt="Cloud"
+                  class="cloud-animation-large-reverse absolute top-[8%] right-0 w-68 sm:w-84 md:w-[30rem] lg:w-[38rem] xl:w-[46rem] opacity-25 pointer-events-none"
+                  style="transform: translateX(100%); animation-delay: 5s;" />
+
+                <!-- Medium clouds - Layer 3 -->
+                <img src="/images/Clouds/Cloud2.png" alt="Cloud"
+                  class="cloud-animation-medium absolute top-[35%] left-0 w-56 sm:w-72 md:w-88 lg:w-[28rem] xl:w-[36rem] opacity-22 pointer-events-none"
+                  style="transform: translateX(-130%); animation-delay: 30s;" />
+
+                <img src="/images/Clouds/Cloud3.png" alt="Cloud"
+                  class="cloud-animation-medium-reverse absolute top-[12%] right-0 w-60 sm:w-76 md:w-92 lg:w-[30rem] xl:w-[38rem] opacity-20 pointer-events-none"
+                  style="transform: translateX(110%); animation-delay: 15s;" />
+
+                <!-- Small accent clouds - Layer 4 -->
+                <img src="/images/Clouds/cloud1.png" alt="Cloud"
+                  class="cloud-animation-small absolute top-[45%] left-0 w-48 sm:w-64 md:w-80 lg:w-96 xl:w-[32rem] opacity-18 pointer-events-none"
+                  style="transform: translateX(-140%); animation-delay: 40s;" />
+
+                <img src="/images/Clouds/Cloud2.png" alt="Cloud"
+                  class="cloud-animation-small-reverse absolute top-[20%] right-0 w-44 sm:w-60 md:w-76 lg:w-92 xl:w-[30rem] opacity-16 pointer-events-none"
+                  style="transform: translateX(120%); animation-delay: 25s;" />
+
+                <!-- Extra small clouds - Layer 5 -->
+                <img src="/images/Clouds/Cloud3.png" alt="Cloud"
+                  class="cloud-animation-drift absolute top-[50%] left-0 w-40 sm:w-56 md:w-72 lg:w-88 xl:w-[28rem] opacity-14 pointer-events-none"
+                  style="transform: translateX(-150%); animation-delay: 50s;" />
+
+                <img src="/images/Clouds/cloud1.png" alt="Cloud"
+                  class="cloud-animation-drift-reverse absolute top-[3%] right-0 w-36 sm:w-52 md:w-68 lg:w-84 xl:w-[26rem] opacity-12 pointer-events-none"
+                  style="transform: translateX(130%); animation-delay: 35s;" />
+
+                <!-- Additional frequent clouds for density -->
+                <img src="/images/Clouds/Cloud2.png" alt="Cloud"
+                  class="cloud-animation-frequent1 absolute top-[30%] left-0 w-52 sm:w-68 md:w-84 lg:w-[26rem] xl:w-[34rem] opacity-15 pointer-events-none"
+                  style="transform: translateX(-160%); animation-delay: 60s;" />
+
+                <img src="/images/Clouds/Cloud3.png" alt="Cloud"
+                  class="cloud-animation-frequent2 absolute top-[40%] right-0 w-48 sm:w-64 md:w-80 lg:w-96 xl:w-[32rem] opacity-17 pointer-events-none"
+                  style="transform: translateX(140%); animation-delay: 45s;" />
+              </div>
+
+              <!-- Rain Canvas Animation - Only for Rainy Weather -->
+              <canvas v-if="isRainingWeather()" ref="rainCanvas" class="absolute inset-0 pointer-events-none z-5"
+                :style="{ width: '100%', height: '100%' }">
+              </canvas>
+
+              <section class="w-full relative z-10 lg:mt-24 md:mt-24 sm:mt-2">
+                <div class="w-full max-w-5xl mx-auto rounded-3xl p-3 sm:p-4 md:p-6 lg:p-8">
+                  <div class="flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-6 lg:gap-8">
+                    <!-- Main Weather Display -->
+                    <div class="text-center lg:text-left mb-4 lg:mb-0 flex-1">
+                      <div
+                        class="flex flex-col sm:flex-row items-center justify-center lg:justify-start space-y-3 sm:space-y-0 sm:space-x-4 mb-3">
+                        <div class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl animate-bounce">
+                          {{ getWeatherIcon() }}
                         </div>
-                        <div class="text-base sm:text-lg md:text-xl text-white font-medium mt-1">
-                          {{ currentStation.name }}
+                        <div class="text-center sm:text-left">
+                          <div class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white">
+                            {{ currentStation.data.temperature }}°
+                          </div>
+                          <div class="text-base sm:text-lg md:text-xl text-white font-medium mt-1">
+                            {{ currentStation.name }}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <!-- Weather Description -->
-                    <div class="text-sm sm:text-base md:text-lg text-white/90 mb-3 max-w-md mx-auto lg:mx-0">
-                      {{ getWeatherDescription() }}
-                    </div>
+                      <!-- Weather Description -->
+                      <div class="text-sm sm:text-base md:text-lg text-white/90 mb-3 max-w-md mx-auto lg:mx-0">
+                        {{ getWeatherDescription() }}
+                      </div>
 
-                    <!-- Quick Stats -->
-                    <div class="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 max-w-xs sm:max-w-sm mx-auto lg:mx-0">
-                      <div class="bg-slate-800/80 backdrop-blur-sm rounded-xl p-2 sm:p-3 text-center border border-slate-700/50">
-                        <div class="text-lg sm:text-xl md:text-2xl font-bold text-blue-400">{{ currentStation.data.humidity }}%</div>
-                        <div class="text-xs sm:text-sm text-blue-300">Humidity</div>
-                      </div>
-                      <div class="bg-slate-800/80 backdrop-blur-sm rounded-xl p-2 sm:p-3 text-center border border-slate-700/50">
-                        <div class="text-lg sm:text-xl md:text-2xl font-bold text-orange-400">
-                          {{ currentStation.data.heatIndex }}°</div>
-                        <div class="text-xs sm:text-sm text-orange-300">Heat Index</div>
+                      <!-- Quick Stats -->
+                      <div class="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 max-w-xs sm:max-w-sm mx-auto lg:mx-0">
+                        <div
+                          class="bg-slate-800/80 backdrop-blur-sm rounded-xl p-2 sm:p-3 text-center border border-slate-700/50">
+                          <div class="text-lg sm:text-xl md:text-2xl font-bold text-blue-400">{{
+                            currentStation.data.humidity }}%</div>
+                          <div class="text-xs sm:text-sm text-blue-300">Humidity</div>
+                        </div>
+                        <div
+                          class="bg-slate-800/80 backdrop-blur-sm rounded-xl p-2 sm:p-3 text-center border border-slate-700/50">
+                          <div class="text-lg sm:text-xl md:text-2xl font-bold text-orange-400">
+                            {{ currentStation.data.heatIndex }}°</div>
+                          <div class="text-xs sm:text-sm text-orange-300">Heat Index</div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <!-- Open Map Button -->
-                  <div class="w-full sm:w-72 md:w-80 lg:w-80 h-40 sm:h-48 md:h-56 lg:h-64 rounded-2xl overflow-hidden shadow-lg border border-slate-700/50 flex-shrink-0 flex items-center justify-center bg-slate-800/60 backdrop-blur-lg">
-                    <button @click="openMapModal" 
-                      class="w-full h-full flex flex-col items-center justify-center gap-3 hover:bg-slate-700/50 transition-all duration-300 text-white">
-                      <div class="text-4xl">🗺️</div>
-                      <div class="text-lg font-semibold">View All Stations</div>
-                      <div class="text-sm text-gray-300">Open Map</div>
-                    </button>
+                    <!-- Open Map Button -->
+                    <div
+                      class="w-full sm:w-72 md:w-80 lg:w-80 h-40 sm:h-48 md:h-56 lg:h-64 rounded-2xl overflow-hidden shadow-lg border border-slate-700/50 flex-shrink-0 flex items-center justify-center bg-slate-800/60 backdrop-blur-lg">
+                      <button @click="openMapModal"
+                        class="w-full h-full flex flex-col items-center justify-center gap-3 hover:bg-slate-700/50 transition-all duration-300 text-white">
+                        <div class="text-4xl">🗺️</div>
+                        <div class="text-lg font-semibold">View All Stations</div>
+                        <div class="text-sm text-gray-300">Open Map</div>
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </section>
+            </div>
+
+            <section class="lg:mt-24 md:mt-24 sm:mt-2">
+              <!-- Weather Metrics Grid -->
+              <transition name="fade">
+                <div v-if="showWindSpeedTable" class="mt-6">
+                  <WindSpeedTable 
+                    ref="windSpeedTableRef" 
+                    :stationId="currentStation.id"
+                    :currentWindSpeed="currentStation.data.windSpeed" 
+                    :isTransforming="isTransformingWind"
+                    @animation-complete="onWindAnimationComplete" 
+                    @close-table="toggleWindChart" 
+                  />
+                </div>
+              </transition>
+              <transition name="fade">
+                <div v-if="showRainfallTable" class="mt-6">
+                  <RainfallTable 
+                    ref="rainfallTableRef" 
+                    :stationId="currentStation.id"
+                    :currentRainfall="currentStation.data.rainfall" 
+                    :isTransforming="isTransformingRainfall"
+                    @animation-complete="onRainfallAnimationComplete" 
+                    @close-table="toggleRainfallChart" 
+                  />
+                </div>
+              </transition>
+              <transition name="fade">
+                <div v-if="showTemperatureTable" class="mt-6">
+                  <TemperatureTable ref="temperatureTableRef" :stationId="currentStation.id"
+                    :currentTemperature="currentStation.data.temperature" :isTransforming="isTransformingTemperature"
+                    @animation-complete="onTemperatureAnimationComplete" @close-table="toggleTemperatureTable" />
+                </div>
+              </transition>
             </section>
-          </div>
-          
-          <section class="lg:mt-24 md:mt-24 sm:mt-2">
-                   <!-- Weather Metrics Grid -->
-          <transition name="fade">
-            <div v-if="showWindChart" class="mt-6">
-              <WindSpeedChart ref="windChartRef" :stationId="currentStation.id" />
-            </div>
-          </transition>
-          <transition name="fade">
-            <div v-if="showRainfallChart" class="mt-6">
-              <RainfallChart ref="rainfallChartRef" :stationId="currentStation.id" />
-            </div>
-          </transition>
-          <transition name="fade">
-            <div v-if="showTemperatureTable" class="mt-6">
-              <TemperatureTable 
-                ref="temperatureTableRef" 
-                :stationId="currentStation.id" 
-                :currentTemperature="currentStation.data.temperature"
-                :isTransforming="isTransformingTemperature"
-                @animation-complete="onTemperatureAnimationComplete"
-                @close-table="toggleTemperatureTable"
-              />
-            </div>
-          </transition>
-          </section>
-    
-          
-          <!-- Temporary Debug Component -->
-          <!-- <div class="mt-6">
+
+
+            <!-- Temporary Debug Component -->
+            <!-- <div class="mt-6">
             <FirebaseDebug :stationId="selectedStation" />
           </div> -->
-          <section class="lg:mt-1 md:mt-8 mt-10">
-            <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-white mb-3 sm:mb-4 md:mb-6 -mt-1 sm:mt-6 md:mt-10 text-center lg:text-left">Weather Metrics</h2>
-            <div id="metrics-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-4 lg:gap-6 max-w-6xl mx-auto">
-              <!-- Temperature & Humidity -->
-                   <!-- Enhanced Rainfall Card -->
-              <div data-card-id="RainfallIntensity"
-                :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation col-span-2 sm:col-span-2 md:col-span-3', heroHidden ? 'card-dark' : '']">
-                <div class="flex items-center justify-between mb-3 md:mb-4">
-                  <h3 class="text-sm font-semibold text-white">Rainfall Intensity & Warnings</h3>
-                  <img src="/images/rainfall.png" class="w-8 h-8 md:w-10 md:h-10 object-contain" alt="Rainfall" />
-                </div>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <!-- Rainfall Icon and Current Reading -->
-                  <div class="flex items-center justify-center sm:col-span-1">
-                    <div class="text-center">
-                      <div class="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-1">
-                        {{ currentStation.data.rainfall }}<span class="text-sm md:text-base">mm</span>
+            <section class="lg:mt-1 md:mt-8 mt-10">
+              <h2
+                class="text-lg sm:text-xl md:text-2xl font-bold text-white mb-3 sm:mb-4 md:mb-6 -mt-1 sm:mt-6 md:mt-10 text-center lg:text-left">
+                Weather Metrics</h2>
+              <div id="metrics-grid"
+                class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-4 lg:gap-6 max-w-6xl mx-auto">
+                <!-- Temperature & Humidity -->
+                <!-- Enhanced Rainfall Card -->
+                <div data-card-id="RainfallIntensity"
+                  :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation col-span-2 sm:col-span-2 md:col-span-3', heroHidden ? 'card-dark' : '']">
+                  <div class="flex items-center justify-between mb-3 md:mb-4">
+                    <h3 class="text-sm font-semibold text-white">Rainfall Intensity & Warnings</h3>
+                    <img src="/images/rainfall.png" class="w-8 h-8 md:w-10 md:h-10 object-contain" alt="Rainfall" />
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Rainfall Icon and Current Reading -->
+                    <div class="flex items-center justify-center sm:col-span-1">
+                      <div class="text-center">
+                        <div class="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-1">
+                          {{ currentStation.data.rainfall }}<span class="text-sm md:text-base">mm</span>
+                        </div>
+                        <div class="text-xs md:text-sm text-white/80">Current Intensity</div>
                       </div>
-                      <div class="text-xs md:text-sm text-white/80">Current Intensity</div>
+                    </div>
+
+                    <!-- Rainfall Details -->
+                    <div class="sm:col-span-2 space-y-3">
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+                        <div>
+                          <p class="text-xs md:text-sm text-white/80">Daily Total</p>
+                          <h1 class="text-xl md:text-lg font-bold text-white">{{ todayTotalRain.toFixed(2) }} mm</h1>
+                        </div>
+                        <div>
+                          <p class="text-xs md:text-sm text-white/80">Category</p>
+                          <h1 class="text-xl md:text-lg text-white font-semibold">{{ getRainfallCategory() }}</h1>
+                        </div>
+                      </div>
+
+                      <!-- Rainfall Warning Levels -->
+                      <div class="space-y-2">
+                        <p class="text-xs text-white/80">Warning Levels</p>
+                        <div class="flex gap-1">
+                          <!-- Yellow Warning -->
+                          <div
+                            :class="todayTotalRain >= 50.0 && todayTotalRain <= 100.0 ? 'w-full bg-yellow-500 transition-all duration-300' : 'bg-gray-600/50 w-8'"
+                            class="h-4 flex items-center justify-center rounded-l-lg rounded-r-sm relative">
+                            <p :class="todayTotalRain >= 50.0 && todayTotalRain <= 100.0 ? 'text-white text-[10px] md:text-xs opacity-100' : 'hidden'"
+                              class="absolute inset-0 flex items-center justify-center font-bold">
+                              YELLOW (50-100mm)
+                            </p>
+                          </div>
+
+                          <!-- Orange Warning -->
+                          <div
+                            :class="todayTotalRain >= 101.0 && todayTotalRain <= 200.0 ? 'w-full bg-orange-600 transition-all duration-300' : 'bg-gray-600/50 w-8'"
+                            class="h-4 flex items-center justify-center rounded-sm relative">
+                            <p :class="todayTotalRain >= 101.0 && todayTotalRain <= 200.0 ? 'text-white text-[10px] md:text-xs opacity-100' : 'hidden'"
+                              class="absolute inset-0 flex items-center justify-center font-bold">
+                              ORANGE (101-200mm)
+                            </p>
+                          </div>
+
+                          <!-- Red Warning -->
+                          <div
+                            :class="todayTotalRain >= 201.0 ? 'w-full bg-red-700 transition-all duration-300' : 'bg-gray-600/50 w-8'"
+                            class="h-4 flex items-center justify-center rounded-r-lg rounded-l-sm relative">
+                            <p :class="todayTotalRain >= 201.0 ? 'text-white text-[10px] md:text-xs opacity-100' : 'hidden'"
+                              class="absolute inset-0 flex items-center justify-center font-bold">
+                              RED (201mm+)
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  
-                  <!-- Rainfall Details -->
-                  <div class="sm:col-span-2 space-y-3">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
-                      <div>
-                        <p class="text-xs md:text-sm text-white/80">Daily Total</p>
-                        <h1 class="text-xl md:text-lg font-bold text-white">{{ todayTotalRain.toFixed(2) }} mm</h1>
-                      </div>
-                      <div>
-                        <p class="text-xs md:text-sm text-white/80">Category</p>
-                        <h1 class="text-xl md:text-lg text-white font-semibold">{{ getRainfallCategory() }}</h1>
-                      </div>
-                    </div>
-                    
-                    <!-- Rainfall Warning Levels -->
-                    <div class="space-y-2">
-                      <p class="text-xs text-white/80">Warning Levels</p>
-                      <div class="flex gap-1">
-                        <!-- Yellow Warning -->
-                        <div 
-                          :class="todayTotalRain >= 50.0 && todayTotalRain <= 100.0 ? 'w-full bg-yellow-500 transition-all duration-300' : 'bg-gray-600/50 w-8'"
-                          class="h-4 flex items-center justify-center rounded-l-lg rounded-r-sm relative">
-                          <p 
-                            :class="todayTotalRain >= 50.0 && todayTotalRain <= 100.0 ? 'text-white text-[10px] md:text-xs opacity-100' : 'hidden'"
-                            class="absolute inset-0 flex items-center justify-center font-bold">
-                            YELLOW (50-100mm)
-                          </p>
-                        </div>
-                        
-                        <!-- Orange Warning -->
-                        <div 
-                          :class="todayTotalRain >= 101.0 && todayTotalRain <= 200.0 ? 'w-full bg-orange-600 transition-all duration-300' : 'bg-gray-600/50 w-8'"
-                          class="h-4 flex items-center justify-center rounded-sm relative">
-                          <p 
-                            :class="todayTotalRain >= 101.0 && todayTotalRain <= 200.0 ? 'text-white text-[10px] md:text-xs opacity-100' : 'hidden'"
-                            class="absolute inset-0 flex items-center justify-center font-bold">
-                            ORANGE (101-200mm)
-                          </p>
-                        </div>
-                        
-                        <!-- Red Warning -->
-                        <div 
-                          :class="todayTotalRain >= 201.0 ? 'w-full bg-red-700 transition-all duration-300' : 'bg-gray-600/50 w-8'"
-                          class="h-4 flex items-center justify-center rounded-r-lg rounded-l-sm relative">
-                          <p 
-                            :class="todayTotalRain >= 201.0 ? 'text-white text-[10px] md:text-xs opacity-100' : 'hidden'"
-                            class="absolute inset-0 flex items-center justify-center font-bold">
-                            RED (201mm+)
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
-              </div>
-              <div data-card-id="Temperature"
-                :class="[
+                <div data-card-id="Temperature" :class="[
                   'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 cursor-pointer select-none card-hover card-transition touch-manipulation transition-all duration-500 ease-in-out',
                   heroHidden ? 'card-dark' : '',
                   isTransformingTemperature ? 'transform-to-table' : '',
                   showTemperatureTable ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'
-                ]"
-                role="button" :aria-expanded="showTemperatureTable" @click="toggleTemperatureTable" @keydown.enter="toggleTemperatureTable"
-                @keydown.space.prevent="toggleTemperatureTable">
-                
-                <!-- Card to Table Transformation Overlay -->
-                <div v-if="isTransformingTemperature" class="transform-overlay">
-                  <div class="transform-particles">
-                    <div v-for="n in 12" :key="n" class="particle" :style="{ animationDelay: `${n * 0.1}s` }"></div>
-                  </div>
-                  <div class="transform-text">
-                    <svg class="transform-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path v-if="!showTemperatureTable" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
-                      <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-                    </svg>
-                    <span v-if="!showTemperatureTable">Expanding to table...</span>
-                    <span v-else>Collapsing to card...</span>
-                  </div>
-                </div>
-                
-                <div class="flex items-center justify-between mb-3 md:mb-4">
-                  <h3 class="text-sm font-semibold text-white">Temperature</h3>
-                  <span class="text-xl md:text-2xl">🌡️</span>
-                </div>
-                <div class="space-y-2 md:space-y-3">
-                  <div class="flex justify-between items-center">
-                    <span class="text-white/80 text-xs md:text-sm">Current</span>
-                    <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{ currentStation.data.temperature }}°C</span>
-                  </div>
-                  <div class="flex justify-between items-center">
-                    <span class="text-white/80 text-xs md:text-sm">Feels like</span>
-                    <span class="text-xs md:text-sm font-semibold text-orange-400">{{ currentStation.data.heatIndex }}°C</span>
-                  </div>
-                </div>
-              </div>
+                ]" role="button" :aria-expanded="showTemperatureTable" @click="toggleTemperatureTable"
+                  @keydown.enter="toggleTemperatureTable" @keydown.space.prevent="toggleTemperatureTable">
 
-              <!-- Wind -->
-              <div data-card-id="Wind"
-                :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 cursor-pointer select-none card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']"
-                role="button" :aria-expanded="showWindChart" @click="toggleWindChart" @keydown.enter="toggleWindChart"
-                @keydown.space.prevent="toggleWindChart">
-                <div class="flex items-center justify-between mb-3 md:mb-4">
-                  <h3 class="text-sm font-semibold text-white">Wind</h3>
-                  <WindCompass :windDirection="currentStation.data.windAngle || 0"
-                    :windSpeed="currentStation.data.windSpeed || 0" />
-                </div>
-                <div class="space-y-2 md:space-y-3">
-                  <div class="flex justify-between items-center">
-                    <span class="text-white/80 text-xs md:text-sm">Speed</span>
-                    <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{ currentStation.data.windSpeed }} m/s</span>
+                  <!-- Card to Table Transformation Overlay -->
+                  <div v-if="isTransformingTemperature" class="transform-overlay">
+                    <div class="transform-particles">
+                      <div v-for="n in 12" :key="n" class="particle" :style="{ animationDelay: `${n * 0.1}s` }"></div>
+                    </div>
+                    <div class="transform-text">
+                      <svg class="transform-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path v-if="!showTemperatureTable" stroke-linecap="round" stroke-linejoin="round"
+                          stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                      </svg>
+                      <span v-if="!showTemperatureTable">Expanding to table...</span>
+                      <span v-else>Collapsing to card...</span>
+                    </div>
                   </div>
-                  <div class="flex justify-between items-center">
-                    <span class="text-white/80 text-xs md:text-sm">Direction</span>
-                    <span class="text-xs md:text-sm font-semibold text-blue-400">{{ currentStation.data.windDirection }}</span>
-                  </div>
-                </div>
-              </div>
 
-              <!-- Precipitation -->
-              <div data-card-id="Precipitation"
-                :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 cursor-pointer select-none card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']"
-                role="button" :aria-expanded="showRainfallChart" @click="toggleRainfallChart"
-                @keydown.enter="toggleRainfallChart" @keydown.space.prevent="toggleRainfallChart">
-                <div class="flex items-center justify-between mb-3 md:mb-4">
-                  <h3 class="text-sm font-semibold text-white">Precipitation</h3>
-                  <span class="text-xl md:text-2xl">🌧️</span>
-                </div>
-                <div class="space-y-2 md:space-y-3">
-                  <div class="flex justify-between items-center">
-                    <span class="text-white/80 text-xs md:text-sm">Rainfall</span>
-                    <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{ currentStation.data.rainfall }} mm</span>
+                  <div class="flex items-center justify-between mb-3 md:mb-4">
+                    <h3 class="text-sm font-semibold text-white">Temperature</h3>
+                    <span class="text-xl md:text-2xl">🌡️</span>
                   </div>
-                  <div class="flex justify-between items-center">
-                    <span class="text-white/80 text-xs md:text-sm">Humidity</span>
-                    <span class="text-xs md:text-sm font-semibold text-blue-400">{{ currentStation.data.humidity }}%</span>
-                  </div>
-                </div>
-              </div>
+                  <div class="space-y-2 md:space-y-3">
+                    <div class="flex justify-between items-center">
+                      <span class="text-white/80 text-xs md:text-sm">Current</span>
+                      <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{
+                        currentStation.data.temperature }}°C</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-white/80 text-xs md:text-sm">Feels like</span>
+                      <span class="text-xs md:text-sm font-semibold text-orange-400">{{ currentStation.data.heatIndex
+                        }}°C</span>
+                    </div>
+                    <div class="flex justify-end items-center space-x-1">
+                      <span class="text-xs md:text-sm font-semibold text-white-400 text-right">
+                        View more data
+                      </span>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
 
-          
-
-              <!-- Atmospheric -->
-              <div data-card-id="Atmospheric"
-                :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
-                <div class="flex items-center justify-between mb-3 md:mb-4">
-                  <h3 class="text-sm font-semibold text-white">Atmospheric</h3>
-                  <span class="text-xl md:text-2xl">🧪</span>
-                </div>
-                <div class="space-y-2 md:space-y-3">
-                  <div class="flex justify-between items-center">
-                    <span class="text-white/80 text-xs md:text-sm">Pressure</span>
-                    <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{ currentStation.data.pressure }} hPa</span>
-                  </div>
-                  <div class="flex justify-between items-center">
-                    <span class="text-white/80 text-xs md:text-sm">Solar</span>
-                    <span class="text-xs md:text-sm font-semibold text-yellow-400">{{ currentStation.data.solar }} W/m²</span>
                   </div>
                 </div>
-              </div>
-              <!-- Soil Moisture -->
-              <div data-card-id="SoilMoisture"
-                :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
-                <div class="flex items-center justify-between mb-3 md:mb-4">
-                  <h3 class="text-sm font-semibold text-white">Soil Moisture</h3>
-                  <span class="text-xl md:text-2xl">🌱</span>
+
+                <!-- Wind -->
+                <div data-card-id="Wind"
+                  :class="[
+                    'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 cursor-pointer select-none card-hover card-transition touch-manipulation transition-all duration-500 ease-in-out',
+                    heroHidden ? 'card-dark' : '',
+                    isTransformingWind ? 'transform-to-table' : '',
+                    showWindSpeedTable ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'
+                  ]"
+                  role="button" :aria-expanded="showWindSpeedTable" @click="toggleWindChart" @keydown.enter="toggleWindChart"
+                  @keydown.space.prevent="toggleWindChart">
+                  
+                  <!-- Card to Table Transformation Overlay -->
+                  <div v-if="isTransformingWind" class="transform-overlay">
+                    <div class="transform-particles">
+                      <div v-for="n in 12" :key="n" class="particle" :style="{ animationDelay: `${n * 0.1}s` }"></div>
+                    </div>
+                    <div class="transform-text">
+                      <svg class="transform-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path v-if="!showWindSpeedTable" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                      </svg>
+                      <span v-if="!showWindSpeedTable">Expanding to table...</span>
+                      <span v-else>Collapsing to card...</span>
+                    </div>
+                  </div>
+                  
+                  <div class="flex items-center justify-between mb-3 md:mb-4">
+                    <h3 class="text-sm font-semibold text-white">Wind</h3>
+                    <WindCompass :windDirection="currentStation.data.windAngle || 0"
+                      :windSpeed="currentStation.data.windSpeed || 0" />
+                  </div>
+                  <div class="space-y-2 md:space-y-3">
+                    <div class="flex justify-between items-center">
+                      <span class="text-white/80 text-xs md:text-sm">Speed</span>
+                      <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{
+                        currentStation.data.windSpeed }} m/s</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-white/80 text-xs md:text-sm">Direction</span>
+                      <span class="text-xs md:text-sm font-semibold text-blue-400">{{ currentStation.data.windDirection
+                        }}</span>
+                    </div>
+                  </div>
                 </div>
-                <div class="text-center">
-                  <div class="text-lg md:text-xl lg:text-2xl font-bold text-green-400 mb-2">{{ currentStation.data.soilMoisture }}%</div>
-                  <div class="w-full bg-slate-700/50 rounded-full h-2 md:h-3">
-                    <div
-                      class="bg-gradient-to-r from-green-400 to-green-600 h-2 md:h-3 rounded-full transition-all duration-500"
-                      :style="{ width: currentStation.data.soilMoisture + '%' }"></div>
+
+                <!-- Precipitation -->
+                <div data-card-id="Precipitation"
+                  :class="[
+                    'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 cursor-pointer select-none card-hover card-transition touch-manipulation transition-all duration-500 ease-in-out',
+                    heroHidden ? 'card-dark' : '',
+                    isTransformingRainfall ? 'transform-to-table' : '',
+                    showRainfallTable ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'
+                  ]"
+                  role="button" :aria-expanded="showRainfallTable" @click="toggleRainfallChart"
+                  @keydown.enter="toggleRainfallChart" @keydown.space.prevent="toggleRainfallChart">
+                  
+                  <!-- Card to Table Transformation Overlay -->
+                  <div v-if="isTransformingRainfall" class="transform-overlay">
+                    <div class="transform-particles">
+                      <div v-for="n in 12" :key="n" class="particle" :style="{ animationDelay: `${n * 0.1}s` }"></div>
+                    </div>
+                    <div class="transform-text">
+                      <svg class="transform-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path v-if="!showRainfallTable" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                      </svg>
+                      <span v-if="!showRainfallTable">Expanding to table...</span>
+                      <span v-else>Collapsing to card...</span>
+                    </div>
+                  </div>
+                  
+                  <div class="flex items-center justify-between mb-3 md:mb-4">
+                    <h3 class="text-sm font-semibold text-white">Precipitation</h3>
+                    <span class="text-xl md:text-2xl">🌧️</span>
+                  </div>
+                  <div class="space-y-2 md:space-y-3">
+                    <div class="flex justify-between items-center">
+                      <span class="text-white/80 text-xs md:text-sm">Rainfall</span>
+                      <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{ currentStation.data.rainfall
+                        }} mm</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-white/80 text-xs md:text-sm">Humidity</span>
+                      <span class="text-xs md:text-sm font-semibold text-blue-400">{{ currentStation.data.humidity
+                        }}%</span>
+                    </div>
+                  </div>
+                </div>
+
+
+
+                <!-- Atmospheric -->
+                <div data-card-id="Atmospheric"
+                  :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
+                  <div class="flex items-center justify-between mb-3 md:mb-4">
+                    <h3 class="text-sm font-semibold text-white">Atmospheric</h3>
+                    <span class="text-xl md:text-2xl">🧪</span>
+                  </div>
+                  <div class="space-y-2 md:space-y-3">
+                    <div class="flex justify-between items-center">
+                      <span class="text-white/80 text-xs md:text-sm">Pressure</span>
+                      <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{ currentStation.data.pressure
+                        }} hPa</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-white/80 text-xs md:text-sm">Solar</span>
+                      <span class="text-xs md:text-sm font-semibold text-yellow-400">{{ currentStation.data.solar }}
+                        W/m²</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- Soil Moisture -->
+                <div data-card-id="SoilMoisture"
+                  :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
+                  <div class="flex items-center justify-between mb-3 md:mb-4">
+                    <h3 class="text-sm font-semibold text-white">Soil Moisture</h3>
+                    <span class="text-xl md:text-2xl">🌱</span>
+                  </div>
+                  <div class="text-center">
+                    <div class="text-lg md:text-xl lg:text-2xl font-bold text-green-400 mb-2">{{
+                      currentStation.data.soilMoisture }}%</div>
+                    <div class="w-full bg-slate-700/50 rounded-full h-2 md:h-3">
+                      <div
+                        class="bg-gradient-to-r from-green-400 to-green-600 h-2 md:h-3 rounded-full transition-all duration-500"
+                        :style="{ width: currentStation.data.soilMoisture + '%' }"></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Soil Temperature -->
+                <div data-card-id="SoilTemp"
+                  :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
+                  <div class="flex items-center justify-between mb-3 md:mb-4">
+                    <h3 class="text-sm font-semibold text-white">Soil Temperature</h3>
+                    <span class="text-xl md:text-2xl">🌡️</span>
+                  </div>
+                  <div class="text-center">
+                    <div class="text-lg md:text-xl lg:text-2xl font-bold text-yellow-400 mb-2">{{
+                      currentStation.data.soilTemp }}°C</div>
+                    <div class="text-xs md:text-sm text-white/80">Underground reading</div>
+                  </div>
+                </div>
+                <!-- Light Intensity -->
+                <div data-card-id="LightIntensity"
+                  :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
+                  <div class="flex items-center justify-between mb-3 md:mb-4">
+                    <h3 class="text-sm font-semibold text-white">Light Intensity</h3>
+                    <span class="text-xl md:text-2xl">💡</span>
+                  </div>
+                  <div class="text-center">
+                    <div class="text-lg md:text-xl lg:text-2xl font-bold text-purple-400 mb-2">{{
+                      currentStation.data.illumination }}</div>
+                    <div class="text-xs md:text-sm text-white/80">lux</div>
                   </div>
                 </div>
               </div>
-              <!-- Soil Temperature -->
-              <div data-card-id="SoilTemp"
-                :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
-                <div class="flex items-center justify-between mb-3 md:mb-4">
-                  <h3 class="text-sm font-semibold text-white">Soil Temperature</h3>
-                  <span class="text-xl md:text-2xl">🌡️</span>
-                </div>
-                <div class="text-center">
-                  <div class="text-lg md:text-xl lg:text-2xl font-bold text-yellow-400 mb-2">{{ currentStation.data.soilTemp }}°C</div>
-                  <div class="text-xs md:text-sm text-white/80">Underground reading</div>
-                </div>
-              </div>
-              <!-- Light Intensity -->
-              <div data-card-id="LightIntensity"
-                :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
-                <div class="flex items-center justify-between mb-3 md:mb-4">
-                  <h3 class="text-sm font-semibold text-white">Light Intensity</h3>
-                  <span class="text-xl md:text-2xl">💡</span>
-                </div>
-                <div class="text-center">
-                  <div class="text-lg md:text-xl lg:text-2xl font-bold text-purple-400 mb-2">{{ currentStation.data.illumination }}</div>
-                  <div class="text-xs md:text-sm text-white/80">lux</div>
-                </div>
-              </div>
-            </div>
-          </section>
+            </section>
 
-          
-          <!-- Action Buttons -->
-          <section class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8 mt-6 px-4">
-            <router-link to="/summary"
-              class="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 sm:px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 touch-manipulation min-h-[44px]">
-              <span>📊</span>
-              <span>View 7-Day Summary</span>
-            </router-link>
 
-            <button v-if="currentStation && currentStation.data.heatIndex > 35" @click="openHeatAlert"
-              class="w-full sm:w-auto bg-gradient-to-r from-red-500 to-red-600 text-white px-6 sm:px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 animate-pulse touch-manipulation min-h-[44px]">
-              <span>🚨</span>
-              <span>Heat Alert Active</span>
-            </button>
-          </section>
-        </main>
+            <!-- Action Buttons -->
+            <section class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8 mt-6 px-4">
+              <router-link to="/summary"
+                class="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 sm:px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 touch-manipulation min-h-[44px]">
+                <span>📊</span>
+                <span>View 7-Day Summary</span>
+              </router-link>
+
+              <button v-if="currentStation && currentStation.data.heatIndex > 35" @click="openHeatAlert"
+                class="w-full sm:w-auto bg-gradient-to-r from-red-500 to-red-600 text-white px-6 sm:px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 animate-pulse touch-manipulation min-h-[44px]">
+                <span>🚨</span>
+                <span>Heat Alert Active</span>
+              </button>
+            </section>
+          </main>
         </div>
-        
+
         <!-- Heat Alert handled by SweetAlert2 component -->
         <HeatAlert ref="heatAlertRef" />
 
@@ -469,6 +530,8 @@
 import WindSpeedChart from '../components/WindSpeedChart.vue';
 import RainfallChart from '../components/RainfallChart.vue';
 import TemperatureTable from '../components/TemperatureTable.vue';
+import WindSpeedTable from '../components/WindSpeedTable.vue';
+import RainfallTable from '../components/RainfallTable.vue';
 import FirebaseDebug from '../components/FirebaseDebug.vue';
 import HeatAlert from '../components/HeatAlert.vue';
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
@@ -499,17 +562,45 @@ const rainCanvas = ref<HTMLCanvasElement | null>(null);
 const showWindChart = ref(false);
 
 function toggleWindChart() {
-  showWindChart.value = !showWindChart.value;
-  // If opening, try to refresh chart data from child component
-  if (showWindChart.value) {
-    try {
-      const child: any = windChartRef.value;
-      if (child && typeof child.fetchWindSpeedData === 'function') {
-        child.fetchWindSpeedData(selectedStation.value);
-      }
-    } catch (e) {
-      console.warn('Failed to refresh wind chart on toggle', e);
+  if (!showWindSpeedTable.value) {
+    // Starting transformation - show animation
+    isTransformingWind.value = true;
+    
+    // After a delay, show the table and hide transformation
+    setTimeout(() => {
+      showWindSpeedTable.value = true;
+      isTransformingWind.value = false;
+      
+      // Trigger data fetch
+      setTimeout(() => {
+        try {
+          const child: any = windSpeedTableRef.value;
+          if (child && typeof child.fetchWindData === 'function') {
+            child.fetchWindData(selectedStation.value);
+          }
+        } catch (e) {
+          console.warn('Failed to refresh wind speed table on toggle', e);
+        }
+      }, 100);
+    }, 800); // Duration of transformation animation
+  } else {
+    // Closing table - start reverse transformation
+    isTransformingWind.value = true;
+    
+    // First hide the table with exit animation
+    const child: any = windSpeedTableRef.value;
+    if (child && child.$el) {
+      child.$el.classList.add('table-exiting');
     }
+    
+    // After table exit animation, show card transformation
+    setTimeout(() => {
+      showWindSpeedTable.value = false;
+      // Keep transformation overlay for reverse effect
+      setTimeout(() => {
+        isTransformingWind.value = false;
+      }, 600); // Reverse transformation duration
+    }, 400); // Table exit duration
   }
 }
 // Show/hide rainfall chart (same logic as wind)
@@ -519,17 +610,56 @@ const rainfallChartRef = ref(null);
 const showTemperatureTable = ref(false);
 const temperatureTableRef = ref(null);
 const isTransformingTemperature = ref(false);
+
+// Show/hide wind speed table
+const showWindSpeedTable = ref(false);
+const windSpeedTableRef = ref(null);
+const isTransformingWind = ref(false);
+
+// Show/hide rainfall table
+const showRainfallTable = ref(false);
+const rainfallTableRef = ref(null);
+const isTransformingRainfall = ref(false);
 function toggleRainfallChart() {
-  showRainfallChart.value = !showRainfallChart.value;
-  if (showRainfallChart.value) {
-    try {
-      const child: any = rainfallChartRef.value;
-      if (child && typeof child.fetchRainfallData === 'function') {
-        child.fetchRainfallData(selectedStation.value);
-      }
-    } catch (e) {
-      console.warn('Failed to refresh rainfall chart on toggle', e);
+  if (!showRainfallTable.value) {
+    // Starting transformation - show animation
+    isTransformingRainfall.value = true;
+    
+    // After a delay, show the table and hide transformation
+    setTimeout(() => {
+      showRainfallTable.value = true;
+      isTransformingRainfall.value = false;
+      
+      // Trigger data fetch
+      setTimeout(() => {
+        try {
+          const child: any = rainfallTableRef.value;
+          if (child && typeof child.fetchRainfallData === 'function') {
+            child.fetchRainfallData(selectedStation.value);
+          }
+        } catch (e) {
+          console.warn('Failed to refresh rainfall table on toggle', e);
+        }
+      }, 100);
+    }, 800); // Duration of transformation animation
+  } else {
+    // Closing table - start reverse transformation
+    isTransformingRainfall.value = true;
+    
+    // First hide the table with exit animation
+    const child: any = rainfallTableRef.value;
+    if (child && child.$el) {
+      child.$el.classList.add('table-exiting');
     }
+    
+    // After table exit animation, show card transformation
+    setTimeout(() => {
+      showRainfallTable.value = false;
+      // Keep transformation overlay for reverse effect
+      setTimeout(() => {
+        isTransformingRainfall.value = false;
+      }, 600); // Reverse transformation duration
+    }, 400); // Table exit duration
   }
 }
 
@@ -537,12 +667,12 @@ function toggleTemperatureTable() {
   if (!showTemperatureTable.value) {
     // Starting transformation - show animation
     isTransformingTemperature.value = true;
-    
+
     // After a delay, show the table and hide transformation
     setTimeout(() => {
       showTemperatureTable.value = true;
       isTransformingTemperature.value = false;
-      
+
       // Trigger data fetch
       setTimeout(() => {
         try {
@@ -558,13 +688,13 @@ function toggleTemperatureTable() {
   } else {
     // Closing table - start reverse transformation
     isTransformingTemperature.value = true;
-    
+
     // First hide the table with exit animation
     const child: any = temperatureTableRef.value;
     if (child && child.$el) {
       child.$el.classList.add('table-exiting');
     }
-    
+
     // After table exit animation, show card transformation
     setTimeout(() => {
       showTemperatureTable.value = false;
@@ -578,6 +708,14 @@ function toggleTemperatureTable() {
 
 function onTemperatureAnimationComplete() {
   isTransformingTemperature.value = false;
+}
+
+function onWindAnimationComplete() {
+  isTransformingWind.value = false;
+}
+
+function onRainfallAnimationComplete() {
+  isTransformingRainfall.value = false;
 }
 
 function openHeatAlert() {
@@ -620,9 +758,9 @@ function closeMapModal() {
 // Function to get weather icon based on weather conditions for station popups
 function getStationWeatherIcon(stationData: any): string {
   if (!stationData) return '⛅';
-  
+
   const weatherCondition = determineWeatherCondition(stationData);
-  
+
   // Return emoji based on weather condition (same logic as main weather icon)
   if (weatherCondition.wType.includes('Intense') || weatherCondition.wType.includes('Torrential')) return '🌊';
   if (weatherCondition.wType.includes('Heavy')) return '🌧️';
@@ -689,7 +827,7 @@ function initializeModalMap() {
 
       const marker = window.L.marker([station.lat, station.lng], { icon }).addTo(modalMap)
         .bindPopup(popupContent);
-      
+
       marker.on('click', () => {
         selectedStation.value = station.id;
         // Update popup content when station is selected
@@ -697,7 +835,7 @@ function initializeModalMap() {
           const updatedData = currentStation.value?.data;
           const updatedTemp = updatedData?.temperature || 0;
           const updatedIcon = getStationWeatherIcon(updatedData);
-          
+
           const updatedPopupContent = `
             <div class="flex flex-col items-center p-2 min-w-[100px]">
               <div class="text-5xl mb-2">${updatedIcon}</div>
@@ -708,7 +846,7 @@ function initializeModalMap() {
           marker.setPopupContent(updatedPopupContent);
         }, 500);
       });
-      
+
       modalMarkerMap[station.id] = marker;
     });
 
@@ -786,7 +924,7 @@ function getWeatherIcon(): string {
   if (!currentStation.value || !currentStation.value.data) return '⛅';
 
   const weatherCondition = determineWeatherCondition(currentStation.value.data);
-  
+
   // Return emoji based on weather condition
   if (weatherCondition.wType.includes('Intense') || weatherCondition.wType.includes('Torrential')) return '🌊';
   if (weatherCondition.wType.includes('Heavy')) return '🌧️';
@@ -824,7 +962,7 @@ function determineWeatherCondition(weather: any) {
   let condition = '';
 
   // Determine weather type based on rainfall and light levels
-  if (rr > 200) { 
+  if (rr > 200) {
     wType = 'Intense to Torrential Rain';
     condition = intenseRainIcon;
   } else if (rr > 100 && rr <= 200) {
@@ -850,8 +988,8 @@ function determineWeatherCondition(weather: any) {
     wType = 'Unknown';
     condition = cloudyIcon;
   }
-  
-  
+
+
   return { condition, wType };
 }
 
@@ -943,8 +1081,8 @@ class RainParticleSystem {
   private getDropCount(): number {
     const area = this.canvas.width * this.canvas.height;
     const baseCount = area / 50000; // Base density
-    
-    switch(this.intensity) {
+
+    switch (this.intensity) {
       case 'light': return Math.floor(baseCount * 0.3);
       case 'moderate': return Math.floor(baseCount * 0.6);
       case 'heavy': return Math.floor(baseCount * 1.0);
@@ -957,7 +1095,7 @@ class RainParticleSystem {
     const canvas = this.canvas;
     let speed, length, width, opacity;
 
-    switch(this.intensity) {
+    switch (this.intensity) {
       case 'light':
         speed = 2 + Math.random() * 3;
         length = 10 + Math.random() * 10;
@@ -999,12 +1137,12 @@ class RainParticleSystem {
   private updateDrop(drop: RainDrop) {
     drop.y += drop.speed;
     drop.x += this.windEffect;
-    
+
     // Reset drop when it goes off screen
     if (drop.y > this.canvas.height + drop.length) {
       Object.assign(drop, this.createDrop());
     }
-    
+
     // Handle horizontal wrapping for wind effect
     if (drop.x > this.canvas.width + 50) {
       drop.x = -50;
@@ -1019,7 +1157,7 @@ class RainParticleSystem {
     this.ctx.strokeStyle = `rgba(200, 220, 255, ${drop.opacity})`;
     this.ctx.lineWidth = drop.width;
     this.ctx.lineCap = 'round';
-    
+
     this.ctx.beginPath();
     this.ctx.moveTo(drop.x, drop.y);
     this.ctx.lineTo(drop.x - this.windEffect * 0.5, drop.y + drop.length);
@@ -1029,29 +1167,29 @@ class RainParticleSystem {
 
   private animate = () => {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    
+
     // Update wind effect based on intensity
     this.windEffect = this.intensity === 'intense' ? Math.sin(Date.now() * 0.001) * 2 : 0;
-    
+
     // Update and draw drops
     this.drops.forEach(drop => {
       this.updateDrop(drop);
       this.drawDrop(drop);
     });
-    
+
     this.animationId = requestAnimationFrame(this.animate);
   };
 
   public start(intensity: string) {
     this.intensity = intensity;
-    
+
     // Create drops based on intensity
     const dropCount = this.getDropCount();
     this.drops = [];
     for (let i = 0; i < dropCount; i++) {
       this.drops.push(this.createDrop());
     }
-    
+
     // Start animation
     if (this.animationId) {
       cancelAnimationFrame(this.animationId);
@@ -1116,7 +1254,7 @@ function fetchLatestSensors(stationId: string) {
   sensorTypes.forEach(sensor => {
     const sensorRef = dbRef(db, `${stationId}/data/sensors/${sensor.key}`);
     const q = query(sensorRef, orderByKey(), limitToLast(1));
-    
+
     // Store the unsubscribe function
     const unsubscribe = onChildAdded(q, (snapshot) => {
       const val = snapshot.val();
@@ -1132,7 +1270,7 @@ function fetchLatestSensors(stationId: string) {
       else if (sensor.key === 'HUM') sensorValues.value.HUM = finalValue;
       else if (sensor.key === 'RR') {
         sensorValues.value.RR = finalValue;
-        
+
       }
       else if (sensor.key === 'WSP') sensorValues.value.WSP = finalValue;
       else if (sensor.key === 'WD') sensorValues.value.WD = finalValue;
@@ -1140,7 +1278,7 @@ function fetchLatestSensors(stationId: string) {
       else if (sensor.key === 'STD') sensorValues.value.STD = finalValue;
       else if (sensor.key === 'LUX') {
         sensorValues.value.LUX = finalValue;
-        
+
       }
       else if (sensor.key === 'TSR') sensorValues.value.TSR = finalValue;
       else if (sensor.key === 'WA') sensorValues.value.WA = finalValue;
@@ -1180,7 +1318,7 @@ onUnmounted(() => {
       console.warn('Error cleaning up modal map on unmount:', error);
     }
   }
-  
+
   // Clear marker references
   Object.keys(modalMarkerMap).forEach(key => {
     delete modalMarkerMap[key];
@@ -1203,7 +1341,7 @@ watch(selectedStation, (newStation) => {
 
   fetchLatestSensors(newStation);
   fetchTodayRainfallTotal(newStation);
-  
+
   // Update rain system when station changes
   setTimeout(() => {
     updateRainSystem();
@@ -1248,7 +1386,7 @@ const handleRefresh = async (event: any) => {
         const updatedData = currentStation.value.data;
         const updatedTemp = updatedData?.temperature || 0;
         const updatedIcon = getStationWeatherIcon(updatedData);
-        
+
         const updatedPopupContent = `
           <div class="flex flex-col items-center p-2 min-w-[150px]">
             <div class="text-5xl mb-2">${updatedIcon}</div>
@@ -1281,27 +1419,27 @@ async function fetchTodayRainfallTotal(stationId: string) {
   try {
     // Reset the daily total
     dailyRainfallTotal.value = 0;
-    
+
     // Calculate start of today with timezone adjustment (like your working code)
     const today = new Date();
     const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     // Add 8 hours timezone offset (matching your working code's addHours(startOfDay(new Date()), 8))
     startOfToday.setHours(8, 0, 0, 0);
     const startTime = Math.floor(startOfToday.getTime() / 1000); // Convert to Unix timestamp in seconds
-    
-    
-    
+
+
+
     // Query Firebase for today's rainfall data (matching your working code structure exactly)
     const collectionRef = dbRef(db, `station${stationId}/data/sensors/RR/`);
     const q = query(collectionRef, orderByKey(), startAt(startTime.toString()));
-    
+
     let accumulatedTotal = 0;
     let readingCount = 0;
-    
+
     // Use onChildAdded to accumulate all rainfall readings for today (same as working code)
     const unsubscribe = onChildAdded(q, (snapshot) => {
       const newData = snapshot.val();
-      
+
       // Handle the data structure like your working code
       let rainfall = 0;
       if (newData && typeof newData === 'object' && newData.val !== undefined) {
@@ -1311,30 +1449,30 @@ async function fetchTodayRainfallTotal(stationId: string) {
       } else if (typeof newData === 'string') {
         rainfall = parseFloat(newData);
       }
-      
+
       // Only add valid rainfall values (same validation as working code)
       if (!isNaN(rainfall) && rainfall >= 0) {
         accumulatedTotal += rainfall;
         readingCount++;
-        
+
         // Update the daily total
         dailyRainfallTotal.value = accumulatedTotal;
-        
+
         const timestamp = snapshot.key;
         if (timestamp) {
           const readingTime = new Date(parseInt(timestamp) * 1000);
-     
+
         } else {
-         
+
         }
       }
     });
-    
+
     // Log completion after a short delay to see the final result
     setTimeout(() => {
-      
+
     }, 2000);
-    
+
   } catch (error) {
     console.error('Error fetching daily rainfall total:', error);
     dailyRainfallTotal.value = 0;
@@ -1349,7 +1487,7 @@ const todayTotalRain = computed(() => {
 function getRainfallCategory(): string {
   const total = todayTotalRain.value;
   if (total >= 201) return 'RED Warning - Heavy to Intense';
-  if (total >= 101) return 'ORANGE Warning - Moderate to Heavy'; 
+  if (total >= 101) return 'ORANGE Warning - Moderate to Heavy';
   if (total >= 50) return 'YELLOW Warning - Light to Moderate';
   return 'Normal';
 }
@@ -1505,7 +1643,8 @@ watch(selectedStation, (newId) => {
 /* Fix scrolling issues and improve mobile performance */
 .min-h-screen {
   min-height: 100vh;
-  min-height: 100dvh; /* Dynamic viewport height for mobile */
+  min-height: 100dvh;
+  /* Dynamic viewport height for mobile */
 }
 
 /* Ensure proper scrolling in Ionic */
@@ -1599,20 +1738,31 @@ ion-content {
   .min-h-screen {
     padding-bottom: env(safe-area-inset-bottom);
   }
-  
+
   /* Adjust font sizes for mobile */
-  h1 { font-size: 1.875rem; }
-  h2 { font-size: 1.5rem; }
-  h3 { font-size: 1.125rem; }
-  
+  h1 {
+    font-size: 1.875rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.125rem;
+  }
+
   /* Improve touch targets */
-  button, a, [role="button"] {
+  button,
+  a,
+  [role="button"] {
     min-height: 44px;
     min-width: 44px;
   }
 }
 
 @media (max-width: 768px) {
+
   /* Improve card spacing on mobile */
   #metrics-grid {
     gap: 1rem;
@@ -1626,22 +1776,22 @@ ion-content {
     gap: 0.75rem;
     max-width: 800px;
   }
-  
+
   /* More compact cards for tablet */
   .card-hover {
     padding: 0.75rem !important;
   }
-  
+
   /* Smaller text in cards for better fit */
   .card-hover h3 {
     font-size: 0.875rem;
   }
-  
+
   .card-hover .text-lg,
   .card-hover .text-xl {
     font-size: 1rem;
   }
-  
+
   .card-hover .text-2xl {
     font-size: 1.25rem;
   }
@@ -1701,6 +1851,7 @@ ion-content {
 
 /* Desktop hover effects */
 @media (hover: hover) and (pointer: fine) {
+
   .card-hover:hover,
   .card-hover:focus {
     transform: translateY(-6px) scale(1.01);
@@ -1771,6 +1922,7 @@ ion-content {
 
 /* Improve performance on mobile */
 @media (max-width: 768px) {
+
   .backdrop-blur-lg,
   .backdrop-blur-md,
   .backdrop-blur-sm {
@@ -1781,17 +1933,18 @@ ion-content {
 
 /* Specific tablet optimizations */
 @media (min-width: 768px) and (max-width: 1024px) {
+
   /* Better spacing for tablet view */
   .w-full.max-w-4xl {
     max-width: 100%;
     padding: 0 2rem;
   }
-  
+
   /* Optimize hero section for tablet */
   .min-h-\[80vh\] {
     min-height: 70vh;
   }
-  
+
   /* Better button sizing for tablet */
   .w-full.sm\:w-auto {
     width: auto;
@@ -1831,9 +1984,11 @@ ion-content {
     transform: translateX(10%);
     opacity: 0.3;
   }
+
   50% {
     opacity: 0.3;
   }
+
   100% {
     transform: translateX(calc(100vw + 100%));
     opacity: 0;
@@ -1919,9 +2074,11 @@ ion-content {
     transform: translateX(20%);
     opacity: 0.2;
   }
+
   40% {
     opacity: 0.2;
   }
+
   100% {
     transform: translateX(calc(100vw + 120%));
     opacity: 0;
@@ -1934,9 +2091,11 @@ ion-content {
     transform: translateX(5%);
     opacity: 0.35;
   }
+
   50% {
     opacity: 0.35;
   }
+
   100% {
     transform: translateX(calc(100vw + 100%));
     opacity: 0;
@@ -1948,9 +2107,11 @@ ion-content {
     transform: translateX(15%);
     opacity: 0.30;
   }
+
   45% {
     opacity: 0.30;
   }
+
   100% {
     transform: translateX(calc(100vw + 120%));
     opacity: 0;
@@ -1963,9 +2124,11 @@ ion-content {
     transform: translateX(25%);
     opacity: 0.28;
   }
+
   48% {
     opacity: 0.28;
   }
+
   100% {
     transform: translateX(calc(100vw + 110%));
     opacity: 0;
@@ -1977,9 +2140,11 @@ ion-content {
     transform: translateX(80%);
     opacity: 0.25;
   }
+
   52% {
     opacity: 0.25;
   }
+
   100% {
     transform: translateX(calc(-100vw - 100%));
     opacity: 0;
@@ -1992,9 +2157,11 @@ ion-content {
     transform: translateX(35%);
     opacity: 0.22;
   }
+
   45% {
     opacity: 0.22;
   }
+
   100% {
     transform: translateX(calc(100vw + 130%));
     opacity: 0;
@@ -2006,9 +2173,11 @@ ion-content {
     transform: translateX(70%);
     opacity: 0.20;
   }
+
   50% {
     opacity: 0.20;
   }
+
   100% {
     transform: translateX(calc(-100vw - 110%));
     opacity: 0;
@@ -2021,9 +2190,11 @@ ion-content {
     transform: translateX(45%);
     opacity: 0.18;
   }
+
   35% {
     opacity: 0.18;
   }
+
   100% {
     transform: translateX(calc(100vw + 140%));
     opacity: 0;
@@ -2035,9 +2206,11 @@ ion-content {
     transform: translateX(60%);
     opacity: 0.16;
   }
+
   40% {
     opacity: 0.16;
   }
+
   100% {
     transform: translateX(calc(-100vw - 120%));
     opacity: 0;
@@ -2050,9 +2223,11 @@ ion-content {
     transform: translateX(50%);
     opacity: 0.14;
   }
+
   30% {
     opacity: 0.14;
   }
+
   100% {
     transform: translateX(calc(100vw + 150%));
     opacity: 0;
@@ -2064,9 +2239,11 @@ ion-content {
     transform: translateX(65%);
     opacity: 0.12;
   }
+
   35% {
     opacity: 0.12;
   }
+
   100% {
     transform: translateX(calc(-100vw - 130%));
     opacity: 0;
@@ -2079,9 +2256,11 @@ ion-content {
     transform: translateX(30%);
     opacity: 0.15;
   }
+
   42% {
     opacity: 0.15;
   }
+
   100% {
     transform: translateX(calc(100vw + 160%));
     opacity: 0;
@@ -2093,9 +2272,11 @@ ion-content {
     transform: translateX(75%);
     opacity: 0.17;
   }
+
   46% {
     opacity: 0.17;
   }
+
   100% {
     transform: translateX(calc(-100vw - 140%));
     opacity: 0;
@@ -2180,18 +2361,77 @@ ion-content {
   animation: particleFloatReverse 0.6s ease-in-out;
 }
 
-.particle:nth-child(1) { top: 20%; left: 10%; animation-delay: 0s; }
-.particle:nth-child(2) { top: 15%; left: 80%; animation-delay: 0.1s; }
-.particle:nth-child(3) { top: 40%; left: 15%; animation-delay: 0.2s; }
-.particle:nth-child(4) { top: 60%; left: 85%; animation-delay: 0.3s; }
-.particle:nth-child(5) { top: 80%; left: 25%; animation-delay: 0.4s; }
-.particle:nth-child(6) { top: 75%; left: 75%; animation-delay: 0.5s; }
-.particle:nth-child(7) { top: 30%; left: 50%; animation-delay: 0.6s; }
-.particle:nth-child(8) { top: 50%; left: 60%; animation-delay: 0.7s; }
-.particle:nth-child(9) { top: 25%; left: 40%; animation-delay: 0.8s; }
-.particle:nth-child(10) { top: 65%; left: 30%; animation-delay: 0.9s; }
-.particle:nth-child(11) { top: 85%; left: 55%; animation-delay: 1.0s; }
-.particle:nth-child(12) { top: 45%; left: 70%; animation-delay: 1.1s; }
+.particle:nth-child(1) {
+  top: 20%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.particle:nth-child(2) {
+  top: 15%;
+  left: 80%;
+  animation-delay: 0.1s;
+}
+
+.particle:nth-child(3) {
+  top: 40%;
+  left: 15%;
+  animation-delay: 0.2s;
+}
+
+.particle:nth-child(4) {
+  top: 60%;
+  left: 85%;
+  animation-delay: 0.3s;
+}
+
+.particle:nth-child(5) {
+  top: 80%;
+  left: 25%;
+  animation-delay: 0.4s;
+}
+
+.particle:nth-child(6) {
+  top: 75%;
+  left: 75%;
+  animation-delay: 0.5s;
+}
+
+.particle:nth-child(7) {
+  top: 30%;
+  left: 50%;
+  animation-delay: 0.6s;
+}
+
+.particle:nth-child(8) {
+  top: 50%;
+  left: 60%;
+  animation-delay: 0.7s;
+}
+
+.particle:nth-child(9) {
+  top: 25%;
+  left: 40%;
+  animation-delay: 0.8s;
+}
+
+.particle:nth-child(10) {
+  top: 65%;
+  left: 30%;
+  animation-delay: 0.9s;
+}
+
+.particle:nth-child(11) {
+  top: 85%;
+  left: 55%;
+  animation-delay: 1.0s;
+}
+
+.particle:nth-child(12) {
+  top: 45%;
+  left: 70%;
+  animation-delay: 1.1s;
+}
 
 .transform-text {
   display: flex;
@@ -2226,10 +2466,12 @@ ion-content {
     opacity: 0;
     backdrop-filter: blur(0px);
   }
+
   50% {
     opacity: 1;
     backdrop-filter: blur(8px);
   }
+
   100% {
     opacity: 0.8;
     backdrop-filter: blur(6px);
@@ -2241,10 +2483,12 @@ ion-content {
     opacity: 0.8;
     backdrop-filter: blur(6px);
   }
+
   50% {
     opacity: 1;
     backdrop-filter: blur(8px);
   }
+
   100% {
     opacity: 0;
     backdrop-filter: blur(0px);
@@ -2252,10 +2496,13 @@ ion-content {
 }
 
 @keyframes particleFloat {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0) scale(1);
     opacity: 0.3;
   }
+
   50% {
     transform: translateY(-10px) scale(1.2);
     opacity: 1;
@@ -2267,6 +2514,7 @@ ion-content {
     transform: translateY(-10px) scale(1.2);
     opacity: 1;
   }
+
   100% {
     transform: translateY(0) scale(0.5);
     opacity: 0;
@@ -2278,10 +2526,12 @@ ion-content {
     opacity: 0;
     transform: translateY(10px) scale(0.9);
   }
+
   50% {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+
   100% {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -2293,6 +2543,7 @@ ion-content {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
+
   100% {
     opacity: 0;
     transform: translateY(-10px) scale(0.8);
@@ -2300,10 +2551,13 @@ ion-content {
 }
 
 @keyframes iconPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
     opacity: 0.8;
   }
+
   50% {
     transform: scale(1.1);
     opacity: 1;

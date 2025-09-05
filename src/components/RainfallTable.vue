@@ -1,19 +1,19 @@
 <template>
   <div :class="[
-    'temperature-table-container',
+    'rainfall-table-container',
     isTransforming ? 'table-transforming' : 'table-ready'
   ]">
-    <!-- Header Section with enhanced animation -->
+    <!-- Header Section -->
     <div class="table-header">
       <div class="header-content">
         <div class="title-section">
-          <h3 class="table-title">Temperature Timeline</h3>
-          <p class="table-subtitle">Hourly data from 12mn to 11pm</p>
+          <h3 class="table-title">Rainfall Timeline</h3>
+          <p class="table-subtitle">Hourly rainfall data from 12mn to 11pm</p>
         </div>
         <button 
           @click="closeTable" 
-          class="close-button "
-          aria-label="Close temperature table"
+          class="close-button"
+          aria-label="Close rainfall table"
         >
           <svg class="close-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -23,23 +23,22 @@
       </div>
     </div>
 
-
     <!-- Carousel Container -->
     <div class="carousel-wrapper">
       <div class="loading-overlay" v-if="isLoading">
         <div class="loading-spinner"></div>
-        <p class="loading-text">Loading temperature data...</p>
+        <p class="loading-text">Loading rainfall data...</p>
       </div>
       
-      <div v-else class="temperature-carousel">
+      <div v-else class="rainfall-carousel">
         <div class="carousel-scroll">
           <div 
-            v-for="(entry, index) in temperatureData" 
+            v-for="(entry, index) in rainfallData" 
             :key="index"
             :class="[
-              'temp-card',
+              'rainfall-card',
               { 'current-hour': entry.isCurrent },
-              { 'no-data': entry.temperature === null }
+              { 'no-data': entry.rainfall === null }
             ]"
           >
             <!-- Time Header -->
@@ -48,21 +47,21 @@
               <span v-if="entry.period" class="time-period">{{ entry.period }}</span>
             </div>
             
-            <!-- Temperature Display -->
-            <div class="card-temp">
-              <span v-if="entry.temperature !== null" class="temp-value">
-                {{ entry.temperature }}°
+            <!-- Rainfall Display -->
+            <div class="card-rainfall">
+              <span v-if="entry.rainfall !== null" class="rainfall-value">
+                {{ entry.rainfall }} mm
               </span>
               <span v-else class="no-data-text">--</span>
             </div>
             
-            <!-- Temperature Bar -->
-            <div class="temp-bar-container">
+            <!-- Rainfall Bar -->
+            <div class="rainfall-bar-container">
               <div 
-                class="temp-bar"
+                class="rainfall-bar"
                 :style="{ 
-                  height: entry.temperature !== null ? getTemperatureBarHeight(entry.temperature) : '0%',
-                  backgroundColor: getTemperatureColor(entry.temperature)
+                  height: entry.rainfall !== null ? getRainfallBarHeight(entry.rainfall) : '0%',
+                  backgroundColor: getRainfallColor(entry.rainfall)
                 }"
               ></div>
             </div>
@@ -72,11 +71,11 @@
               <span 
                 :class="[
                   'status-dot',
-                  getTemperatureStatus(entry.temperature).class
+                  getRainfallStatus(entry.rainfall).class
                 ]"
               ></span>
               <span class="status-text">
-                {{ getTemperatureStatus(entry.temperature).text }}
+                {{ getRainfallStatus(entry.rainfall).text }}
               </span>
             </div>
           </div>
@@ -99,14 +98,17 @@
     <div class="table-footer">
       <div class="footer-stats">
         <div class="footer-stat">
-          <span class="footer-label">Min Today:</span>
-          <span class="footer-value">{{ minTemperature }}°C</span>
+          <span class="footer-label">Total Today:</span>
+          <span class="footer-value">{{ totalRainfall }} mm</span>
         </div>
         <div class="footer-stat">
-          <span class="footer-label">Max Today:</span>
-          <span class="footer-value">{{ maxTemperature }}°C</span>
+          <span class="footer-label">Peak Hour:</span>
+          <span class="footer-value">{{ maxRainfall }} mm</span>
         </div>
-   
+        <div class="footer-stat">
+          <span class="footer-label">Last Updated:</span>
+          <span class="footer-value">{{ lastUpdated }}</span>
+        </div>
       </div>
     </div>
   </div>
@@ -120,7 +122,7 @@ import { addHours, getUnixTime, startOfDay, format, fromUnixTime } from 'date-fn
 
 const props = defineProps<{ 
   stationId: string
-  currentTemperature?: number 
+  currentRainfall?: number 
   isTransforming?: boolean
 }>()
 
@@ -129,35 +131,32 @@ const emit = defineEmits<{
   'close-table': []
 }>()
 
-interface TemperatureEntry {
+interface RainfallEntry {
   hour: number
   time12h: string
   period: string
-  temperature: number | null
+  rainfall: number | null
   isCurrent: boolean
 }
 
 const isLoading = ref(true)
 const lastUpdated = ref('')
-const temperatureData = ref<TemperatureEntry[]>([])
+const rainfallData = ref<RainfallEntry[]>([])
 
 // Simple timezone-aware date handling (Philippines is UTC+8)
 function getLocalDate(timestamp: number): Date {
-  // Timestamps in Firebase are likely already in local time or UTC
-  // Let's use them directly first and see what happens
   return new Date(timestamp * 1000)
 }
 
 function getTodayStartTimestamp(): number {
-  // Get start of today in local time, then convert to Unix timestamp
   const now = new Date()
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   return Math.floor(todayStart.getTime() / 1000)
 }
 
 // Generate all hours from 12mn to 11pm
-function generateHourlySlots(): TemperatureEntry[] {
-  const slots: TemperatureEntry[] = []
+function generateHourlySlots(): RainfallEntry[] {
+  const slots: RainfallEntry[] = []
   const now = new Date()
   const currentHour = now.getHours()
   
@@ -175,7 +174,7 @@ function generateHourlySlots(): TemperatureEntry[] {
       hour,
       time12h: timeDisplay,
       period: hour === 0 || hour === 12 ? '' : period,
-      temperature: null,
+      rainfall: null,
       isCurrent: hour === currentHour
     })
   }
@@ -184,74 +183,51 @@ function generateHourlySlots(): TemperatureEntry[] {
 }
 
 // Computed properties
-const averageTemperature = computed(() => {
-  const validTemps = temperatureData.value
-    .map(entry => entry.temperature)
-    .filter(temp => temp !== null) as number[]
+const totalRainfall = computed(() => {
+  const validRainfall = rainfallData.value
+    .map(entry => entry.rainfall)
+    .filter(rainfall => rainfall !== null) as number[]
   
-  if (validTemps.length === 0) return 0
-  
-  const sum = validTemps.reduce((a, b) => a + b, 0)
-  return Math.round((sum / validTemps.length) * 10) / 10
+  return validRainfall.length > 0 ? Math.round(validRainfall.reduce((a, b) => a + b, 0) * 100) / 100 : 0
 })
 
-const minTemperature = computed(() => {
-  const validTemps = temperatureData.value
-    .map(entry => entry.temperature)
-    .filter(temp => temp !== null) as number[]
+const maxRainfall = computed(() => {
+  const validRainfall = rainfallData.value
+    .map(entry => entry.rainfall)
+    .filter(rainfall => rainfall !== null) as number[]
   
-  return validTemps.length > 0 ? Math.min(...validTemps) : 0
-})
-
-const maxTemperature = computed(() => {
-  const validTemps = temperatureData.value
-    .map(entry => entry.temperature)
-    .filter(temp => temp !== null) as number[]
-  
-  return validTemps.length > 0 ? Math.max(...validTemps) : 0
+  return validRainfall.length > 0 ? Math.max(...validRainfall) : 0
 })
 
 // Helper functions for styling
-function getTemperatureBarWidth(temp: number | null): string {
-  if (temp === null) return '0%'
+function getRainfallBarHeight(rainfall: number | null): string {
+  if (rainfall === null) return '0%'
   
-  // Scale temperature bar based on typical range (15°C to 40°C)
-  const minTemp = 15
-  const maxTemp = 40
-  const normalizedTemp = Math.max(0, Math.min(100, ((temp - minTemp) / (maxTemp - minTemp)) * 100))
+  // Scale rainfall bar based on typical range (0 to 50mm per hour)
+  const maxRainfall = 50
+  const normalizedRainfall = Math.max(0, Math.min(100, (rainfall / maxRainfall) * 100))
   
-  return `${normalizedTemp}%`
+  return `${normalizedRainfall}%`
 }
 
-function getTemperatureBarHeight(temp: number | null): string {
-  if (temp === null) return '0%'
+function getRainfallColor(rainfall: number | null): string {
+  if (rainfall === null) return '#64748b'
   
-  // Scale temperature bar based on typical range (15°C to 40°C)
-  const minTemp = 15
-  const maxTemp = 40
-  const normalizedTemp = Math.max(0, Math.min(100, ((temp - minTemp) / (maxTemp - minTemp)) * 100))
-  
-  return `${normalizedTemp}%`
+  if (rainfall <= 0.1) return '#10b981' // Green - No rain/trace
+  if (rainfall <= 2.5) return '#3b82f6' // Blue - Light rain
+  if (rainfall <= 10) return '#f59e0b' // Yellow - Moderate rain
+  if (rainfall <= 30) return '#ef4444' // Red - Heavy rain
+  return '#dc2626' // Dark red - Intense rain
 }
 
-function getTemperatureColor(temp: number | null): string {
-  if (temp === null) return '#64748b'
+function getRainfallStatus(rainfall: number | null): { text: string; class: string } {
+  if (rainfall === null) return { text: 'No Data', class: 'status-gray' }
   
-  if (temp <= 20) return '#3b82f6' // Blue - Cool
-  if (temp <= 25) return '#10b981' // Green - Comfortable
-  if (temp <= 30) return '#f59e0b' // Yellow - Warm
-  if (temp <= 35) return '#ef4444' // Red - Hot
-  return '#dc2626' // Dark red - Very hot
-}
-
-function getTemperatureStatus(temp: number | null): { text: string; class: string } {
-  if (temp === null) return { text: 'No Data', class: 'status-gray' }
-  
-  if (temp <= 20) return { text: 'Cool', class: 'status-blue' }
-  if (temp <= 25) return { text: 'Comfortable', class: 'status-green' }
-  if (temp <= 30) return { text: 'Warm', class: 'status-yellow' }
-  if (temp <= 35) return { text: 'Hot', class: 'status-orange' }
-  return { text: 'Very Hot', class: 'status-red' }
+  if (rainfall <= 0.1) return { text: 'No Rain', class: 'status-green' }
+  if (rainfall <= 2.5) return { text: 'Light Rain', class: 'status-blue' }
+  if (rainfall <= 10) return { text: 'Moderate', class: 'status-yellow' }
+  if (rainfall <= 30) return { text: 'Heavy Rain', class: 'status-orange' }
+  return { text: 'Intense Rain', class: 'status-red' }
 }
 
 // Close table function
@@ -259,28 +235,29 @@ function closeTable() {
   emit('close-table')
 }
 
-// Fetch temperature data for today
-async function fetchTemperatureData(stationId: string) {
+// Fetch rainfall data for today
+async function fetchRainfallData(stationId: string) {
   isLoading.value = true
   
   try {
-   
+    console.log('Fetching rainfall data for station:', stationId)
     
     // Initialize data with empty slots
-    temperatureData.value = generateHourlySlots()
+    rainfallData.value = generateHourlySlots()
 
-    const tempRef = dbRef(db, `${stationId}/data/sensors/TEM`)
+    const rainfallRef = dbRef(db, `${stationId}/data/sensors/RR`)
     
-    // Get today's data - but account for UTC storage
-    // If data is stored in UTC, we need to query from yesterday 16:00 UTC to today 16:00 UTC
-    // to get all of today's Philippines time (UTC+8) data
+    // Get today's data - accounting for UTC storage
     const now = new Date()
     const todayStartLocal = getTodayStartTimestamp()
     const todayStartUTC = todayStartLocal + (8 * 60 * 60) // Add 8 hours to convert to UTC
     
-  
+    console.log('Date range (accounting for UTC storage):')
+    console.log('- Today start (local):', new Date(todayStartLocal * 1000).toLocaleString())
+    console.log('- Today start (UTC for query):', new Date(todayStartUTC * 1000).toLocaleString())
+    console.log('- Querying RR sensor')
     
-    const todayQuery = query(tempRef, orderByKey(), startAt(todayStartUTC.toString()))
+    const todayQuery = query(rainfallRef, orderByKey(), startAt(todayStartUTC.toString()))
     const snapshot = await get(todayQuery)
     
     const hourMap: Record<number, number[]> = {}
@@ -293,60 +270,51 @@ async function fetchTemperatureData(stationId: string) {
         const val = child.val()
         const timestamp = parseInt(child.key || '0')
         
-        // Extract temperature using same logic as HomePage
-        let temperature = 0
+        let rainfall = 0
         if (typeof val === 'object' && val !== null && val.val !== undefined) {
-          temperature = parseFloat(val.val) || 0
+          rainfall = parseFloat(val.val) || 0
         } else if (typeof val === 'number') {
-          temperature = val
+          rainfall = val
         } else if (typeof val === 'string') {
-          temperature = parseFloat(val) || 0
+          rainfall = parseFloat(val) || 0
         }
 
-        if (temperature > 0) {
+        if (rainfall >= 0) {
           validEntries++
           
-          // Convert timestamp to local date and adjust for UTC+8 timezone
           const date = getLocalDate(timestamp)
-          // Subtract 8 hours to convert from UTC to Philippines time
           const adjustedDate = new Date(date.getTime() - 8 * 60 * 60 * 1000)
           const hour = adjustedDate.getHours()
           
-          // Only include data from today (using adjusted date)
           const entryDate = new Date(adjustedDate.getFullYear(), adjustedDate.getMonth(), adjustedDate.getDate())
           const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
           
           if (entryDate.getTime() === todayDate.getTime()) {
             if (!hourMap[hour]) hourMap[hour] = []
-            hourMap[hour].push(temperature)
-            
-            
-          } else {
-          
+            hourMap[hour].push(rainfall)
           }
         }
       })
       
-     
+      console.log(`Processed ${totalEntries} total entries, ${validEntries} valid entries`)
+      console.log('Hour distribution:', Object.keys(hourMap).map(h => `${h}:${hourMap[parseInt(h)].length}`).join(', '))
       
-      // Calculate average temperature for each hour
-      temperatureData.value.forEach(entry => {
+      // Calculate average rainfall for each hour
+      rainfallData.value.forEach(entry => {
         if (hourMap[entry.hour] && hourMap[entry.hour].length > 0) {
-          const avg = hourMap[entry.hour].reduce((a, b) => a + b, 0) / hourMap[entry.hour].length
-          entry.temperature = Math.round(avg * 10) / 10
-          
+          const avgRainfall = hourMap[entry.hour].reduce((a, b) => a + b, 0) / hourMap[entry.hour].length
+          entry.rainfall = Math.round(avgRainfall * 100) / 100
         }
       })
       
     } else {
-      
+      console.log('No rainfall data found for today')
     }
 
     lastUpdated.value = format(now, 'hh:mm:ss a')
 
   } catch (error: any) {
-    console.error('Error fetching temperature data:', error)
-   
+    console.error('Error fetching rainfall data:', error)
   } finally {
     isLoading.value = false
   }
@@ -354,13 +322,13 @@ async function fetchTemperatureData(stationId: string) {
 
 watch(() => props.stationId, (newId) => {
   if (newId) {
-    fetchTemperatureData(newId)
+    fetchRainfallData(newId)
   }
 }, { immediate: true })
 
 onMounted(() => {
   if (props.stationId) {
-    fetchTemperatureData(props.stationId)
+    fetchRainfallData(props.stationId)
   }
   
   // Emit animation complete after mount animation
@@ -369,11 +337,11 @@ onMounted(() => {
   }, 1000)
 })
 
-defineExpose({ fetchTemperatureData })
+defineExpose({ fetchRainfallData })
 </script>
 
 <style scoped>
-.temperature-table-container {
+.rainfall-table-container {
   width: 100%;
   background-color: #00000046;
   border-radius: 0.75rem;
@@ -457,68 +425,6 @@ defineExpose({ fetchTemperatureData })
   }
 }
 
-.chart-header {
-  background-color: #0000002d;
-  padding: 1.5rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.title-section {
-  flex: 1;
-  min-width: 200px;
-}
-
-.chart-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #ffffff;
-  margin-bottom: 0.25rem;
-}
-
-.subtitle {
-  font-size: 0.875rem;
-  color: #cbd5e1;
-  margin: 0;
-}
-
-.current-stats {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.stat-card {
-  background: rgba(255, 255, 255, 0.05);
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  min-width: 100px;
-}
-
-.stat-label {
-  display: block;
-  font-size: 0.75rem;
-  color: #cbd5e1;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.stat-value {
-  display: block;
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: #ffffff;
-  margin-top: 0.25rem;
-}
-
 .carousel-wrapper {
   position: relative;
   overflow: hidden;
@@ -557,7 +463,7 @@ defineExpose({ fetchTemperatureData })
   font-size: 0.875rem;
 }
 
-.temperature-carousel {
+.rainfall-carousel {
   padding: 1rem 0;
 }
 
@@ -572,7 +478,7 @@ defineExpose({ fetchTemperatureData })
   scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
 }
 
-.temp-card {
+.rainfall-card {
   flex: 0 0 auto;
   width: 120px;
   background: rgba(255, 255, 255, 0.05);
@@ -587,20 +493,20 @@ defineExpose({ fetchTemperatureData })
   backdrop-filter: blur(10px);
 }
 
-.temp-card:hover {
+.rainfall-card:hover {
   background: rgba(255, 255, 255, 0.1);
   border-color: rgba(148, 163, 184, 0.4);
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
-.temp-card.current-hour {
+.rainfall-card.current-hour {
   background: rgba(59, 130, 246, 0.15);
   border-color: rgba(59, 130, 246, 0.4);
   box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
 }
 
-.temp-card.no-data {
+.rainfall-card.no-data {
   opacity: 0.6;
   background: rgba(100, 116, 139, 0.1);
 }
@@ -628,14 +534,14 @@ defineExpose({ fetchTemperatureData })
   letter-spacing: 0.05em;
 }
 
-.card-temp {
+.card-rainfall {
   text-align: center;
   margin: 0.25rem 0;
 }
 
-.temp-value {
+.rainfall-value {
   font-weight: 800;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   color: #ffffff;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
@@ -646,7 +552,7 @@ defineExpose({ fetchTemperatureData })
   font-size: 1.25rem;
 }
 
-.temp-bar-container {
+.rainfall-bar-container {
   width: 60px;
   height: 80px;
   background-color: rgba(148, 163, 184, 0.2);
@@ -658,7 +564,7 @@ defineExpose({ fetchTemperatureData })
   border: 2px solid rgba(148, 163, 184, 0.1);
 }
 
-.temp-bar {
+.rainfall-bar {
   width: 100%;
   border-radius: 30px;
   transition: height 0.8s ease, background-color 0.3s ease;
@@ -727,52 +633,6 @@ defineExpose({ fetchTemperatureData })
   }
 }
 
-/* Status colors */
-.status-blue { 
-  background-color: #3b82f6;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
-}
-.status-green { 
-  background-color: #10b981;
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
-}
-.status-yellow { 
-  background-color: #f59e0b;
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
-}
-.status-orange { 
-  background-color: #f97316;
-  box-shadow: 0 0 10px rgba(249, 115, 22, 0.4);
-}
-.status-red { 
-  background-color: #ef4444;
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
-}
-.status-gray { 
-  background-color: #64748b;
-  box-shadow: 0 0 10px rgba(100, 116, 139, 0.4);
-}
-
-/* Custom scrollbar for carousel */
-.carousel-scroll::-webkit-scrollbar {
-  height: 6px;
-}
-
-.carousel-scroll::-webkit-scrollbar-track {
-  background: rgba(148, 163, 184, 0.1);
-  border-radius: 3px;
-  margin: 0 1rem;
-}
-
-.carousel-scroll::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.3);
-  border-radius: 3px;
-}
-
-.carousel-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.5);
-}
-
 .table-footer {
   background-color: #0f172a;
   padding: 1rem 1.5rem;
@@ -805,41 +665,53 @@ defineExpose({ fetchTemperatureData })
   font-weight: 600;
 }
 
+/* Status colors */
+.status-blue { 
+  background-color: #3b82f6;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+}
+.status-green { 
+  background-color: #10b981;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+.status-yellow { 
+  background-color: #f59e0b;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+}
+.status-orange { 
+  background-color: #f97316;
+  box-shadow: 0 0 10px rgba(249, 115, 22, 0.4);
+}
+.status-red { 
+  background-color: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+.status-gray { 
+  background-color: #64748b;
+  box-shadow: 0 0 10px rgba(100, 116, 139, 0.4);
+}
+
 /* Mobile responsiveness */
 @media (max-width: 768px) {
-  .header-content {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .current-stats {
-    justify-content: space-between;
-  }
-  
-  .stat-card {
-    flex: 1;
-    text-align: center;
-  }
-  
   .carousel-scroll {
     padding: 0 0.75rem 1rem 0.75rem;
     gap: 0.75rem;
   }
   
-  .temp-card {
+  .rainfall-card {
     width: 100px;
     padding: 0.75rem;
   }
   
-  .temp-value {
-    font-size: 1.25rem;
+  .rainfall-value {
+    font-size: 1rem;
   }
   
   .time-main {
     font-size: 0.875rem;
   }
   
-  .temp-bar-container {
+  .rainfall-bar-container {
     width: 50px;
     height: 60px;
   }
@@ -869,8 +741,28 @@ defineExpose({ fetchTemperatureData })
   }
 }
 
+/* Custom scrollbar for carousel */
+.carousel-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.carousel-scroll::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.1);
+  border-radius: 3px;
+  margin: 0 1rem;
+}
+
+.carousel-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 3px;
+}
+
+.carousel-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
 /* Table Transformation Animation Styles */
-.temperature-table-container {
+.rainfall-table-container {
   transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -923,7 +815,7 @@ defineExpose({ fetchTemperatureData })
 }
 
 /* Enhanced carousel entrance animation */
-.temperature-carousel {
+.rainfall-carousel {
   animation: carouselSlideIn 0.8s ease-out 0.2s both;
 }
 
@@ -939,22 +831,22 @@ defineExpose({ fetchTemperatureData })
 }
 
 /* Staggered card animations */
-.temp-card {
+.rainfall-card {
   animation: cardSlideUp 0.6s ease-out both;
 }
 
-.temp-card:nth-child(1) { animation-delay: 0.1s; }
-.temp-card:nth-child(2) { animation-delay: 0.15s; }
-.temp-card:nth-child(3) { animation-delay: 0.2s; }
-.temp-card:nth-child(4) { animation-delay: 0.25s; }
-.temp-card:nth-child(5) { animation-delay: 0.3s; }
-.temp-card:nth-child(6) { animation-delay: 0.35s; }
-.temp-card:nth-child(7) { animation-delay: 0.4s; }
-.temp-card:nth-child(8) { animation-delay: 0.45s; }
-.temp-card:nth-child(9) { animation-delay: 0.5s; }
-.temp-card:nth-child(10) { animation-delay: 0.55s; }
-.temp-card:nth-child(11) { animation-delay: 0.6s; }
-.temp-card:nth-child(12) { animation-delay: 0.65s; }
+.rainfall-card:nth-child(1) { animation-delay: 0.1s; }
+.rainfall-card:nth-child(2) { animation-delay: 0.15s; }
+.rainfall-card:nth-child(3) { animation-delay: 0.2s; }
+.rainfall-card:nth-child(4) { animation-delay: 0.25s; }
+.rainfall-card:nth-child(5) { animation-delay: 0.3s; }
+.rainfall-card:nth-child(6) { animation-delay: 0.35s; }
+.rainfall-card:nth-child(7) { animation-delay: 0.4s; }
+.rainfall-card:nth-child(8) { animation-delay: 0.45s; }
+.rainfall-card:nth-child(9) { animation-delay: 0.5s; }
+.rainfall-card:nth-child(10) { animation-delay: 0.55s; }
+.rainfall-card:nth-child(11) { animation-delay: 0.6s; }
+.rainfall-card:nth-child(12) { animation-delay: 0.65s; }
 
 @keyframes cardSlideUp {
   0% {
@@ -967,8 +859,8 @@ defineExpose({ fetchTemperatureData })
   }
 }
 
-/* Enhanced temperature bar animation */
-.temp-bar {
+/* Enhanced rainfall bar animation */
+.rainfall-bar {
   animation: barFillUp 1.2s ease-out both;
 }
 
@@ -987,10 +879,10 @@ defineExpose({ fetchTemperatureData })
 
 /* Reduce animations for users who prefer reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .temperature-table-container,
-  .temp-card,
-  .temp-bar,
-  .temperature-carousel {
+  .rainfall-table-container,
+  .rainfall-card,
+  .rainfall-bar,
+  .rainfall-carousel {
     animation: none !important;
     transition: none !important;
   }
@@ -1001,5 +893,4 @@ defineExpose({ fetchTemperatureData })
     filter: none;
   }
 }
-
 </style>
