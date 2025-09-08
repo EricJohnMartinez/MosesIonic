@@ -240,7 +240,7 @@ async function fetchRainfallData(stationId: string) {
   isLoading.value = true
   
   try {
-
+    
     
     // Initialize data with empty slots
     rainfallData.value = generateHourlySlots()
@@ -295,11 +295,11 @@ async function fetchRainfallData(stationId: string) {
       
      
       
-      // Calculate average rainfall for each hour
+      // Calculate total rainfall for each hour
       rainfallData.value.forEach(entry => {
         if (hourMap[entry.hour] && hourMap[entry.hour].length > 0) {
-          const avgRainfall = hourMap[entry.hour].reduce((a, b) => a + b, 0) / hourMap[entry.hour].length
-          entry.rainfall = Math.round(avgRainfall * 100) / 100
+          const totalRainfall = hourMap[entry.hour].reduce((a, b) => a + b, 0)
+          entry.rainfall = Math.round(totalRainfall * 100) / 100
         }
       })
       
