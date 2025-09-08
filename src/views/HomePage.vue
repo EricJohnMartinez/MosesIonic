@@ -26,18 +26,40 @@
             <div
               class="absolute right-0 mt-2 min-w-[180px] max-w-[280px] rounded-xl bg-gray-800/95 backdrop-blur-md border border-gray-700 shadow-xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transform transition-all duration-200 origin-top-right">
               <ul class="py-2">
-                <li v-for="station in stations" :key="station.id" @click="selectedStation = station.id"
-                  class="px-4 py-3 text-sm md:text-xs text-gray-300 hover:bg-gray-700 hover:text-white cursor-pointer transition-colors duration-200 touch-manipulation">
-                  {{ station.name }}
+                <li v-for="(station, index) in stations" :key="station.id" @click="changeStation(station.id, index)"
+                  :class="[
+                    'px-4 py-3 text-sm md:text-xs cursor-pointer transition-colors duration-200 touch-manipulation flex items-center justify-between',
+                    selectedStation === station.id 
+                      ? 'bg-blue-600/90 text-white' 
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  ]">
+                  <span>{{ station.name }}</span>
+                  <span v-if="selectedStation === station.id" class="text-green-400 text-xs">✓</span>
                 </li>
               </ul>
             </div>
           </div>
-          <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" v-if="currentStation">
+          <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 transition-all duration-1000 ease-out" 
+            :class="{
+              'station-transition-out-left': isTransitioning && transitionDirection === 'left',
+              'station-transition-out-right': isTransitioning && transitionDirection === 'right',
+              'station-transition-in': !isTransitioning
+            }"
+            v-if="currentStation">
             <!-- Current Weather Hero Section -->
             <div
-              :class="['w-full flex items-center justify-center min-h-[60vh] sm:min-h-[50vh] md:min-h-[45vh] lg:min-h-[40vh] -mt-4 sm:-mt-6 md:-mt-8 lg:-mt-12 -mb-8 sm:-mb-12 md:-mb-16 lg:-mb-20 transition-all duration-700 ease-in-out relative overflow-hidden', heroHidden ? 'opacity-0 -translate-y-6 pointer-events-none' : 'opacity-100 translate-y-0']"
-              :style="{ filter: heroHidden ? 'blur(6px) saturate(0.95)' : 'none', willChange: 'opacity, transform, filter' }">
+              :class="[
+                'w-full flex items-center justify-center min-h-[60vh] sm:min-h-[50vh] md:min-h-[45vh] lg:min-h-[40vh] -mt-4 sm:-mt-6 md:-mt-8 lg:-mt-12 -mb-8 sm:-mb-12 md:-mb-16 lg:-mb-20 transition-all duration-700 ease-out relative overflow-hidden',
+                isTransitioning && transitionDirection === 'left' ? 'hero-transition-out-left' : '',
+                isTransitioning && transitionDirection === 'right' ? 'hero-transition-out-right' : '',
+                !isTransitioning ? 'hero-transition-in' : ''
+              ]"
+              :style="{ 
+                transform: `translateY(${scrollOffset * 0.3}px) scale(${1 - scrollOffset * 0.0002})`,
+                opacity: Math.max(0.2, 1 - scrollOffset * 0.003),
+                willChange: 'transform, opacity'
+              }"
+              ref="heroSection">
 
               <!-- Cloud Background Animation - Only for Cloudy Weather -->
               <div v-if="isCloudyWeather()" class="absolute inset-0 pointer-events-none z-0">
@@ -202,11 +224,19 @@
                 class="text-lg sm:text-xl md:text-2xl font-bold text-white mb-3 sm:mb-4 md:mb-6 -mt-1 sm:mt-6 md:mt-10 text-center lg:text-left">
                 Weather Metrics</h2>
               <div id="metrics-grid"
-                class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-4 lg:gap-6 max-w-6xl mx-auto">
+                class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-4 lg:gap-6 max-w-6xl mx-auto transition-all duration-500 ease-out"
+                :class="{
+                  'opacity-30 scale-95': isTransitioning,
+                  'opacity-100 scale-100': !isTransitioning
+                }">
                 <!-- Temperature & Humidity -->
                 <!-- Enhanced Rainfall Card -->
                 <div data-card-id="RainfallIntensity"
-                  :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation col-span-2 sm:col-span-2 md:col-span-3', heroHidden ? 'card-dark' : '']">
+                  :class="[
+                    'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation col-span-2 sm:col-span-2 md:col-span-3',
+                    cardsDarkened ? 'card-dark' : '',
+                    isTransitioning ? 'card-transition-out' : 'card-from-top'
+                  ]">
                   <div class="flex items-center justify-between mb-3 md:mb-4">
                     <h3 class="text-sm font-semibold text-white">Rainfall Intensity & Warnings</h3>
                     <img src="/images/rainfall.png" class="w-8 h-8 md:w-10 md:h-10 object-contain" alt="Rainfall" />
@@ -276,10 +306,12 @@
                 </div>
                 <div data-card-id="Temperature" :class="[
                   'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 cursor-pointer select-none card-hover card-transition touch-manipulation transition-all duration-500 ease-in-out',
-                  heroHidden ? 'card-dark' : '',
+                  cardsDarkened ? 'card-dark' : '',
                   isTransformingTemperature ? 'transform-to-table' : '',
-                  showTemperatureTable ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'
-                ]" role="button" :aria-expanded="showTemperatureTable" @click="toggleTemperatureTable"
+                  showTemperatureTable ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100',
+                  isTransitioning ? 'card-transition-out' : 'card-from-left'
+                ]" 
+                role="button" :aria-expanded="showTemperatureTable" @click="toggleTemperatureTable"
                   @keydown.enter="toggleTemperatureTable" @keydown.space.prevent="toggleTemperatureTable">
 
                   <!-- Card to Table Transformation Overlay -->
@@ -331,9 +363,10 @@
                 <div data-card-id="Wind"
                   :class="[
                     'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 cursor-pointer select-none card-hover card-transition touch-manipulation transition-all duration-500 ease-in-out',
-                    heroHidden ? 'card-dark' : '',
+                    cardsDarkened ? 'card-dark' : '',
                     isTransformingWind ? 'transform-to-table' : '',
-                    showWindSpeedTable ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'
+                    showWindSpeedTable ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100',
+                    isTransitioning ? 'card-transition-out' : 'card-from-right'
                   ]"
                   role="button" :aria-expanded="showWindSpeedTable" @click="toggleWindChart" @keydown.enter="toggleWindChart"
                   @keydown.space.prevent="toggleWindChart">
@@ -376,9 +409,10 @@
                 <div data-card-id="Precipitation"
                   :class="[
                     'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 cursor-pointer select-none card-hover card-transition touch-manipulation transition-all duration-500 ease-in-out',
-                    heroHidden ? 'card-dark' : '',
+                    cardsDarkened ? 'card-dark' : '',
                     isTransformingRainfall ? 'transform-to-table' : '',
-                    showRainfallTable ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'
+                    showRainfallTable ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100',
+                    isTransitioning ? 'card-transition-out' : 'card-from-bottom'
                   ]"
                   role="button" :aria-expanded="showRainfallTable" @click="toggleRainfallChart"
                   @keydown.enter="toggleRainfallChart" @keydown.space.prevent="toggleRainfallChart">
@@ -420,7 +454,11 @@
 
                 <!-- Atmospheric -->
                 <div data-card-id="Atmospheric"
-                  :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
+                  :class="[
+                    'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation',
+                    cardsDarkened ? 'card-dark' : '',
+                    isTransitioning ? 'card-transition-out' : 'card-from-top-left'
+                  ]">
                   <div class="flex items-center justify-between mb-3 md:mb-4">
                     <h3 class="text-sm font-semibold text-white">Atmospheric</h3>
                     <span class="text-xl md:text-2xl">🧪</span>
@@ -440,7 +478,11 @@
                 </div>
                 <!-- Soil Moisture -->
                 <div data-card-id="SoilMoisture"
-                  :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
+                  :class="[
+                    'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation',
+                    cardsDarkened ? 'card-dark' : '',
+                    isTransitioning ? 'card-transition-out' : 'card-from-top-right'
+                  ]">
                   <div class="flex items-center justify-between mb-3 md:mb-4">
                     <h3 class="text-sm font-semibold text-white">Soil Moisture</h3>
                     <span class="text-xl md:text-2xl">🌱</span>
@@ -457,7 +499,11 @@
                 </div>
                 <!-- Soil Temperature -->
                 <div data-card-id="SoilTemp"
-                  :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
+                  :class="[
+                    'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation',
+                    cardsDarkened ? 'card-dark' : '',
+                    isTransitioning ? 'card-transition-out' : 'card-from-bottom-left'
+                  ]">
                   <div class="flex items-center justify-between mb-3 md:mb-4">
                     <h3 class="text-sm font-semibold text-white">Soil Temperature</h3>
                     <span class="text-xl md:text-2xl">🌡️</span>
@@ -470,7 +516,11 @@
                 </div>
                 <!-- Light Intensity -->
                 <div data-card-id="LightIntensity"
-                  :class="['bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation', heroHidden ? 'card-dark' : '']">
+                  :class="[
+                    'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation',
+                    cardsDarkened ? 'card-dark' : '',
+                    isTransitioning ? 'card-transition-out' : 'card-from-bottom-right'
+                  ]">
                   <div class="flex items-center justify-between mb-3 md:mb-4">
                     <h3 class="text-sm font-semibold text-white">Light Intensity</h3>
                     <span class="text-xl md:text-2xl">💡</span>
@@ -558,6 +608,15 @@ const isMapModalOpen = ref(false);
 const mapModal = ref<any>(null);
 // Rain canvas ref
 const rainCanvas = ref<HTMLCanvasElement | null>(null);
+
+// Parallax effect for hero section
+const scrollOffset = ref(0);
+const heroSection = ref<HTMLElement | null>(null);
+
+// Station transition animation states
+const isTransitioning = ref(false);
+const transitionDirection = ref<'left' | 'right'>('left');
+
 // Show/hide wind chart when clicking the Wind card
 const showWindChart = ref(false);
 
@@ -866,26 +925,40 @@ function initializeModalMap() {
   }
 }
 
-// Fade-out-when-scroll-up behavior for hero
-const heroHidden = ref(false);
-let lastScroll = 0;
-function onScroll() {
-  const y = window.scrollY || document.documentElement.scrollTop;
-  // if scrolled down (y increased) hide hero, if scrolled up show
-  if (y > lastScroll && y > 30) {
-    heroHidden.value = true;
-  } else if (y < lastScroll) {
-    heroHidden.value = false;
-  }
-  lastScroll = y;
+// Computed property for card darkening based on scroll
+const cardsDarkened = computed(() => scrollOffset.value > 100);
+
+// Station change with parallax transition
+function changeStation(stationId: string, index: number) {
+  if (stationId === selectedStation.value || isTransitioning.value) return;
+  
+  // Determine direction based on current vs new station index
+  const currentIndex = stations.value.findIndex(s => s.id === selectedStation.value);
+  transitionDirection.value = index > currentIndex ? 'right' : 'left';
+  
+  // Start transition
+  isTransitioning.value = true;
+  
+  // Change station after initial animation
+  setTimeout(() => {
+    selectedStation.value = stationId;
+    
+    // End transition after data loads and animations complete
+    setTimeout(() => {
+      isTransitioning.value = false;
+    }, 1200); // Increased to allow for staggered card animations
+  }, 400);
 }
 
-// Ionic IonContent scroll handler (preferred inside Ionic apps)
+function onScroll() {
+  const y = window.scrollY || document.documentElement.scrollTop;
+  scrollOffset.value = y;
+}
+
+// Ionic IonContent scroll handler with parallax
 function handleIonScroll(ev: any) {
   const y = ev?.detail?.scrollTop ?? 0;
-  if (y > lastScroll && y > 30) heroHidden.value = true;
-  else if (y < lastScroll) heroHidden.value = false;
-  lastScroll = y;
+  scrollOffset.value = y;
 }
 // Sensor types and mapping
 const sensorTypes = [
@@ -1640,6 +1713,332 @@ watch(selectedStation, (newId) => {
 </script>
 
 <style scoped>
+/* Hero section transition animations */
+@keyframes heroSlideOutLeft {
+  0% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50vw) scale(0.9);
+    opacity: 0;
+  }
+}
+
+@keyframes heroSlideOutRight {
+  0% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(50vw) scale(0.9);
+    opacity: 0;
+  }
+}
+
+@keyframes heroSlideInLeft {
+  0% {
+    transform: translateX(50vw) scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes heroSlideInRight {
+  0% {
+    transform: translateX(-50vw) scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Hero transition classes */
+.hero-transition-out-left {
+  animation: heroSlideOutLeft 0.5s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+}
+
+.hero-transition-out-right {
+  animation: heroSlideOutRight 0.5s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+}
+
+.hero-transition-in {
+  animation: heroSlideInLeft 0.7s cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+}
+
+/* Individual card animations from different directions */
+@keyframes cardFromTop {
+  0% {
+    transform: translateY(-100vh) scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes cardFromLeft {
+  0% {
+    transform: translateX(-100vw) scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes cardFromRight {
+  0% {
+    transform: translateX(100vw) scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes cardFromBottom {
+  0% {
+    transform: translateY(100vh) scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes cardFromTopLeft {
+  0% {
+    transform: translate(-70vw, -70vh) scale(0.8) rotate(-15deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes cardFromTopRight {
+  0% {
+    transform: translate(70vw, -70vh) scale(0.8) rotate(15deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes cardFromBottomLeft {
+  0% {
+    transform: translate(-70vw, 70vh) scale(0.8) rotate(15deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes cardFromBottomRight {
+  0% {
+    transform: translate(70vw, 70vh) scale(0.8) rotate(-15deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(0, 0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* Card direction classes with staggered delays */
+.card-from-top {
+  animation: cardFromTop 0.8s cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+  animation-delay: 0.1s;
+  opacity: 0;
+}
+
+.card-from-left {
+  animation: cardFromLeft 0.8s cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+  animation-delay: 0.2s;
+  opacity: 0;
+}
+
+.card-from-right {
+  animation: cardFromRight 0.8s cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+  animation-delay: 0.25s;
+  opacity: 0;
+}
+
+.card-from-bottom {
+  animation: cardFromBottom 0.8s cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+  animation-delay: 0.3s;
+  opacity: 0;
+}
+
+.card-from-top-left {
+  animation: cardFromTopLeft 0.8s cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+  animation-delay: 0.35s;
+  opacity: 0;
+}
+
+.card-from-top-right {
+  animation: cardFromTopRight 0.8s cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+  animation-delay: 0.4s;
+  opacity: 0;
+}
+
+.card-from-bottom-left {
+  animation: cardFromBottomLeft 0.8s cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+  animation-delay: 0.45s;
+  opacity: 0;
+}
+
+.card-from-bottom-right {
+  animation: cardFromBottomRight 0.8s cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+  animation-delay: 0.5s;
+  opacity: 0;
+}
+
+/* Station Transition Parallax Effects */
+@keyframes stationSlideOutLeft {
+  0% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-100vw) scale(0.8);
+    opacity: 0;
+  }
+}
+
+@keyframes stationSlideOutRight {
+  0% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100vw) scale(0.8);
+    opacity: 0;
+  }
+}
+
+@keyframes stationSlideInLeft {
+  0% {
+    transform: translateX(100vw) scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes stationSlideInRight {
+  0% {
+    transform: translateX(-100vw) scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Card-specific parallax animations with staggered delays */
+@keyframes cardsSlideOutLeft {
+  0% {
+    transform: translateX(0) translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-50vw) translateY(-20px) scale(0.9);
+    opacity: 0;
+  }
+}
+
+@keyframes cardsSlideOutRight {
+  0% {
+    transform: translateX(0) translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(50vw) translateY(-20px) scale(0.9);
+    opacity: 0;
+  }
+}
+
+@keyframes cardsSlideInLeft {
+  0% {
+    transform: translateX(50vw) translateY(20px) scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes cardsSlideInRight {
+  0% {
+    transform: translateX(-50vw) translateY(20px) scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0) translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Station transition classes */
+.station-transition-out-left {
+  animation: stationSlideOutLeft 0.6s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+}
+
+.station-transition-out-right {
+  animation: stationSlideOutRight 0.6s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+}
+
+.station-transition-in {
+  animation: stationSlideInLeft 0.8s cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+}
+
+/* Cards transition classes with staggered effects */
+.cards-transition-out-left {
+  animation: cardsSlideOutLeft 0.5s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+}
+
+.cards-transition-out-right {
+  animation: cardsSlideOutRight 0.5s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+}
+
+.cards-transition-in {
+  animation: cardsSlideInLeft 0.8s cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+}
+
+.cards-transition-in > * {
+  animation-delay: calc(var(--card-index, 0) * 0.05s);
+}
+
+/* Individual card animations for more dynamic effect */
+.cards-transition-in > *:nth-child(1) { animation-delay: 0.1s; }
+.cards-transition-in > *:nth-child(2) { animation-delay: 0.15s; }
+.cards-transition-in > *:nth-child(3) { animation-delay: 0.2s; }
+.cards-transition-in > *:nth-child(4) { animation-delay: 0.25s; }
+.cards-transition-in > *:nth-child(5) { animation-delay: 0.3s; }
+.cards-transition-in > *:nth-child(6) { animation-delay: 0.35s; }
+.cards-transition-in > *:nth-child(7) { animation-delay: 0.4s; }
+.cards-transition-in > *:nth-child(8) { animation-delay: 0.45s; }
+
 /* Fix scrolling issues and improve mobile performance */
 .min-h-screen {
   min-height: 100vh;
