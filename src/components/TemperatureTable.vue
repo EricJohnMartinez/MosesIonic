@@ -1,65 +1,65 @@
 <template>
   <div :class="[
-    'temperature-table-container',
-    isTransforming ? 'table-transforming' : 'table-ready'
+    'w-full bg-black/25 rounded-xl overflow-hidden border border-slate-400/20 transition-all duration-700 ease-[cubic-bezier(0.34,1.56,0.64,1)]',
+    isTransforming ? 'opacity-0 scale-90 translate-y-5 blur-sm' : 'opacity-100 scale-100 translate-y-0 blur-0 animate-[tableEntrance_1s_ease-out]'
   ]">
     <!-- Header Section with enhanced animation -->
-    <div class="table-header">
-      <div class="header-content">
-        <div class="title-section">
-          <h3 class="table-title">Temperature Timeline</h3>
-          <p class="table-subtitle">Hourly data from 12mn to 11pm</p>
+    <div class="bg-black/15 p-6 border-b border-slate-400/10">
+      <div class="flex justify-between items-start flex-wrap gap-4">
+        <div class="flex-1 min-w-[200px]">
+          <h3 class="text-xl font-semibold text-white mb-1">Temperature Timeline</h3>
+          <p class="text-sm text-slate-300 m-0">Hourly data from 12mn to 11pm</p>
         </div>
         <button 
           @click="closeTable" 
-          class="close-button "
+          class="flex items-center gap-2 px-4 py-3 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-500 text-sm font-semibold cursor-pointer transition-all duration-300 backdrop-blur-sm hover:bg-blue-500/20 hover:border-blue-500/50 hover:text-blue-400 hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(59,130,246,0.2)]"
           aria-label="Close temperature table"
         >
-          <svg class="close-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 transition-transform duration-300 hover:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
-          <span class="close-text">Back to Card</span>
+          <span class="hidden md:inline">Back to Card</span>
         </button>
       </div>
     </div>
 
-
     <!-- Carousel Container -->
-    <div class="carousel-wrapper">
-      <div class="loading-overlay" v-if="isLoading">
-        <div class="loading-spinner"></div>
-        <p class="loading-text">Loading temperature data...</p>
+    <div class="relative overflow-hidden">
+      <div class="absolute inset-0 flex flex-col items-center justify-center bg-black/30 z-10 backdrop-blur-sm" v-if="isLoading">
+        <div class="w-8 h-8 border-3 border-slate-600 border-t-blue-500 rounded-full animate-spin mb-3"></div>
+        <p class="text-white text-sm">Loading temperature data...</p>
       </div>
       
-      <div v-else class="temperature-carousel">
-        <div class="carousel-scroll">
+      <div v-else class="py-4 animate-[carouselSlideIn_0.8s_ease-out_0.2s_both]">
+        <div class="flex gap-4 overflow-x-auto overflow-y-hidden px-4 pb-4 scroll-smooth scrollbar-thin scrollbar-track-slate-400/10 scrollbar-thumb-slate-400/30 hover:scrollbar-thumb-slate-400/50">
           <div 
             v-for="(entry, index) in temperatureData" 
             :key="index"
             :class="[
-              'temp-card',
-              { 'current-hour': entry.isCurrent },
-              { 'no-data': entry.temperature === null }
+              'flex-none w-[120px] bg-white/5 border border-slate-400/20 rounded-xl p-4 flex flex-col items-center gap-3 transition-all duration-300 backdrop-blur-sm hover:bg-white/10 hover:border-slate-400/40 hover:-translate-y-0.5 hover:shadow-[0_8px_25px_rgba(0,0,0,0.2)] animate-[cardSlideUp_0.6s_ease-out_both]',
+              { 'bg-blue-500/15 border-blue-500/40 shadow-[0_4px_20px_rgba(59,130,246,0.3)]': entry.isCurrent },
+              { 'opacity-60 bg-slate-600/10': entry.temperature === null }
             ]"
+            :style="{ animationDelay: `${0.1 + index * 0.05}s` }"
           >
             <!-- Time Header -->
-            <div class="card-time">
-              <span class="time-main">{{ entry.time12h }}</span>
-              <span v-if="entry.period" class="time-period">{{ entry.period }}</span>
+            <div class="text-center flex flex-col items-center gap-1">
+              <span class="font-bold text-white text-base leading-none">{{ entry.time12h }}</span>
+              <span v-if="entry.period" class="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">{{ entry.period }}</span>
             </div>
             
             <!-- Temperature Display -->
-            <div class="card-temp">
-              <span v-if="entry.temperature !== null" class="temp-value">
+            <div class="text-center my-1">
+              <span v-if="entry.temperature !== null" class="font-extrabold text-2xl text-white text-shadow-[0_2px_4px_rgba(0,0,0,0.3)]">
                 {{ entry.temperature }}°
               </span>
-              <span v-else class="no-data-text">--</span>
+              <span v-else class="text-slate-600 font-semibold text-xl">--</span>
             </div>
             
             <!-- Temperature Bar -->
-            <div class="temp-bar-container">
+            <div class="w-[60px] h-20 bg-slate-400/20 rounded-[30px] overflow-hidden relative flex items-end border-2 border-slate-400/10">
               <div 
-                class="temp-bar"
+                class="w-full rounded-[30px] transition-all duration-[800ms] ease-out min-h-[8px] bg-gradient-to-t from-current to-white/20 animate-[barFillUp_1.2s_ease-out_both]"
                 :style="{ 
                   height: entry.temperature !== null ? getTemperatureBarHeight(entry.temperature) : '0%',
                   backgroundColor: getTemperatureColor(entry.temperature)
@@ -68,14 +68,14 @@
             </div>
             
             <!-- Status Indicator -->
-            <div class="card-status">
+            <div class="flex flex-col items-center gap-1.5 text-center">
               <span 
                 :class="[
-                  'status-dot',
+                  'w-2.5 h-2.5 rounded-full flex-shrink-0 shadow-[0_2px_4px_rgba(0,0,0,0.2)]',
                   getTemperatureStatus(entry.temperature).class
                 ]"
               ></span>
-              <span class="status-text">
+              <span class="text-[11px] font-semibold text-slate-200 uppercase tracking-wide leading-tight">
                 {{ getTemperatureStatus(entry.temperature).text }}
               </span>
             </div>
@@ -83,12 +83,12 @@
         </div>
         
         <!-- Carousel Navigation Hint -->
-        <div class="carousel-hint">
-          <svg class="scroll-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex items-center justify-center gap-2 px-3 py-2 text-slate-400 text-xs font-medium uppercase tracking-wide">
+          <svg class="w-4 h-4 opacity-60 animate-[bounce_2s_infinite]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16l4-4m0 0l4 4m-4-4v12"></path>
           </svg>
           <span>Scroll to see more hours</span>
-          <svg class="scroll-icon rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 opacity-60 animate-[bounce_2s_infinite] rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16l4-4m0 0l4 4m-4-4v12"></path>
           </svg>
         </div>
@@ -96,17 +96,16 @@
     </div>
 
     <!-- Footer with additional info -->
-    <div class="table-footer">
-      <div class="footer-stats">
-        <div class="footer-stat">
-          <span class="footer-label">Min Today:</span>
-          <span class="footer-value">{{ minTemperature }}°C</span>
+    <div class="bg-slate-900 px-6 py-4 border-t border-slate-400/10">
+      <div class="flex justify-between items-center flex-wrap gap-4 md:gap-0 md:flex-row flex-col">
+        <div class="flex items-center gap-2 md:justify-start justify-between w-full md:w-auto">
+          <span class="text-xs text-slate-400 font-medium">Min Today:</span>
+          <span class="text-sm text-white font-semibold">{{ minTemperature }}°C</span>
         </div>
-        <div class="footer-stat">
-          <span class="footer-label">Max Today:</span>
-          <span class="footer-value">{{ maxTemperature }}°C</span>
+        <div class="flex items-center gap-2 md:justify-start justify-between w-full md:w-auto">
+          <span class="text-xs text-slate-400 font-medium">Max Today:</span>
+          <span class="text-sm text-white font-semibold">{{ maxTemperature }}°C</span>
         </div>
-   
       </div>
     </div>
   </div>
@@ -245,13 +244,13 @@ function getTemperatureColor(temp: number | null): string {
 }
 
 function getTemperatureStatus(temp: number | null): { text: string; class: string } {
-  if (temp === null) return { text: 'No Data', class: 'status-gray' }
+  if (temp === null) return { text: 'No Data', class: 'bg-slate-600 shadow-[0_0_10px_rgba(100,116,139,0.4)]' }
   
-  if (temp <= 20) return { text: 'Cool', class: 'status-blue' }
-  if (temp <= 25) return { text: 'Comfortable', class: 'status-green' }
-  if (temp <= 30) return { text: 'Warm', class: 'status-yellow' }
-  if (temp <= 35) return { text: 'Hot', class: 'status-orange' }
-  return { text: 'Very Hot', class: 'status-red' }
+  if (temp <= 20) return { text: 'Cool', class: 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.4)]' }
+  if (temp <= 25) return { text: 'Comfortable', class: 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]' }
+  if (temp <= 30) return { text: 'Warm', class: 'bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.4)]' }
+  if (temp <= 35) return { text: 'Hot', class: 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]' }
+  return { text: 'Very Hot', class: 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.4)]' }
 }
 
 // Close table function
@@ -373,524 +372,7 @@ defineExpose({ fetchTemperatureData })
 </script>
 
 <style scoped>
-.temperature-table-container {
-  width: 100%;
-  background-color: #00000046;
-  border-radius: 0.75rem;
-  overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-}
-
-.table-header {
-  background-color: #0000002d;
-  padding: 1.5rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.title-section {
-  flex: 1;
-  min-width: 200px;
-}
-
-.table-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #ffffff;
-  margin-bottom: 0.25rem;
-}
-
-.table-subtitle {
-  font-size: 0.875rem;
-  color: #cbd5e1;
-  margin: 0;
-}
-
-.close-button {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  border-radius: 0.5rem;
-  color: #3b82f6;
-  font-size: 0.875rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(8px);
-}
-
-.close-button:hover {
-  background: rgba(59, 130, 246, 0.2);
-  border-color: rgba(59, 130, 246, 0.5);
-  color: #60a5fa;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-}
-
-.close-icon {
-  width: 1rem;
-  height: 1rem;
-  transition: transform 0.3s ease;
-}
-
-.close-button:hover .close-icon {
-  transform: rotate(90deg);
-}
-
-.close-text {
-  display: none;
-}
-
-@media (min-width: 768px) {
-  .close-text {
-    display: inline;
-  }
-}
-
-.chart-header {
-  background-color: #0000002d;
-  padding: 1.5rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.title-section {
-  flex: 1;
-  min-width: 200px;
-}
-
-.chart-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #ffffff;
-  margin-bottom: 0.25rem;
-}
-
-.subtitle {
-  font-size: 0.875rem;
-  color: #cbd5e1;
-  margin: 0;
-}
-
-.current-stats {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.stat-card {
-  background: rgba(255, 255, 255, 0.05);
-  padding: 0.75rem 1rem;
-  border-radius: 0.5rem;
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  min-width: 100px;
-}
-
-.stat-label {
-  display: block;
-  font-size: 0.75rem;
-  color: #cbd5e1;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.stat-value {
-  display: block;
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: #ffffff;
-  margin-top: 0.25rem;
-}
-
-.carousel-wrapper {
-  position: relative;
-  overflow: hidden;
-}
-
-.loading-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.3);
-  z-index: 10;
-  backdrop-filter: blur(4px);
-}
-
-.loading-spinner {
-  width: 2rem;
-  height: 2rem;
-  border-width: 3px;
-  border-style: solid;
-  border-color: #475569;
-  border-top-color: #3b82f6;
-  border-radius: 9999px;
-  animation: spin 1s linear infinite;
-  margin-bottom: 0.75rem;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.loading-text {
-  color: #ffffff;
-  font-size: 0.875rem;
-}
-
-.temperature-carousel {
-  padding: 1rem 0;
-}
-
-.carousel-scroll {
-  display: flex;
-  gap: 1rem;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 0 1rem 1rem 1rem;
-  scroll-behavior: smooth;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(148, 163, 184, 0.3) transparent;
-}
-
-.temp-card {
-  flex: 0 0 auto;
-  width: 120px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 0.75rem;
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-}
-
-.temp-card:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(148, 163, 184, 0.4);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-}
-
-.temp-card.current-hour {
-  background: rgba(59, 130, 246, 0.15);
-  border-color: rgba(59, 130, 246, 0.4);
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
-}
-
-.temp-card.no-data {
-  opacity: 0.6;
-  background: rgba(100, 116, 139, 0.1);
-}
-
-.card-time {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.time-main {
-  font-weight: 700;
-  color: #ffffff;
-  font-size: 1rem;
-  line-height: 1;
-}
-
-.time-period {
-  font-size: 0.625rem;
-  color: #94a3b8;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.card-temp {
-  text-align: center;
-  margin: 0.25rem 0;
-}
-
-.temp-value {
-  font-weight: 800;
-  font-size: 1.5rem;
-  color: #ffffff;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.no-data-text {
-  color: #64748b;
-  font-weight: 600;
-  font-size: 1.25rem;
-}
-
-.temp-bar-container {
-  width: 60px;
-  height: 80px;
-  background-color: rgba(148, 163, 184, 0.2);
-  border-radius: 30px;
-  overflow: hidden;
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  border: 2px solid rgba(148, 163, 184, 0.1);
-}
-
-.temp-bar {
-  width: 100%;
-  border-radius: 30px;
-  transition: height 0.8s ease, background-color 0.3s ease;
-  min-height: 8px;
-  background: linear-gradient(to top, currentColor, rgba(255, 255, 255, 0.2));
-}
-
-.card-status {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.375rem;
-  text-align: center;
-}
-
-.status-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.status-text {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: #e2e8f0;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-  line-height: 1.2;
-}
-
-.carousel-hint {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  color: #94a3b8;
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.scroll-icon {
-  width: 16px;
-  height: 16px;
-  opacity: 0.6;
-  animation: bounce 2s infinite;
-}
-
-.rotate-180 {
-  transform: rotate(180deg);
-}
-
-@keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
-    transform: translateX(0);
-  }
-  40% {
-    transform: translateX(-4px);
-  }
-  60% {
-    transform: translateX(4px);
-  }
-}
-
-/* Status colors */
-.status-blue { 
-  background-color: #3b82f6;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
-}
-.status-green { 
-  background-color: #10b981;
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
-}
-.status-yellow { 
-  background-color: #f59e0b;
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
-}
-.status-orange { 
-  background-color: #f97316;
-  box-shadow: 0 0 10px rgba(249, 115, 22, 0.4);
-}
-.status-red { 
-  background-color: #ef4444;
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
-}
-.status-gray { 
-  background-color: #64748b;
-  box-shadow: 0 0 10px rgba(100, 116, 139, 0.4);
-}
-
-/* Custom scrollbar for carousel */
-.carousel-scroll::-webkit-scrollbar {
-  height: 6px;
-}
-
-.carousel-scroll::-webkit-scrollbar-track {
-  background: rgba(148, 163, 184, 0.1);
-  border-radius: 3px;
-  margin: 0 1rem;
-}
-
-.carousel-scroll::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.3);
-  border-radius: 3px;
-}
-
-.carousel-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.5);
-}
-
-.table-footer {
-  background-color: #0f172a;
-  padding: 1rem 1.5rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.1);
-}
-
-.footer-stats {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.footer-stat {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.footer-label {
-  font-size: 0.75rem;
-  color: #94a3b8;
-  font-weight: 500;
-}
-
-.footer-value {
-  font-size: 0.875rem;
-  color: #ffffff;
-  font-weight: 600;
-}
-
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-  .header-content {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .current-stats {
-    justify-content: space-between;
-  }
-  
-  .stat-card {
-    flex: 1;
-    text-align: center;
-  }
-  
-  .carousel-scroll {
-    padding: 0 0.75rem 1rem 0.75rem;
-    gap: 0.75rem;
-  }
-  
-  .temp-card {
-    width: 100px;
-    padding: 0.75rem;
-  }
-  
-  .temp-value {
-    font-size: 1.25rem;
-  }
-  
-  .time-main {
-    font-size: 0.875rem;
-  }
-  
-  .temp-bar-container {
-    width: 50px;
-    height: 60px;
-  }
-  
-  .status-text {
-    font-size: 0.625rem;
-  }
-  
-  .footer-stats {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.5rem;
-  }
-  
-  .footer-stat {
-    justify-content: space-between;
-  }
-  
-  .carousel-hint {
-    padding: 0.5rem;
-    font-size: 0.6875rem;
-  }
-  
-  .scroll-icon {
-    width: 14px;
-    height: 14px;
-  }
-}
-
-/* Table Transformation Animation Styles */
-.temperature-table-container {
-  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.table-transforming {
-  opacity: 0;
-  transform: scale(0.8) translateY(20px);
-  filter: blur(4px);
-}
-
-.table-ready {
-  opacity: 1;
-  transform: scale(1) translateY(0);
-  filter: blur(0px);
-  animation: tableEntrance 1s ease-out;
-}
-
-.table-exiting {
-  animation: tableExit 0.4s ease-in both;
-}
-
+/* Custom animations for enhanced user experience */
 @keyframes tableEntrance {
   0% {
     opacity: 0;
@@ -909,24 +391,6 @@ defineExpose({ fetchTemperatureData })
   }
 }
 
-@keyframes tableExit {
-  0% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-    filter: blur(0px);
-  }
-  100% {
-    opacity: 0;
-    transform: scale(0.95) translateY(-20px);
-    filter: blur(4px);
-  }
-}
-
-/* Enhanced carousel entrance animation */
-.temperature-carousel {
-  animation: carouselSlideIn 0.8s ease-out 0.2s both;
-}
-
 @keyframes carouselSlideIn {
   0% {
     opacity: 0;
@@ -938,24 +402,6 @@ defineExpose({ fetchTemperatureData })
   }
 }
 
-/* Staggered card animations */
-.temp-card {
-  animation: cardSlideUp 0.6s ease-out both;
-}
-
-.temp-card:nth-child(1) { animation-delay: 0.1s; }
-.temp-card:nth-child(2) { animation-delay: 0.15s; }
-.temp-card:nth-child(3) { animation-delay: 0.2s; }
-.temp-card:nth-child(4) { animation-delay: 0.25s; }
-.temp-card:nth-child(5) { animation-delay: 0.3s; }
-.temp-card:nth-child(6) { animation-delay: 0.35s; }
-.temp-card:nth-child(7) { animation-delay: 0.4s; }
-.temp-card:nth-child(8) { animation-delay: 0.45s; }
-.temp-card:nth-child(9) { animation-delay: 0.5s; }
-.temp-card:nth-child(10) { animation-delay: 0.55s; }
-.temp-card:nth-child(11) { animation-delay: 0.6s; }
-.temp-card:nth-child(12) { animation-delay: 0.65s; }
-
 @keyframes cardSlideUp {
   0% {
     opacity: 0;
@@ -965,11 +411,6 @@ defineExpose({ fetchTemperatureData })
     opacity: 1;
     transform: translateY(0) scale(1);
   }
-}
-
-/* Enhanced temperature bar animation */
-.temp-bar {
-  animation: barFillUp 1.2s ease-out both;
 }
 
 @keyframes barFillUp {
@@ -985,21 +426,43 @@ defineExpose({ fetchTemperatureData })
   }
 }
 
-/* Reduce animations for users who prefer reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .temperature-table-container,
-  .temp-card,
-  .temp-bar,
-  .temperature-carousel {
-    animation: none !important;
-    transition: none !important;
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateX(0);
   }
-  
-  .table-transforming {
-    opacity: 1;
-    transform: none;
-    filter: none;
+  40% {
+    transform: translateX(-4px);
+  }
+  60% {
+    transform: translateX(4px);
   }
 }
 
+/* Custom scrollbar styles */
+.scrollbar-thin::-webkit-scrollbar {
+  height: 6px;
+}
+
+.scrollbar-track-slate-400\/10::-webkit-scrollbar-track {
+  background: rgba(148, 163, 184, 0.1);
+  border-radius: 3px;
+  margin: 0 1rem;
+}
+
+.scrollbar-thumb-slate-400\/30::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 3px;
+}
+
+.scrollbar-thumb-slate-400\/30:hover::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+/* Reduce animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
 </style>
