@@ -5,7 +5,13 @@
       <IonRefresherContent pulling-text="Pull to refresh" refreshing-spinner="lines" />
     </IonRefresher>
     <div class="relative min-h-screen flex flex-col bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900">
-      <div class="relative z-20 flex-1 overflow-y-auto"
+      <!-- Scroll Progress Indicator -->
+      <div class="fixed top-0 left-0 w-full h-1 bg-gray-800/50 z-50">
+        <div class="h-full scroll-progress transition-all duration-200 ease-out" 
+             :style="{ width: `${scrollProgress * 100}%` }"></div>
+      </div>
+      
+      <div class="relative z-30 flex-1"
         :style="{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }">
 
         <!-- Main Content -->
@@ -134,17 +140,30 @@
               'station-transition-in': !isTransitioning
             }"
             v-if="currentStation">
+            
+            <!-- Interactive Parallax Background Elements -->
+            <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+              <div class="parallax-element absolute top-1/4 left-1/4 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl" 
+                   :style="{ transform: `translate(${mouseX * 0.1}px, ${mouseY * 0.1 + parallaxOffset * 0.2}px)` }"></div>
+              <div class="parallax-element absolute top-1/2 right-1/4 w-48 h-48 bg-purple-500/3 rounded-full blur-3xl" 
+                   :style="{ transform: `translate(${mouseX * -0.15}px, ${mouseY * -0.15 + parallaxOffset * 0.3}px)` }"></div>
+              <div class="parallax-element absolute bottom-1/4 left-1/3 w-24 h-24 bg-green-500/4 rounded-full blur-3xl" 
+                   :style="{ transform: `translate(${mouseX * 0.2}px, ${mouseY * 0.2 + parallaxOffset * -0.1}px)` }"></div>
+              <div class="parallax-element absolute top-3/4 right-1/3 w-40 h-40 bg-orange-500/3 rounded-full blur-3xl" 
+                   :style="{ transform: `translate(${mouseX * -0.1}px, ${mouseY * -0.1 + parallaxOffset * 0.4}px)` }"></div>
+            </div>
+            
             <!-- Current Weather Hero Section -->
             <div
               :class="[
-                'w-full flex items-center justify-center min-h-[60vh] sm:min-h-[50vh] md:min-h-[45vh] lg:min-h-[40vh] -mt-4 sm:-mt-6 md:-mt-8 lg:-mt-12 -mb-8 sm:-mb-12 md:-mb-16 lg:-mb-20 transition-all duration-700 ease-out relative overflow-hidden',
+                'w-full flex items-center justify-center min-h-[50vh] sm:min-h-[45vh] md:min-h-[40vh] lg:min-h-[35vh] pt-8 sm:pt-12 md:pt-16 lg:pt-20 pb-4 sm:pb-6 md:pb-8 lg:pb-12 transition-all duration-700 ease-out relative overflow-hidden',
                 isTransitioning && transitionDirection === 'left' ? 'hero-transition-out-left' : '',
                 isTransitioning && transitionDirection === 'right' ? 'hero-transition-out-right' : '',
                 !isTransitioning ? 'hero-transition-in' : ''
               ]"
               :style="{ 
-                transform: `translateY(${scrollOffset * 0.3}px) scale(${1 - scrollOffset * 0.0002})`,
-                opacity: Math.max(0.2, 1 - scrollOffset * 0.003),
+                transform: `translateY(${heroParallax}px) scale(${1 - scrollY * 0.0002})`,
+                opacity: Math.max(0.2, 1 - scrollY * 0.003),
                 willChange: 'transform, opacity'
               }"
               ref="heroSection">
@@ -152,26 +171,24 @@
               <!-- Cloud Background Animation - Only for Cloudy Weather -->
               <CloudAnimation :is-visible="isCloudyWeather()" />
 
-              <!-- Rain Canvas Animation - Only for Rainy Weather -->
-              <canvas v-if="isRainingWeather()" ref="rainCanvas" class="absolute inset-0 pointer-events-none z-5"
-                :style="{ width: '100%', height: '100%' }">
-              </canvas>
+              <!-- Rain Animation - Only for Rainy Weather -->
+              <RainAnimation :is-visible="isRainingWeather()" :intensity="getRainIntensity()" />
 
-              <section class="w-full relative z-10 lg:mt-24 md:mt-24 sm:mt-2">
-                <div class="w-full max-w-5xl mx-auto rounded-3xl p-3 sm:p-4 md:p-6 lg:p-8">
+              <section class="w-full relative z-20 mt-4 sm:mt-6 md:mt-8 lg:mt-12 ">
+                <div class="w-full max-w-5xl mx-auto rounded-3xl p-4 sm:p-6 md:p-8 lg:p-10">
                   <div class="flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-6 lg:gap-8">
                     <!-- Main Weather Display -->
-                    <div class="text-center lg:text-left mb-4 lg:mb-0 flex-1">
+                    <div class="text-center  pr-16 sm:text-center lg:text-center mb-4 lg:mb-0 flex-1">
                       <div
-                        class="flex flex-col sm:flex-row items-center justify-center lg:justify-start space-y-3 sm:space-y-0 sm:space-x-4 mb-3">
-                        <div class="text-5xl sm:text-6xl md:text-7xl lg:text-8xl animate-bounce">
+                        class="flex flex-col sm:flex-row items-center justify-start lg:justify-start space-y-3 sm:space-y-0 sm:space-x-4 mb-3">
+                        <div class="text-9xl sm:text-8xl md:text-7xl lg:text-8xl animate-bounce">
                           {{ getWeatherIcon() }}
                         </div>
                         <div class="text-center sm:text-left">
-                          <div class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white">
+                          <div class="text-7xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white">
                             {{ currentStation.data.temperature }}°
                           </div>
-                          <div class="text-base sm:text-lg md:text-xl text-white font-medium mt-1">
+                          <div class="text-base sm:text-lg md:text-xl text-white font-medium mt-1 text-left">
                             {{ currentStation.name }}
                           </div>
                         </div>
@@ -183,7 +200,7 @@
                       </div>
 
                       <!-- Quick Stats -->
-                      <div class="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 max-w-xs sm:max-w-sm mx-auto lg:mx-0">
+                      <div class="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 max-w-xs sm:max-w-sm mx-auto lg:mx-0 ">
                         <div
                           class="bg-slate-800/80 backdrop-blur-sm rounded-xl p-2 sm:p-3 text-center border border-slate-700/50">
                           <div class="text-lg sm:text-xl md:text-2xl font-bold text-blue-400">{{
@@ -198,16 +215,6 @@
                         </div>
                       </div>
                     </div>
-                    <!-- Open Map Button -->
-                    <!-- <div
-                      class="w-full sm:w-72 md:w-80 lg:w-80 h-40 sm:h-48 md:h-56 lg:h-64 rounded-2xl overflow-hidden shadow-lg border border-slate-700/50 flex-shrink-0 flex items-center justify-center bg-slate-800/60 backdrop-blur-lg">
-                      <button @click="openMapModal"
-                        class="w-full h-full flex flex-col items-center justify-center gap-3 hover:bg-slate-700/50 transition-all duration-300 text-white">
-                        <div class="text-4xl">🗺️</div>
-                        <div class="text-lg font-semibold">View All Stations</div>
-                        <div class="text-sm text-gray-300">Open Map</div>
-                      </button>
-                    </div> -->
                   </div>
                 </div>
               </section>
@@ -262,6 +269,10 @@
                 :class="{
                   'opacity-30 scale-95': isTransitioning,
                   'opacity-100 scale-100': !isTransitioning
+                }"
+                :style="{ 
+                  transform: `translateY(${cardsParallax}px)`,
+                  willChange: 'transform'
                 }">
                 <!-- Temperature & Humidity -->
                 <!-- Enhanced Rainfall Card -->
@@ -604,17 +615,14 @@
 </template>
 
 <script setup lang="ts">
-import WindSpeedChart from '../components/WindSpeedChart.vue';
-import RainfallChart from '../components/RainfallChart.vue';
 import TemperatureTable from '../components/TemperatureTable.vue';
 import WindSpeedTable from '../components/WindSpeedTable.vue';
 import RainfallTable from '../components/RainfallTable.vue';
-import FirebaseDebug from '../components/FirebaseDebug.vue';
 import HeatAlert from '../components/HeatAlert.vue';
 import InteractiveMap from '../components/InteractiveMap.vue';
 import CloudAnimation from '../components/CloudAnimation.vue';
+import RainAnimation from '../components/RainAnimation.vue';
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
-import Sortable from 'sortablejs';
 import { IonContent, IonRefresher, IonRefresherContent } from '@ionic/vue';
 import WindCompass from '../components/WindCompass.vue';
 import { db } from '../firebase';
@@ -634,8 +642,6 @@ const selectedStation = ref('station1');
 const heatAlertRef = ref<any>(null);
 // Map modal state
 const isMapModalOpen = ref(false);
-// Rain canvas ref
-const rainCanvas = ref<HTMLCanvasElement | null>(null);
 
 // Computed property for stations with current data
 const stationsWithData = computed(() => {
@@ -1060,206 +1066,6 @@ function calculateHeatIndex(T: number, RH: number): number {
 // Store Firebase listeners for cleanup
 const firebaseListeners = ref<(() => void)[]>([]);
 
-// Rain Particle System
-interface RainDrop {
-  x: number;
-  y: number;
-  length: number;
-  speed: number;
-  opacity: number;
-  width: number;
-}
-
-class RainParticleSystem {
-  private canvas: HTMLCanvasElement;
-  private ctx: CanvasRenderingContext2D;
-  private drops: RainDrop[] = [];
-  private animationId: number | null = null;
-  private intensity: string = 'none';
-  private windEffect: number = 0;
-
-  constructor(canvas: HTMLCanvasElement) {
-    this.canvas = canvas;
-    this.ctx = canvas.getContext('2d')!;
-    this.resizeCanvas();
-    this.setupEventListeners();
-  }
-
-  private resizeCanvas() {
-    const rect = this.canvas.getBoundingClientRect();
-    this.canvas.width = rect.width * window.devicePixelRatio;
-    this.canvas.height = rect.height * window.devicePixelRatio;
-    this.ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    this.canvas.style.width = rect.width + 'px';
-    this.canvas.style.height = rect.height + 'px';
-  }
-
-  private setupEventListeners() {
-    window.addEventListener('resize', () => this.resizeCanvas());
-  }
-
-  private getDropCount(): number {
-    const area = this.canvas.width * this.canvas.height;
-    const baseCount = area / 50000; // Base density
-
-    switch (this.intensity) {
-      case 'light': return Math.floor(baseCount * 0.3);
-      case 'moderate': return Math.floor(baseCount * 0.6);
-      case 'heavy': return Math.floor(baseCount * 1.0);
-      case 'intense': return Math.floor(baseCount * 1.5);
-      default: return 0;
-    }
-  }
-
-  private createDrop(): RainDrop {
-    const canvas = this.canvas;
-    let speed, length, width, opacity;
-
-    switch (this.intensity) {
-      case 'light':
-        speed = 2 + Math.random() * 3;
-        length = 10 + Math.random() * 10;
-        width = 0.5 + Math.random() * 0.5;
-        opacity = 0.3 + Math.random() * 0.3;
-        break;
-      case 'moderate':
-        speed = 4 + Math.random() * 4;
-        length = 15 + Math.random() * 15;
-        width = 0.8 + Math.random() * 0.7;
-        opacity = 0.4 + Math.random() * 0.4;
-        break;
-      case 'heavy':
-        speed = 6 + Math.random() * 6;
-        length = 20 + Math.random() * 20;
-        width = 1 + Math.random() * 1;
-        opacity = 0.5 + Math.random() * 0.4;
-        break;
-      case 'intense':
-        speed = 8 + Math.random() * 8;
-        length = 25 + Math.random() * 25;
-        width = 1.2 + Math.random() * 1.3;
-        opacity = 0.6 + Math.random() * 0.4;
-        break;
-      default:
-        speed = 0; length = 0; width = 0; opacity = 0;
-    }
-
-    return {
-      x: Math.random() * (canvas.width + 100) - 50,
-      y: -length,
-      length,
-      speed,
-      opacity,
-      width
-    };
-  }
-
-  private updateDrop(drop: RainDrop) {
-    drop.y += drop.speed;
-    drop.x += this.windEffect;
-
-    // Reset drop when it goes off screen
-    if (drop.y > this.canvas.height + drop.length) {
-      Object.assign(drop, this.createDrop());
-    }
-
-    // Handle horizontal wrapping for wind effect
-    if (drop.x > this.canvas.width + 50) {
-      drop.x = -50;
-    } else if (drop.x < -50) {
-      drop.x = this.canvas.width + 50;
-    }
-  }
-
-  private drawDrop(drop: RainDrop) {
-    this.ctx.save();
-    this.ctx.globalAlpha = drop.opacity;
-    this.ctx.strokeStyle = `rgba(200, 220, 255, ${drop.opacity})`;
-    this.ctx.lineWidth = drop.width;
-    this.ctx.lineCap = 'round';
-
-    this.ctx.beginPath();
-    this.ctx.moveTo(drop.x, drop.y);
-    this.ctx.lineTo(drop.x - this.windEffect * 0.5, drop.y + drop.length);
-    this.ctx.stroke();
-    this.ctx.restore();
-  }
-
-  private animate = () => {
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-    // Update wind effect based on intensity
-    this.windEffect = this.intensity === 'intense' ? Math.sin(Date.now() * 0.001) * 2 : 0;
-
-    // Update and draw drops
-    this.drops.forEach(drop => {
-      this.updateDrop(drop);
-      this.drawDrop(drop);
-    });
-
-    this.animationId = requestAnimationFrame(this.animate);
-  };
-
-  public start(intensity: string) {
-    this.intensity = intensity;
-
-    // Create drops based on intensity
-    const dropCount = this.getDropCount();
-    this.drops = [];
-    for (let i = 0; i < dropCount; i++) {
-      this.drops.push(this.createDrop());
-    }
-
-    // Start animation
-    if (this.animationId) {
-      cancelAnimationFrame(this.animationId);
-    }
-    this.animate();
-  }
-
-  public stop() {
-    if (this.animationId) {
-      cancelAnimationFrame(this.animationId);
-      this.animationId = null;
-    }
-    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.drops = [];
-  }
-
-  public updateIntensity(newIntensity: string) {
-    if (newIntensity !== this.intensity) {
-      this.intensity = newIntensity;
-      if (newIntensity === 'none') {
-        this.stop();
-      } else {
-        this.start(newIntensity);
-      }
-    }
-  }
-
-  public destroy() {
-    this.stop();
-    window.removeEventListener('resize', () => this.resizeCanvas());
-  }
-}
-
-// Rain system instance
-let rainSystem: RainParticleSystem | null = null;
-
-function initializeRainSystem() {
-  if (rainCanvas.value) {
-    rainSystem = new RainParticleSystem(rainCanvas.value);
-    updateRainSystem();
-  }
-}
-
-function updateRainSystem() {
-  if (rainSystem) {
-    const intensity = getRainIntensity();
-    rainSystem.updateIntensity(intensity);
-  }
-}
-
 function fetchLatestSensors(stationId: string) {
   // Clean up previous listeners first
   firebaseListeners.value.forEach(unsubscribe => {
@@ -1313,12 +1119,6 @@ function fetchLatestSensors(stationId: string) {
 }
 
 onUnmounted(() => {
-  // Clean up rain system
-  if (rainSystem) {
-    rainSystem.destroy();
-    rainSystem = null;
-  }
-
   // Clean up Firebase listeners
   firebaseListeners.value.forEach(unsubscribe => {
     try {
@@ -1347,10 +1147,6 @@ watch(selectedStation, (newStation) => {
   fetchLatestSensors(newStation);
   fetchTodayRainfallTotal(newStation);
 
-  // Update rain system when station changes
-  setTimeout(() => {
-    updateRainSystem();
-  }, 500);
   // fetching latest sensors for station
   // current sensor values updated
 });
@@ -1477,31 +1273,91 @@ function getRainfallCategory(): string {
   return 'Normal';
 }
 
-// SortableJS: robust drag + touch support for card reordering
-let sortableInstance: any = null;
+// Parallax effects and interactive scroll animations
+const scrollY = ref(0);
+const parallaxOffset = ref(0);
+const heroParallax = ref(0);
+const cardsParallax = ref(0);
+const mouseX = ref(0);
+const mouseY = ref(0);
+const scrollProgress = ref(0);
 
-function saveCardOrder() {
-  try {
-    const container = document.querySelector('.grid.grid-cols-1');
-    if (!container) return;
-    const ids = Array.from(container.children).map((c: any) => c.getAttribute('data-card-id') || c.querySelector('h3')?.textContent || 'card');
-    localStorage.setItem('dashboard.cardOrder', JSON.stringify(ids));
-  } catch (e) { /* ignore */ }
+// Throttle function for performance
+function throttle(func: Function, delay: number) {
+  let timeoutId: NodeJS.Timeout | null = null;
+  let lastExecTime = 0;
+  
+  return function (...args: any[]) {
+    const currentTime = Date.now();
+    
+    if (currentTime - lastExecTime > delay) {
+      func.apply(null, args);
+      lastExecTime = currentTime;
+    } else {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        func.apply(null, args);
+        lastExecTime = Date.now();
+      }, delay - (currentTime - lastExecTime));
+    }
+  };
 }
 
-function restoreCardOrder() {
-  try {
-    const raw = localStorage.getItem('dashboard.cardOrder');
-    if (!raw) return;
-    const order: string[] = JSON.parse(raw);
-    const container = document.querySelector('.grid.grid-cols-1');
-    if (!container) return;
-    order.forEach((key) => {
-      const match = Array.from(container.children).find((c: any) => (c.getAttribute('data-card-id') || c.querySelector('h3')?.textContent || '').trim() === key.trim());
-      if (match) container.appendChild(match);
-    });
-  } catch (e) { /* ignore */ }
-}
+// Mouse movement handler for interactive parallax
+const handleMouseMove = throttle((event: MouseEvent) => {
+  const { clientX, clientY } = event;
+  const { innerWidth, innerHeight } = window;
+  
+  mouseX.value = (clientX / innerWidth - 0.5) * 20;
+  mouseY.value = (clientY / innerHeight - 0.5) * 20;
+  
+  // Apply subtle mouse-based parallax to cards
+  const cards = document.querySelectorAll('.card-hover');
+  cards.forEach((card, index) => {
+    const factor = (index % 3 + 1) * 0.1;
+    const moveX = mouseX.value * factor;
+    const moveY = mouseY.value * factor;
+    
+    (card as HTMLElement).style.setProperty('--mouse-x', `${moveX}px`);
+    (card as HTMLElement).style.setProperty('--mouse-y', `${moveY}px`);
+  });
+}, 16); // ~60fps
+
+// Interactive scroll handler for parallax effects
+const handleScroll = throttle(() => {
+  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+  const windowHeight = window.innerHeight;
+  const documentHeight = document.documentElement.scrollHeight - windowHeight;
+  
+  scrollY.value = scrollTop;
+  scrollProgress.value = Math.min(scrollTop / documentHeight, 1);
+  
+  // Calculate parallax offsets for different layers
+  parallaxOffset.value = scrollTop * 0.5;
+  heroParallax.value = scrollTop * 0.3;
+  cardsParallax.value = scrollTop * 0.1;
+  
+  // Update card animations based on scroll position
+  const cards = document.querySelectorAll('.card-hover');
+  cards.forEach((card, index) => {
+    const rect = card.getBoundingClientRect();
+    const cardTop = rect.top + scrollTop;
+    const cardVisible = rect.top < window.innerHeight && rect.bottom > 0;
+    
+    if (cardVisible) {
+      const scrollProgress = (scrollTop - cardTop + window.innerHeight) / (window.innerHeight + rect.height);
+      const clampedProgress = Math.max(0, Math.min(1, scrollProgress));
+      
+      // Apply interactive transform based on scroll progress
+      const translateY = (1 - clampedProgress) * 20;
+      const opacity = 0.7 + (clampedProgress * 0.3);
+      const scale = 0.98 + (clampedProgress * 0.02);
+      
+      (card as HTMLElement).style.transform = `translateY(${translateY}px) scale(${scale})`;
+      (card as HTMLElement).style.opacity = opacity.toString();
+    }
+  });
+}, 16); // ~60fps throttle
 
 const currentStation = computed(() => {
   const station = stations.value.find((s) => s.id === selectedStation.value);
@@ -1553,7 +1409,7 @@ watch(() => {
   }
   return 'none';
 }, (newIntensity) => {
-  updateRainSystem();
+  // Rain intensity changes are now handled by the RainAnimation component
 }, { immediate: false });
 
 onMounted(async () => {
@@ -1578,43 +1434,42 @@ onMounted(async () => {
     }
   }
 
-  // Initialize rain system when component mounts
+  // Initialize parallax scroll effects and interactive animations
+  window.addEventListener('scroll', handleScroll, { passive: true });
+  window.addEventListener('mousemove', handleMouseMove, { passive: true });
+  
+  // Initialize intersection observer for card animations
+  const observerOptions = {
+    root: null,
+    rootMargin: '0px 0px -50px 0px',
+    threshold: [0, 0.25, 0.5, 0.75, 1]
+  };
+  
+  const cardObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      const card = entry.target as HTMLElement;
+      if (entry.isIntersecting) {
+        card.classList.add('in-view');
+        card.style.transition = 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease';
+      } else {
+        card.classList.remove('in-view');
+      }
+    });
+  }, observerOptions);
+  
+  // Observe all cards for intersection
   setTimeout(() => {
-    initializeRainSystem();
-  }, 100);
-
-  // Initialize SortableJS on the metrics grid for drag/reorder with persistence
-  try {
-    const grid = document.getElementById('metrics-grid');
-    if (grid) {
-      // @ts-ignore - Sortable types not installed
-      sortableInstance = Sortable.create(grid as any, {
-        animation: 150,
-        handle: '.card-hover',
-        draggable: '.card-hover',
-        fallbackOnBody: true,
-        touchStartThreshold: 5,
-        ghostClass: 'sortable-ghost',
-        chosenClass: 'sortable-chosen',
-        onStart: (evt: any) => {
-          try { (evt.item as HTMLElement).classList.add('dragging'); } catch (e) { }
-        },
-        onEnd: () => {
-          // remove transient classes and save
-          document.querySelectorAll('.dragging').forEach(n => n.classList.remove('dragging'));
-          saveCardOrder();
-        }
-      });
-      // restore previous order if any
-      restoreCardOrder();
-    }
-  } catch (e) {
-    // ignore
-  }
+    document.querySelectorAll('.card-hover').forEach(card => {
+      cardObserver.observe(card);
+    });
+  }, 200);
 
   // Store the cleanup function for onUnmounted
   const cleanup = () => {
     document.removeEventListener('keydown', handleKeydown);
+    window.removeEventListener('scroll', handleScroll);
+    window.removeEventListener('mousemove', handleMouseMove);
+    cardObserver.disconnect();
   };
 
   // Set up cleanup
@@ -2291,30 +2146,96 @@ ion-content {
   border-color: rgba(59, 130, 246, 0.4);
 }
 
-/* Drag & drop visual states */
-.card-hover.dragging {
-  opacity: 0.85;
-  transform: translateY(-8px) scale(1.01) !important;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.45) !important;
-  transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
-  z-index: 60;
+/* Interactive Parallax & Scroll Effects */
+.card-hover {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.3s ease,
+              box-shadow 0.3s ease,
+              border-color 0.3s ease;
+  will-change: transform, opacity;
+  --mouse-x: 0px;
+  --mouse-y: 0px;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-hover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(147, 51, 234, 0.1));
+  opacity: 0;
+  transition: opacity 0.3s ease;
   pointer-events: none;
+  z-index: -1;
 }
 
-.card-hover.drag-over {
-  outline: 2px dashed rgba(99, 102, 241, 0.22);
-  outline-offset: 6px;
+.card-hover.in-view {
+  transform: translateY(0) translateX(var(--mouse-x)) translateY(var(--mouse-y)) scale(1) !important;
+  opacity: 1 !important;
 }
 
-.sortable-ghost {
-  opacity: 0.6 !important;
-  transform: scale(0.995) !important;
-  filter: blur(0.2px);
+.card-hover:hover {
+  transform: translateY(-8px) translateX(var(--mouse-x)) translateY(var(--mouse-y)) scale(1.03) !important;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.3), 0 0 30px rgba(59, 130, 246, 0.1) !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
 }
 
-.sortable-chosen {
-  box-shadow: 0 20px 48px rgba(2, 6, 23, 0.45) !important;
-  z-index: 80;
+.card-hover:hover::before {
+  opacity: 1;
+}
+
+/* Interactive scroll animations */
+@keyframes cardSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.card-hover:nth-child(odd) {
+  animation: cardSlideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.card-hover:nth-child(even) {
+  animation: cardSlideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.1s forwards;
+}
+
+/* Enhanced parallax background effects */
+@keyframes parallaxFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(1deg);
+  }
+}
+
+.parallax-element {
+  animation: parallaxFloat 6s ease-in-out infinite;
+}
+
+/* Scroll progress indicator */
+.scroll-progress {
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+  background-size: 200% 100%;
+  animation: gradientShift 3s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }
 
 /* Smooth card state transition for dark mode toggle */
