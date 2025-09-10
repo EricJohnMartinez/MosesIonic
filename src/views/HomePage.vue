@@ -11,32 +11,120 @@
         <!-- Main Content -->
         <div class="relative z-10">
 
-          <!-- Station selector - positioned responsively -->
-          <div class="fixed top-4 right-4 z-50 group" :style="{ top: 'calc(env(safe-area-inset-top) + 1rem)' }">
-            <button type="button" aria-label="Stations"
-              class="flex items-center justify-center w-12 h-12 md:w-10 md:h-10 rounded-full border border-gray-700 bg-gray-800/90 backdrop-blur-sm text-gray-200 hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all duration-200 touch-manipulation">
-              <!-- vertical three dots icon -->
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 md:h-5 md:w-5" viewBox="0 0 20 20"
-                fill="currentColor" aria-hidden="true">
-                <path
-                  d="M10 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm0 6a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" />
+          <!-- Station selector button - positioned responsively -->
+          <div class="fixed top-4 right-4 z-50" :style="{ top: 'calc(env(safe-area-inset-top) + 1rem)' }">
+            <button type="button" aria-label="Open Stations Menu" @click="toggleNav"
+              class="bg-gray-800/90 backdrop-blur-md text-white p-3 rounded-xl shadow-lg border border-gray-700 hover:bg-gray-700/90 transition-all duration-200 flex items-center space-x-2 min-h-[44px]">
+              <span class="text-lg">📍</span>
+              <span class="font-medium text-sm hidden sm:inline">{{ currentStation?.name || 'Select Station' }}</span>
+              <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': isNavOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
               </svg>
             </button>
+          </div>
 
-            <div
-              class="absolute right-0 mt-2 min-w-[180px] max-w-[280px] rounded-xl bg-gray-800/95 backdrop-blur-md border border-gray-700 shadow-xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transform transition-all duration-200 origin-top-right">
-              <ul class="py-2">
-                <li v-for="(station, index) in stations" :key="station.id" @click="changeStation(station.id, index)"
+          <!-- Side Navigation Overlay -->
+          <div v-if="isNavOpen" @click="closeNav" 
+            class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300"
+            :class="{ 'opacity-100': isNavOpen, 'opacity-0': !isNavOpen }">
+          </div>
+
+          <!-- Side Navigation Panel -->
+          <div class="fixed top-0 right-0 h-full w-80 max-w-[90vw] bg-gray-900/95 backdrop-blur-lg border-l border-gray-700 shadow-2xl z-50 transform transition-transform duration-300 ease-out nav-panel"
+            :class="{ 'translate-x-0': isNavOpen, 'translate-x-full': !isNavOpen }"
+            :style="{ paddingTop: 'env(safe-area-inset-top)' }">
+            
+            <!-- Navigation Header -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-700">
+              <h2 class="text-xl font-bold text-white">Weather Stations</h2>
+              <button @click="closeNav" aria-label="Close Navigation"
+                class="p-2 rounded-lg hover:bg-gray-800 transition-colors duration-200">
+                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Station List -->
+            <div class="flex-1 overflow-y-auto p-4">
+              <div class="space-y-3">
+                <div v-for="(station, index) in stations" :key="station.id" 
+                  @click="changeStation(station.id, index)"
                   :class="[
-                    'px-4 py-3 text-sm md:text-xs cursor-pointer transition-colors duration-200 touch-manipulation flex items-center justify-between',
+                    'group relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg station-card',
                     selectedStation === station.id 
-                      ? 'bg-blue-600/90 text-white' 
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                      ? 'active bg-blue-600/20 border-blue-500 shadow-blue-500/20' 
+                      : 'bg-gray-800/50 border-gray-600 hover:border-gray-500 hover:bg-gray-700/50'
                   ]">
-                  <span>{{ station.name }}</span>
-                  <span v-if="selectedStation === station.id" class="text-green-400 text-xs">✓</span>
-                </li>
-              </ul>
+                  
+                  <!-- Station Icon and Status -->
+                  <div class="flex items-center space-x-3 mb-3">
+                    <div :class="[
+                      'w-4 h-4 rounded-full transition-all duration-300',
+                      selectedStation === station.id ? 'bg-green-400 animate-pulse' : 'bg-gray-500'
+                    ]"></div>
+                    <span class="text-lg">📍</span>
+                    <span :class="[
+                      'font-semibold transition-colors duration-200',
+                      selectedStation === station.id ? 'text-blue-300' : 'text-white group-hover:text-blue-200'
+                    ]">{{ station.name }}</span>
+                    
+                    <!-- Selected Badge -->
+                    <div v-if="selectedStation === station.id" 
+                      class="ml-auto bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                      Active
+                    </div>
+                  </div>
+
+                  <!-- Station Preview Data (if it's the selected station) -->
+                  <div v-if="selectedStation === station.id && currentStation" 
+                    class="grid grid-cols-2 gap-3 text-sm">
+                    <div class="bg-gray-800/60 rounded-lg p-3">
+                      <div class="text-gray-400 text-xs mb-1">Temperature</div>
+                      <div class="text-white font-bold">{{ currentStation.data.temperature }}°C</div>
+                    </div>
+                    <div class="bg-gray-800/60 rounded-lg p-3">
+                      <div class="text-gray-400 text-xs mb-1">Humidity</div>
+                      <div class="text-white font-bold">{{ currentStation.data.humidity }}%</div>
+                    </div>
+                    <div class="bg-gray-800/60 rounded-lg p-3">
+                      <div class="text-gray-400 text-xs mb-1">Wind Speed</div>
+                      <div class="text-white font-bold">{{ currentStation.data.windSpeed }} m/s</div>
+                    </div>
+                    <div class="bg-gray-800/60 rounded-lg p-3">
+                      <div class="text-gray-400 text-xs mb-1">Rainfall</div>
+                      <div class="text-white font-bold">{{ currentStation.data.rainfall }} mm</div>
+                    </div>
+                  </div>
+
+                  <!-- Coordinates for non-selected stations -->
+                  <div v-else class="text-gray-400 text-sm">
+                    <div class="flex items-center space-x-2">
+                      <span>📍</span>
+                      <span>{{ station.lat.toFixed(4) }}, {{ station.lng.toFixed(4) }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Hover Arrow -->
+                  <div class="absolute right-4 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Additional Navigation Options -->
+              <div class="mt-6 pt-6 border-t border-gray-700">
+                <button @click="openMapModal" 
+                  class="w-full flex items-center space-x-3 p-4 rounded-xl bg-gray-800/50 border border-gray-600 hover:bg-gray-700/50 hover:border-gray-500 transition-all duration-200">
+                  <span class="text-xl">🗺️</span>
+                  <span class="text-white font-medium">View Map</span>
+                  <svg class="w-4 h-4 text-gray-400 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
           <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 transition-all duration-1000 ease-out" 
@@ -165,7 +253,7 @@
                       </div>
                     </div>
                     <!-- Open Map Button -->
-                    <div
+                    <!-- <div
                       class="w-full sm:w-72 md:w-80 lg:w-80 h-40 sm:h-48 md:h-56 lg:h-64 rounded-2xl overflow-hidden shadow-lg border border-slate-700/50 flex-shrink-0 flex items-center justify-center bg-slate-800/60 backdrop-blur-lg">
                       <button @click="openMapModal"
                         class="w-full h-full flex flex-col items-center justify-center gap-3 hover:bg-slate-700/50 transition-all duration-300 text-white">
@@ -173,7 +261,7 @@
                         <div class="text-lg font-semibold">View All Stations</div>
                         <div class="text-sm text-gray-300">Open Map</div>
                       </button>
-                    </div>
+                    </div> -->
                   </div>
                 </div>
               </section>
@@ -617,6 +705,9 @@ const heroSection = ref<HTMLElement | null>(null);
 const isTransitioning = ref(false);
 const transitionDirection = ref<'left' | 'right'>('left');
 
+// Side navigation state
+const isNavOpen = ref(false);
+
 // Show/hide wind chart when clicking the Wind card
 const showWindChart = ref(false);
 
@@ -932,6 +1023,9 @@ const cardsDarkened = computed(() => scrollOffset.value > 100);
 function changeStation(stationId: string, index: number) {
   if (stationId === selectedStation.value || isTransitioning.value) return;
   
+  // Close navigation
+  isNavOpen.value = false;
+  
   // Determine direction based on current vs new station index
   const currentIndex = stations.value.findIndex(s => s.id === selectedStation.value);
   transitionDirection.value = index > currentIndex ? 'right' : 'left';
@@ -948,6 +1042,15 @@ function changeStation(stationId: string, index: number) {
       isTransitioning.value = false;
     }, 1200); // Increased to allow for staggered card animations
   }, 400);
+}
+
+// Side navigation functions
+function toggleNav() {
+  isNavOpen.value = !isNavOpen.value;
+}
+
+function closeNav() {
+  isNavOpen.value = false;
 }
 
 function onScroll() {
@@ -1654,6 +1757,14 @@ onMounted(async () => {
   fetchLatestSensors(selectedStation.value);
   fetchTodayRainfallTotal(selectedStation.value);
 
+  // Add keyboard event listener for navigation
+  const handleKeydown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape' && isNavOpen.value) {
+      closeNav();
+    }
+  };
+  document.addEventListener('keydown', handleKeydown);
+
   if (window.L) {
     try {
       // Dynamically import ExtraMarkers JS
@@ -1696,6 +1807,16 @@ onMounted(async () => {
   } catch (e) {
     // ignore
   }
+
+  // Store the cleanup function for onUnmounted
+  const cleanup = () => {
+    document.removeEventListener('keydown', handleKeydown);
+  };
+
+  // Set up cleanup
+  onUnmounted(() => {
+    cleanup();
+  });
 });
 
 // Update modal map when station selection changes
@@ -1713,6 +1834,112 @@ watch(selectedStation, (newId) => {
 </script>
 
 <style scoped>
+/* Side Navigation Animations */
+.nav-slide-enter-active, .nav-slide-leave-active {
+  transition: transform 0.3s cubic-bezier(0.0, 0.0, 0.2, 1);
+}
+
+.nav-slide-enter-from {
+  transform: translateX(100%);
+}
+
+.nav-slide-leave-to {
+  transform: translateX(100%);
+}
+
+.nav-overlay-enter-active, .nav-overlay-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.nav-overlay-enter-from, .nav-overlay-leave-to {
+  opacity: 0;
+}
+
+/* Navigation Panel Enhancements */
+.nav-panel {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Station Card Hover Effects */
+.station-card {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.8) 0%, rgba(17, 24, 39, 0.9) 100%);
+  transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+  border: 1px solid rgba(75, 85, 99, 0.3);
+}
+
+.station-card:hover {
+  background: linear-gradient(135deg, rgba(55, 65, 81, 0.9) 0%, rgba(31, 41, 55, 0.95) 100%);
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(59, 130, 246, 0.1);
+}
+
+.station-card.active {
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(29, 78, 216, 0.3) 100%);
+  border-color: rgba(59, 130, 246, 0.8);
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+}
+
+/* Mobile Navigation Adjustments */
+@media (max-width: 640px) {
+  .nav-panel {
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+  
+  .station-card {
+    margin-bottom: 0.75rem;
+  }
+  
+  .nav-header {
+    padding: 1rem 1.5rem;
+  }
+}
+
+/* Tablet Navigation Adjustments */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .nav-panel {
+    width: 350px;
+  }
+}
+
+/* Desktop Navigation Enhancements */
+@media (min-width: 1025px) {
+  .nav-panel {
+    width: 400px;
+  }
+  
+  .station-card:hover {
+    transform: translateX(-4px);
+  }
+}
+
+/* Navigation Panel Blur Effect */
+@supports (backdrop-filter: blur(20px)) {
+  .nav-panel {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
+
+/* Scrollbar styling for navigation */
+.nav-panel::-webkit-scrollbar {
+  width: 4px;
+}
+
+.nav-panel::-webkit-scrollbar-track {
+  background: rgba(31, 41, 55, 0.5);
+}
+
+.nav-panel::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 99, 0.8);
+  border-radius: 2px;
+}
+
+.nav-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(107, 114, 128, 0.9);
+}
+
 /* Hero section transition animations */
 @keyframes heroSlideOutLeft {
   0% {
