@@ -1671,10 +1671,7 @@ onMounted(async () => {
   };
 
   // Set up cleanup
-  onUnmounted(() => {
-    cleanup();
-  });
-});
+ });
 </script>
 
 <style scoped>

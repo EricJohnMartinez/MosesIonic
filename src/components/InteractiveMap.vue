@@ -21,24 +21,26 @@
       </IonToolbar>
     </IonHeader>
     
-    <IonContent class="map-content">
+    <IonContent class="bg-gray-100">
       <!-- Map Container -->
-      <div class="w-full h-full relative map-wrapper">
+      <div class="w-full h-full relative overflow-hidden">
         <div ref="mapContainer" id="interactive-weather-map" class="w-full h-full"></div>
         
         <!-- Map Controls Panel - Fixed positioning to prevent disappearing -->
-        <div class="map-controls-left">
+        <div class="absolute top-4 left-4 z-[1000] flex flex-col gap-3 max-w-[250px] max-h-[calc(100vh-200px)] overflow-y-auto">
           <!-- Layer Toggle -->
-          <div class="control-panel">
-            <div class="control-header">Map Style</div>
-            <div class="control-buttons">
+          <div class="bg-white/95 backdrop-blur-[12px] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] border border-white/20 p-4 transition-all duration-300 hover:bg-white/98 hover:shadow-[0_12px_40px_rgba(0,0,0,0.15)]">
+            <div class="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">Map Style</div>
+            <div class="flex flex-col gap-2">
               <button 
                 v-for="layer in mapLayers" 
                 :key="layer.name"
                 @click="changeMapLayer(layer)"
                 :class="[
-                  'layer-button',
-                  currentLayer.name === layer.name ? 'active' : ''
+                  'px-4 py-2.5 rounded-lg text-xs font-medium border-none cursor-pointer transition-all duration-200',
+                  currentLayer.name === layer.name
+                    ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_4px_12px_rgba(59,130,246,0.3)]'
+                    : 'bg-slate-50 text-slate-600 hover:bg-slate-200 hover:-translate-y-0.5'
                 ]">
                 {{ layer.name }}
               </button>
@@ -46,66 +48,66 @@
           </div>
 
           <!-- Station Info Panel -->
-          <div v-if="selectedMapStation" class="station-info-panel">
-            <div class="station-header">
-              <div class="station-name">
-                <span class="station-icon">📍</span>
-                <span class="station-title">{{ selectedMapStation.name }}</span>
+          <div v-if="selectedMapStation" class="bg-white/98 backdrop-blur-[16px] rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.15)] border border-white/30 p-5 max-w-[280px] animate-[slideInLeft_0.3s_ease] max-h-[400px] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">📍</span>
+                <span class="font-bold text-gray-800 text-base">{{ selectedMapStation.name }}</span>
               </div>
-              <button @click="selectedMapStation = null" class="close-station-btn">
+              <button @click="selectedMapStation = null" class="bg-none border-none text-gray-400 cursor-pointer p-1 rounded-md transition-all duration-200 hover:text-gray-600 hover:bg-gray-100">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
               </button>
             </div>
             
-            <div v-if="selectedMapStation.data" class="station-data">
-              <div class="data-card temperature">
-                <div class="data-label">Temperature</div>
-                <div class="data-value">{{ selectedMapStation.data.temperature }}°C</div>
+            <div v-if="selectedMapStation.data" class="grid grid-cols-2 gap-3 mb-4">
+              <div class="p-3 rounded-xl text-center transition-all duration-200 hover:-translate-y-0.5 bg-gradient-to-br from-blue-50 to-blue-100">
+                <div class="text-xs text-gray-600 mb-1 font-medium">Temperature</div>
+                <div class="font-bold text-sm text-blue-700">{{ selectedMapStation.data.temperature }}°C</div>
               </div>
-              <div class="data-card humidity">
-                <div class="data-label">Humidity</div>
-                <div class="data-value">{{ selectedMapStation.data.humidity }}%</div>
+              <div class="p-3 rounded-xl text-center transition-all duration-200 hover:-translate-y-0.5 bg-gradient-to-br from-green-50 to-green-100">
+                <div class="text-xs text-gray-600 mb-1 font-medium">Humidity</div>
+                <div class="font-bold text-sm text-green-700">{{ selectedMapStation.data.humidity }}%</div>
               </div>
-              <div class="data-card wind">
-                <div class="data-label">Wind Speed</div>
-                <div class="data-value">{{ selectedMapStation.data.windSpeed }} m/s</div>
+              <div class="p-3 rounded-xl text-center transition-all duration-200 hover:-translate-y-0.5 bg-gradient-to-br from-indigo-50 to-indigo-100">
+                <div class="text-xs text-gray-600 mb-1 font-medium">Wind Speed</div>
+                <div class="font-bold text-sm text-indigo-700">{{ selectedMapStation.data.windSpeed }} m/s</div>
               </div>
-              <div class="data-card rainfall">
-                <div class="data-label">Rainfall</div>
-                <div class="data-value">{{ selectedMapStation.data.rainfall }} mm</div>
+              <div class="p-3 rounded-xl text-center transition-all duration-200 hover:-translate-y-0.5 bg-gradient-to-br from-orange-50 to-orange-100">
+                <div class="text-xs text-gray-600 mb-1 font-medium">Rainfall</div>
+                <div class="font-bold text-sm text-orange-700">{{ selectedMapStation.data.rainfall }} mm</div>
               </div>
             </div>
             
             <button 
               @click="selectStationAndClose(selectedMapStation.id)"
-              class="select-station-btn">
+              class="w-full py-3 px-4 bg-gradient-to-br from-blue-500 to-blue-700 text-white border-none rounded-2xl font-semibold text-sm cursor-pointer transition-all duration-300 shadow-[0_4px_12px_rgba(59,130,246,0.3)] hover:from-blue-600 hover:to-blue-800 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(59,130,246,0.4)]">
               Switch to This Station
             </button>
           </div>
         </div>
 
         <!-- Map Legend - Fixed positioning -->
-        <div class="map-legend">
-          <div class="legend-header">Legend</div>
-          <div class="legend-items">
-            <div class="legend-item">
-              <div class="legend-dot active"></div>
-              <span class="legend-text">Active Station</span>
+        <div class="absolute bottom-4 right-4 z-[1000] bg-white/95 backdrop-blur-[12px] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] border border-white/20 p-4 min-w-[140px]">
+          <div class="text-sm font-semibold text-gray-800 mb-3">Legend</div>
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 bg-emerald-500 rounded-full flex-shrink-0 animate-pulse"></div>
+              <span class="text-xs text-gray-700 font-medium">Active Station</span>
             </div>
-            <div class="legend-item">
-              <div class="legend-dot available"></div>
-              <span class="legend-text">Available Station</span>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
+              <span class="text-xs text-gray-700 font-medium">Available Station</span>
             </div>
           </div>
         </div>
         
         <!-- Loading Overlay -->
-        <div v-if="isMapLoading" class="loading-overlay">
-          <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <span class="loading-text">Loading map...</span>
+        <div v-if="isMapLoading" class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-[2000]">
+          <div class="bg-white rounded-2xl p-6 flex items-center gap-3 shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
+            <div class="w-6 h-6 border-3 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
+            <span class="text-gray-700 font-semibold text-sm">Loading map...</span>
           </div>
         </div>
       </div>
@@ -429,394 +431,6 @@ onUnmounted(() => {
 .close-button {
   --color: #9ca3af;
   --color-hover: white;
-}
-
-.map-content {
-  --background: #f3f4f6;
-}
-
-.map-wrapper {
-  position: relative;
-  overflow: hidden;
-}
-
-/* Map Controls - Left Side */
-.map-controls-left {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  max-width: 250px;
-  max-height: calc(100vh - 200px);
-  overflow-y: auto;
-}
-
-.control-panel {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 16px;
-  transition: all 0.3s ease;
-}
-
-.control-panel:hover {
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
-
-.control-header {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.control-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.layer-button {
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: #f8fafc;
-  color: #475569;
-}
-
-.layer-button:hover {
-  background: #e2e8f0;
-  transform: translateY(-1px);
-}
-
-.layer-button.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-/* Station Info Panel */
-.station-info-panel {
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(16px);
-  border-radius: 16px;
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 20px;
-  max-width: 280px;
-  animation: slideInLeft 0.3s ease;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.station-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.station-name {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.station-icon {
-  font-size: 20px;
-}
-
-.station-title {
-  font-weight: 700;
-  color: #1f2937;
-  font-size: 16px;
-}
-
-.close-station-btn {
-  background: none;
-  border: none;
-  color: #9ca3af;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-.close-station-btn:hover {
-  color: #6b7280;
-  background: #f3f4f6;
-}
-
-.station-data {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.data-card {
-  padding: 12px;
-  border-radius: 12px;
-  text-align: center;
-  transition: all 0.2s ease;
-}
-
-.data-card:hover {
-  transform: translateY(-2px);
-}
-
-.data-card.temperature {
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-}
-
-.data-card.humidity {
-  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-}
-
-.data-card.wind {
-  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
-}
-
-.data-card.rainfall {
-  background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
-}
-
-.data-label {
-  font-size: 11px;
-  color: #6b7280;
-  margin-bottom: 4px;
-  font-weight: 500;
-}
-
-.data-value {
-  font-weight: 700;
-  font-size: 14px;
-}
-
-.data-card.temperature .data-value {
-  color: #1d4ed8;
-}
-
-.data-card.humidity .data-value {
-  color: #059669;
-}
-
-.data-card.wind .data-value {
-  color: #6366f1;
-}
-
-.data-card.rainfall .data-value {
-  color: #ea580c;
-}
-
-.select-station-btn {
-  width: 100%;
-  padding: 12px 16px;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-}
-
-.select-station-btn:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
-}
-
-/* Map Legend - Right Side */
-.map-legend {
-  position: absolute;
-  bottom: 16px;
-  right: 16px;
-  z-index: 1000;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 16px;
-  min-width: 140px;
-}
-
-.legend-header {
-  font-size: 14px;
-  font-weight: 600;
-  color: #1f2937;
-  margin-bottom: 12px;
-}
-
-.legend-items {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.legend-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.legend-dot.active {
-  background: #10b981;
-  animation: pulse 2s infinite;
-}
-
-.legend-dot.available {
-  background: #3b82f6;
-}
-
-.legend-text {
-  font-size: 12px;
-  color: #374151;
-  font-weight: 500;
-}
-
-/* Loading Overlay */
-.loading-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(17, 24, 39, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-}
-
-.loading-content {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-}
-
-.loading-spinner {
-  width: 24px;
-  height: 24px;
-  border: 3px solid #e5e7eb;
-  border-top: 3px solid #3b82f6;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-.loading-text {
-  color: #374151;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-/* Animations */
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .map-controls-left {
-    max-width: 200px;
-    top: 12px;
-    left: 12px;
-  }
-  
-  .control-panel {
-    padding: 12px;
-  }
-  
-  .station-info-panel {
-    max-width: 240px;
-    padding: 16px;
-  }
-  
-  .station-data {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-  
-  .map-legend {
-    bottom: 12px;
-    right: 12px;
-    padding: 12px;
-    min-width: 120px;
-  }
-}
-
-@media (max-width: 480px) {
-  .map-controls-left {
-    max-width: 180px;
-    gap: 8px;
-  }
-  
-  .control-header {
-    font-size: 13px;
-  }
-  
-  .layer-button {
-    padding: 8px 12px;
-    font-size: 12px;
-  }
-  
-  .station-info-panel {
-    max-width: 200px;
-  }
-  
-  .station-title {
-    font-size: 14px;
-  }
 }
 
 /* Custom marker styles */
