@@ -643,22 +643,15 @@
         <!-- Heat Alert handled by SweetAlert2 component -->
         <HeatAlert ref="heatAlertRef" />
 
-        <!-- Map Modal -->
-        <IonModal ref="mapModal" :is-open="isMapModalOpen" @willDismiss="closeMapModal">
-          <IonHeader>
-            <IonToolbar>
-              <IonTitle>Weather Stations Map</IonTitle>
-              <IonButtons slot="end">
-                <IonButton @click="closeMapModal">Close</IonButton>
-              </IonButtons>
-            </IonToolbar>
-          </IonHeader>
-          <IonContent class="ion-padding">
-            <div class="w-full h-full min-h-[70vh]">
-              <div id="modal-weather-map" class="w-full h-full rounded-lg"></div>
-            </div>
-          </IonContent>
-        </IonModal>
+        <!-- Interactive Map Component -->
+        <InteractiveMap 
+          :is-open="isMapModalOpen"
+          :stations="stationsWithData"
+          :current-station="currentStation"
+          :selected-station="selectedStation"
+          @close="closeMapModal"
+          @station-selected="handleMapStationSelection"
+        />
       </div>
     </div>
   </IonContent>
@@ -672,9 +665,10 @@ import WindSpeedTable from '../components/WindSpeedTable.vue';
 import RainfallTable from '../components/RainfallTable.vue';
 import FirebaseDebug from '../components/FirebaseDebug.vue';
 import HeatAlert from '../components/HeatAlert.vue';
+import InteractiveMap from '../components/InteractiveMap.vue';
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import Sortable from 'sortablejs';
-import { IonContent, IonRefresher, IonRefresherContent, IonModal, IonHeader, IonToolbar, IonTitle, IonButton, IonButtons } from '@ionic/vue';
+import { IonContent, IonRefresher, IonRefresherContent } from '@ionic/vue';
 import WindCompass from '../components/WindCompass.vue';
 import { db } from '../firebase';
 import { ref as dbRef, query, orderByKey, limitToLast, onChildAdded, onValue, startAt } from 'firebase/database';
@@ -693,9 +687,16 @@ const selectedStation = ref('station1');
 const heatAlertRef = ref<any>(null);
 // Map modal state
 const isMapModalOpen = ref(false);
-const mapModal = ref<any>(null);
 // Rain canvas ref
 const rainCanvas = ref<HTMLCanvasElement | null>(null);
+
+// Computed property for stations with current data
+const stationsWithData = computed(() => {
+  return stations.value.map(station => ({
+    ...station,
+    data: station.id === selectedStation.value ? currentStation.value?.data : null
+  }));
+});
 
 // Parallax effect for hero section
 const scrollOffset = ref(0);
@@ -882,26 +883,16 @@ function openHeatAlert() {
 // Map modal functions
 function openMapModal() {
   isMapModalOpen.value = true;
-  // Initialize map after modal is opened
-  setTimeout(() => {
-    initializeModalMap();
-  }, 300);
 }
 
 function closeMapModal() {
   isMapModalOpen.value = false;
-  // Clean up the modal map when closing
-  if (modalMap) {
-    try {
-      modalMap.remove();
-      modalMap = null;
-      // Clear modal markers
-      Object.keys(modalMarkerMap).forEach(key => {
-        delete modalMarkerMap[key];
-      });
-    } catch (error) {
-      console.warn('Error cleaning up modal map:', error);
-    }
+}
+
+function handleMapStationSelection(stationId: string) {
+  const stationIndex = stations.value.findIndex(s => s.id === stationId);
+  if (stationIndex !== -1) {
+    changeStation(stationId, stationIndex);
   }
 }
 
@@ -920,100 +911,6 @@ function getStationWeatherIcon(stationData: any): string {
   if (weatherCondition.wType.includes('Partly Cloudy')) return '⛅';
   if (weatherCondition.wType.includes('Sunny')) return '☀️';
   return '⛅';
-}
-
-// Initialize the modal map
-function initializeModalMap() {
-  if (!window.L) return;
-
-  const mapContainer = document.getElementById('modal-weather-map');
-  if (!mapContainer) return;
-
-  // Clean up existing map if it exists
-  if (modalMap) {
-    try {
-      modalMap.remove();
-      modalMap = null;
-      // Clear modal markers
-      Object.keys(modalMarkerMap).forEach(key => {
-        delete modalMarkerMap[key];
-      });
-    } catch (error) {
-      console.warn('Error cleaning up existing modal map:', error);
-    }
-  }
-
-  try {
-    // Create the modal map
-    modalMap = window.L.map('modal-weather-map').setView([13.2, 121.1], 9);
-    window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(modalMap);
-
-    const svgIconUrl = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><circle cx='12' cy='9' r='2.5' fill='%230a37fd' fill-opacity='0'><animate fill='freeze' attributeName='fill-opacity' begin='0.935s' dur='0.165s' values='0;1'/></circle><path fill='%230a37fd' fill-opacity='0' stroke='%230a37fd' stroke-dasharray='48' stroke-dashoffset='48' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.2' d='M12 20.5c0 0 -6 -7 -6 -11.5c0 -3.31 2.69 -6 6 -6c3.31 0 6 2.69 6 6c0 4.5 -6 11.5 -6 11.5Z'><animate fill='freeze' attributeName='fill-opacity' begin='0.77s' dur='0.165s' values='0;0.15'/><animate fill='freeze' attributeName='stroke-dashoffset' dur='0.66s' values='48;0'/><animateTransform attributeName='transform' dur='3.3s' keyTimes='0;0.3;0.4;0.54;0.6;0.68;0.7;1' repeatCount='indefinite' type='rotate' values='0 12 20.5;0 12 20.5;-8 12 20.5;0 12 20.5;5 12 20.5;-2 12 20.5;0 12 20.5;0 12 20.5'/></path></svg>";
-
-    // Add station markers with enhanced popups
-    stations.value.forEach((station) => {
-      const icon = window.L.icon({
-        iconUrl: svgIconUrl,
-        iconSize: [40, 40],
-        iconAnchor: [20, 40],
-        popupAnchor: [0, -40],
-      });
-
-      // Get current station data for popup
-      const stationData = station.id === selectedStation.value ? currentStation.value?.data : null;
-      const temperature = stationData?.temperature || 0;
-      const weatherIcon = getStationWeatherIcon(stationData);
-
-      const popupContent = `
-        <div class="flex flex-col items-center p-2 min-w-[100px]">
-          <div class="text-5xl mb-2">${weatherIcon}</div>
-          <div class="font-semibold text-lg text-center -mt-2">${station.name}</div>
-          <div class="text-xl font-bold text-blue-600">${temperature}°C</div>
-         
-        </div>
-      `;
-
-      const marker = window.L.marker([station.lat, station.lng], { icon }).addTo(modalMap)
-        .bindPopup(popupContent);
-
-      marker.on('click', () => {
-        selectedStation.value = station.id;
-        // Update popup content when station is selected
-        setTimeout(() => {
-          const updatedData = currentStation.value?.data;
-          const updatedTemp = updatedData?.temperature || 0;
-          const updatedIcon = getStationWeatherIcon(updatedData);
-
-          const updatedPopupContent = `
-            <div class="flex flex-col items-center p-2 min-w-[100px]">
-              <div class="text-5xl mb-2">${updatedIcon}</div>
-              <div class="font-semibold text-lg text-center -mt-2">${station.name}</div>
-              <div class="text-xl font-bold text-blue-600">${updatedTemp}°C</div>
-            </div>
-          `;
-          marker.setPopupContent(updatedPopupContent);
-        }, 500);
-      });
-
-      modalMarkerMap[station.id] = marker;
-    });
-
-    // Open popup for the currently selected station
-    if (currentStation.value && modalMarkerMap[currentStation.value.id]) {
-      modalMarkerMap[currentStation.value.id].openPopup();
-    }
-
-    // Force map to resize after initialization
-    setTimeout(() => {
-      if (modalMap) {
-        modalMap.invalidateSize();
-      }
-    }, 100);
-  } catch (error) {
-    console.error('Error initializing modal map:', error);
-  }
 }
 
 // Computed property for card darkening based on scroll
@@ -1484,21 +1381,6 @@ onUnmounted(() => {
     }
   });
   firebaseListeners.value = [];
-
-  // Clean up maps when component unmounts
-  if (modalMap) {
-    try {
-      modalMap.remove();
-      modalMap = null;
-    } catch (error) {
-      console.warn('Error cleaning up modal map on unmount:', error);
-    }
-  }
-
-  // Clear marker references
-  Object.keys(modalMarkerMap).forEach(key => {
-    delete modalMarkerMap[key];
-  });
 });
 
 watch(selectedStation, (newStation) => {
@@ -1552,26 +1434,6 @@ const handleRefresh = async (event: any) => {
       }
     } catch (e) {
       console.warn('Temperature table refresh failed or not available yet', e);
-    }
-
-    // Update modal map if it's open
-    if (modalMap && currentStation.value) {
-      const st = stations.value.find(s => s.id === selectedStation.value);
-      if (st && modalMarkerMap[st.id]) {
-        // Update popup with latest data
-        const updatedData = currentStation.value.data;
-        const updatedTemp = updatedData?.temperature || 0;
-        const updatedIcon = getStationWeatherIcon(updatedData);
-
-        const updatedPopupContent = `
-          <div class="flex flex-col items-center p-2 min-w-[150px]">
-            <div class="text-5xl mb-2">${updatedIcon}</div>
-            <div class="font-semibold text-lg text-center -mt-2">${st.name}</div>
-            <div class="text-xl font-bold text-blue-600">${updatedTemp}°C</div>
-          </div>
-        `;
-        modalMarkerMap[st.id].setPopupContent(updatedPopupContent);
-      }
     }
 
     // Small delay to allow async updates to propagate (adjustable)
@@ -1694,11 +1556,6 @@ function restoreCardOrder() {
   } catch (e) { /* ignore */ }
 }
 
-let map: any = null;
-let modalMap: any = null;
-const markerMap: { [key: string]: any } = {};
-const modalMarkerMap: { [key: string]: any } = {};
-
 const currentStation = computed(() => {
   const station = stations.value.find((s) => s.id === selectedStation.value);
   if (!station) return null;
@@ -1817,19 +1674,6 @@ onMounted(async () => {
   onUnmounted(() => {
     cleanup();
   });
-});
-
-// Update modal map when station selection changes
-watch(selectedStation, (newId) => {
-  if (modalMap && window.L && modalMarkerMap) {
-    const station = stations.value.find(s => s.id === newId);
-    if (station) {
-      modalMap.setView([station.lat, station.lng], 12);
-      if (modalMarkerMap[station.id]) {
-        modalMarkerMap[station.id].openPopup();
-      }
-    }
-  }
 });
 </script>
 
@@ -2576,32 +2420,6 @@ ion-content {
     width: auto;
     min-width: 200px;
   }
-}
-
-/* Map Modal Styles */
-#modal-weather-map {
-  height: 70vh;
-  min-height: 500px;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-@media (max-width: 768px) {
-  #modal-weather-map {
-    height: 60vh;
-    min-height: 400px;
-  }
-}
-
-/* Custom popup styles for Leaflet */
-.leaflet-popup-content-wrapper {
-  border-radius: 8px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-}
-
-.leaflet-popup-content {
-  margin: 8px !important;
-  font-family: inherit !important;
 }
 
 /* Cloud Animation */
