@@ -7,10 +7,22 @@
     <div class="relative min-h-screen flex flex-col bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900">
       <!-- Scroll Progress Indicator -->
       <div class="fixed top-0 left-0 w-full h-1 bg-gray-800/50 z-50">
-        <div class="h-full scroll-progress transition-all duration-200 ease-out" 
-             :style="{ width: `${scrollProgress * 100}%` }"></div>
+        <div class="h-full scroll-progress transition-all duration-200 ease-out"
+          :style="{ width: `${scrollProgress * 100}%` }"></div>
       </div>
-      
+
+      <!-- Swipe Indicator -->
+      <div v-if="isSwipeActive" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none">
+        <div class="bg-black/70 backdrop-blur-md text-white px-4 py-2 rounded-lg flex items-center space-x-2">
+          <span class="text-sm">Swipe to switch stations</span>
+          <div class="flex space-x-1">
+            <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+            <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style="animation-delay: 0.2s;"></div>
+            <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div>
+          </div>
+        </div>
+      </div>
+
       <div class="relative z-30 flex-1"
         :style="{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }">
 
@@ -23,30 +35,32 @@
               class="bg-gray-800/90 backdrop-blur-md text-white p-3 rounded-xl shadow-lg border border-gray-700 hover:bg-gray-700/90 transition-all duration-200 flex items-center space-x-2 min-h-[44px]">
               <span class="text-lg">📍</span>
               <span class="font-medium text-sm hidden sm:inline">{{ currentStation?.name || 'Select Station' }}</span>
-              <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': isNavOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+              <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': isNavOpen }" fill="none"
+                stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
           </div>
 
           <!-- Side Navigation Overlay -->
-          <div v-if="isNavOpen" @click="closeNav" 
+          <div v-if="isNavOpen" @click="closeNav"
             class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300"
             :class="{ 'opacity-100': isNavOpen, 'opacity-0': !isNavOpen }">
           </div>
 
           <!-- Side Navigation Panel -->
-          <div class="fixed top-0 right-0 h-full w-80 max-w-[90vw] bg-gray-900/95 backdrop-blur-lg border-l border-gray-700 shadow-2xl z-50 transform transition-transform duration-300 ease-out nav-panel"
+          <div
+            class="fixed top-0 right-0 h-full w-80 max-w-[90vw] bg-gray-900/95 backdrop-blur-lg border-l border-gray-700 shadow-2xl z-50 transform transition-transform duration-300 ease-out nav-panel"
             :class="{ 'translate-x-0': isNavOpen, 'translate-x-full': !isNavOpen }"
             :style="{ paddingTop: 'env(safe-area-inset-top)' }">
-            
+
             <!-- Navigation Header -->
             <div class="flex items-center justify-between p-6 border-b border-gray-700">
               <h2 class="text-xl font-bold text-white">Weather Stations</h2>
               <button @click="closeNav" aria-label="Close Navigation"
                 class="p-2 rounded-lg hover:bg-gray-800 transition-colors duration-200">
                 <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
@@ -54,15 +68,14 @@
             <!-- Station List -->
             <div class="flex-1 overflow-y-auto p-4">
               <div class="space-y-3">
-                <div v-for="(station, index) in stations" :key="station.id" 
-                  @click="changeStation(station.id, index)"
+                <div v-for="(station, index) in stations" :key="station.id" @click="changeStation(station.id, index)"
                   :class="[
                     'group relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg station-card',
-                    selectedStation === station.id 
-                      ? 'active bg-blue-600/20 border-blue-500 shadow-blue-500/20' 
+                    selectedStation === station.id
+                      ? 'active bg-blue-600/20 border-blue-500 shadow-blue-500/20'
                       : 'bg-gray-800/50 border-gray-600 hover:border-gray-500 hover:bg-gray-700/50'
                   ]">
-                  
+
                   <!-- Station Icon and Status -->
                   <div class="flex items-center space-x-3 mb-3">
                     <div :class="[
@@ -74,17 +87,16 @@
                       'font-semibold transition-colors duration-200',
                       selectedStation === station.id ? 'text-blue-300' : 'text-white group-hover:text-blue-200'
                     ]">{{ station.name }}</span>
-                    
+
                     <!-- Selected Badge -->
-                    <div v-if="selectedStation === station.id" 
+                    <div v-if="selectedStation === station.id"
                       class="ml-auto bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium">
                       Active
                     </div>
                   </div>
 
                   <!-- Station Preview Data (if it's the selected station) -->
-                  <div v-if="selectedStation === station.id && currentStation" 
-                    class="grid grid-cols-2 gap-3 text-sm">
+                  <div v-if="selectedStation === station.id && currentStation" class="grid grid-cols-2 gap-3 text-sm">
                     <div class="bg-gray-800/60 rounded-lg p-3">
                       <div class="text-gray-400 text-xs mb-1">Temperature</div>
                       <div class="text-white font-bold">{{ currentStation.data.temperature }}°C</div>
@@ -112,9 +124,10 @@
                   </div>
 
                   <!-- Hover Arrow -->
-                  <div class="absolute right-4 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <div
+                    class="absolute right-4 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
                 </div>
@@ -122,51 +135,34 @@
 
               <!-- Additional Navigation Options -->
               <div class="mt-6 pt-6 border-t border-gray-700">
-                <button @click="openMapModal" 
+                <button @click="openMapModal"
                   class="w-full flex items-center space-x-3 p-4 rounded-xl bg-gray-800/50 border border-gray-600 hover:bg-gray-700/50 hover:border-gray-500 transition-all duration-200">
                   <span class="text-xl">🗺️</span>
                   <span class="text-white font-medium">View Map</span>
                   <svg class="w-4 h-4 text-gray-400 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
                 </button>
               </div>
             </div>
           </div>
-          <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 transition-all duration-1000 ease-out" 
-            :class="{
-              'station-transition-out-left': isTransitioning && transitionDirection === 'left',
-              'station-transition-out-right': isTransitioning && transitionDirection === 'right',
-              'station-transition-in': !isTransitioning
-            }"
-            v-if="currentStation">
-            
-            <!-- Interactive Parallax Background Elements -->
-            <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-              <div class="parallax-element absolute top-1/4 left-1/4 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl" 
-                   :style="{ transform: `translate(${mouseX * 0.1}px, ${mouseY * 0.1 + parallaxOffset * 0.2}px)` }"></div>
-              <div class="parallax-element absolute top-1/2 right-1/4 w-48 h-48 bg-purple-500/3 rounded-full blur-3xl" 
-                   :style="{ transform: `translate(${mouseX * -0.15}px, ${mouseY * -0.15 + parallaxOffset * 0.3}px)` }"></div>
-              <div class="parallax-element absolute bottom-1/4 left-1/3 w-24 h-24 bg-green-500/4 rounded-full blur-3xl" 
-                   :style="{ transform: `translate(${mouseX * 0.2}px, ${mouseY * 0.2 + parallaxOffset * -0.1}px)` }"></div>
-              <div class="parallax-element absolute top-3/4 right-1/3 w-40 h-40 bg-orange-500/3 rounded-full blur-3xl" 
-                   :style="{ transform: `translate(${mouseX * -0.1}px, ${mouseY * -0.1 + parallaxOffset * 0.4}px)` }"></div>
-            </div>
-            
+          <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 transition-all duration-1000 ease-out" :class="{
+            'station-transition-out-left': isTransitioning && transitionDirection === 'left',
+            'station-transition-out-right': isTransitioning && transitionDirection === 'right',
+            'station-transition-in': !isTransitioning
+          }" v-if="currentStation"
+          @touchstart="handleTouchStart"
+          @touchmove="handleTouchMove" 
+          @touchend="handleTouchEnd">
+
             <!-- Current Weather Hero Section -->
-            <div
-              :class="[
-                'w-full flex items-center justify-center min-h-[50vh] sm:min-h-[45vh] md:min-h-[40vh] lg:min-h-[35vh] pt-8 sm:pt-12 md:pt-16 lg:pt-20 pb-4 sm:pb-6 md:pb-8 lg:pb-12 transition-all duration-700 ease-out relative overflow-hidden',
-                isTransitioning && transitionDirection === 'left' ? 'hero-transition-out-left' : '',
-                isTransitioning && transitionDirection === 'right' ? 'hero-transition-out-right' : '',
-                !isTransitioning ? 'hero-transition-in' : ''
-              ]"
-              :style="{ 
-                transform: `translateY(${heroParallax}px) scale(${1 - scrollY * 0.0002})`,
-                opacity: Math.max(0.2, 1 - scrollY * 0.003),
-                willChange: 'transform, opacity'
-              }"
-              ref="heroSection">
+            <div :class="[
+              'w-full flex items-center justify-center min-h-[50vh] sm:min-h-[45vh] md:min-h-[40vh] lg:min-h-[35vh] pt-8 sm:pt-12 md:pt-16 lg:pt-20 pb-4 sm:pb-6 md:pb-8 lg:pb-12 transition-all duration-700 ease-out relative overflow-hidden',
+              isTransitioning && transitionDirection === 'left' ? 'hero-transition-out-left' : '',
+              isTransitioning && transitionDirection === 'right' ? 'hero-transition-out-right' : '',
+              !isTransitioning ? 'hero-transition-in' : ''
+            ]" ref="heroSection">
 
               <!-- Cloud Background Animation - Only for Cloudy Weather -->
               <CloudAnimation :is-visible="isCloudyWeather()" />
@@ -174,44 +170,44 @@
               <!-- Rain Animation - Only for Rainy Weather -->
               <RainAnimation :is-visible="isRainingWeather()" :intensity="getRainIntensity()" />
 
-              <section class="w-full relative z-20 mt-4 sm:mt-6 md:mt-8 lg:mt-12 ">
+              <section class="w-full relative z-20 mt-4 sm:mt-6 md:mt-8 lg:-mt-5 ">
                 <div class="w-full max-w-5xl mx-auto rounded-3xl p-4 sm:p-6 md:p-8 lg:p-10">
                   <div class="flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-6 lg:gap-8">
                     <!-- Main Weather Display -->
                     <div class="text-center  pr-16 sm:text-center lg:text-center mb-4 lg:mb-0 flex-1">
                       <div
-                        class="flex flex-col sm:flex-row items-center justify-start lg:justify-start space-y-3 sm:space-y-0 sm:space-x-4 mb-3">
-                        <div class="text-9xl sm:text-8xl md:text-7xl lg:text-8xl animate-bounce">
+                        class="flex flex-col sm:flex-row items-start justify-start space-y-3 sm:space-y-0 sm:space-x-4 mb-3 pr-10">
+                        <div class="text-9xl sm:text-9xl md:text-[10rem] lg:text-[12rem] animate-bounce text-left">
                           {{ getWeatherIcon() }}
                         </div>
                         <div class="text-center sm:text-left">
-                          <div class="text-7xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white">
+                          <div class="text-7xl sm:text-4xl md:text-8xl lg:text-[8rem] font-bold text-white">
                             {{ currentStation.data.temperature }}°
                           </div>
-                          <div class="text-base sm:text-lg md:text-xl text-white font-medium mt-1 text-left">
+                          <div class="text-base sm:text-lg md:text-xl text-white font-medium mt-1 text-left lg:text-[2rem]">
                             {{ currentStation.name }}
                           </div>
                         </div>
                       </div>
 
                       <!-- Weather Description -->
-                      <div class="text-sm sm:text-base md:text-lg text-white/90 mb-3 max-w-md mx-auto lg:mx-0">
+                      <div class="text-sm sm:text-base md:text-lg text-white/90 mb-3 max-w-md mx-auto lg:mx-0 lg:text-3xl">
                         {{ getWeatherDescription() }}
                       </div>
 
                       <!-- Quick Stats -->
                       <div class="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 max-w-xs sm:max-w-sm mx-auto lg:mx-0 ">
                         <div
-                          class="bg-slate-800/80 backdrop-blur-sm rounded-xl p-2 sm:p-3 text-center border border-slate-700/50">
-                          <div class="text-lg sm:text-xl md:text-2xl font-bold text-blue-400">{{
+                          class="bg-slate-800/80 backdrop-blur-sm rounded-xl p-4 sm:p-6  text-center border border-slate-700/50">
+                          <div class="text-lg sm:text-xl md:text-2xl font-bold text-blue-400 lg:text-4xl">{{
                             currentStation.data.humidity }}%</div>
-                          <div class="text-xs sm:text-sm text-blue-300">Humidity</div>
+                          <div class="text-xs sm:text-sm lg:text-xl text-blue-300">Humidity</div>
                         </div>
                         <div
-                          class="bg-slate-800/80 backdrop-blur-sm rounded-xl p-2 sm:p-3 text-center border border-slate-700/50">
-                          <div class="text-lg sm:text-xl md:text-2xl font-bold text-orange-400">
+                          class="bg-slate-800/80 backdrop-blur-sm rounded-xl p-4 sm:p-6 text-center border border-slate-700/50">
+                          <div class="text-lg sm:text-xl md:text-2xl font-bold lg:text-4xl text-orange-400">
                             {{ currentStation.data.heatIndex }}°</div>
-                          <div class="text-xs sm:text-sm text-orange-300">Heat Index</div>
+                          <div class="text-xs sm:text-sm text-orange-300 lg:text-xl">Heat Index</div>
                         </div>
                       </div>
                     </div>
@@ -220,30 +216,20 @@
               </section>
             </div>
 
-            <section class="lg:mt-24 md:mt-24 sm:mt-2">
+            <section class="lg:-mt-20 md:-mt-24 sm:-mt-2 -mt-10">
               <!-- Weather Metrics Grid -->
               <transition name="fade">
                 <div v-if="showWindSpeedTable" class="mt-6">
-                  <WindSpeedTable 
-                    ref="windSpeedTableRef" 
-                    :stationId="currentStation.id"
-                    :currentWindSpeed="currentStation.data.windSpeed" 
-                    :isTransforming="isTransformingWind"
-                    @animation-complete="onWindAnimationComplete" 
-                    @close-table="toggleWindChart" 
-                  />
+                  <WindSpeedTable ref="windSpeedTableRef" :stationId="currentStation.id"
+                    :currentWindSpeed="currentStation.data.windSpeed" :isTransforming="isTransformingWind"
+                    @animation-complete="onWindAnimationComplete" @close-table="toggleWindChart" />
                 </div>
               </transition>
               <transition name="fade">
                 <div v-if="showRainfallTable" class="mt-6">
-                  <RainfallTable 
-                    ref="rainfallTableRef" 
-                    :stationId="currentStation.id"
-                    :currentRainfall="currentStation.data.rainfall" 
-                    :isTransforming="isTransformingRainfall"
-                    @animation-complete="onRainfallAnimationComplete" 
-                    @close-table="toggleRainfallChart" 
-                  />
+                  <RainfallTable ref="rainfallTableRef" :stationId="currentStation.id"
+                    :currentRainfall="currentStation.data.rainfall" :isTransforming="isTransformingRainfall"
+                    @animation-complete="onRainfallAnimationComplete" @close-table="toggleRainfallChart" />
                 </div>
               </transition>
               <transition name="fade">
@@ -264,24 +250,19 @@
               <h2
                 class="text-lg sm:text-xl md:text-2xl font-bold text-white mb-3 sm:mb-4 md:mb-6 -mt-1 sm:mt-6 md:mt-10 text-center lg:text-left">
                 Weather Metrics</h2>
-              <div id="metrics-grid"
+              <div id="metrics-grid" :key="cardRefreshKey"
                 class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-4 lg:gap-6 max-w-6xl mx-auto transition-all duration-500 ease-out"
                 :class="{
                   'opacity-30 scale-95': isTransitioning,
                   'opacity-100 scale-100': !isTransitioning
-                }"
-                :style="{ 
-                  transform: `translateY(${cardsParallax}px)`,
-                  willChange: 'transform'
                 }">
                 <!-- Temperature & Humidity -->
                 <!-- Enhanced Rainfall Card -->
-                <div data-card-id="RainfallIntensity"
-                  :class="[
-                    'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation col-span-2 sm:col-span-2 md:col-span-3',
-                    cardsDarkened ? 'card-dark' : '',
-                    isTransitioning ? 'card-transition-out' : 'card-from-top'
-                  ]">
+                <div data-card-id="RainfallIntensity" :class="[
+                  'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation col-span-2 sm:col-span-2 md:col-span-3',
+                  cardsDarkened ? 'card-dark' : '',
+                  getCardAnimationClass(0)
+                ]">
                   <div class="flex items-center justify-between mb-3 md:mb-4">
                     <h3 class="text-sm font-semibold text-white">Rainfall Intensity & Warnings</h3>
                     <img src="/images/rainfall.png" class="w-8 h-8 md:w-10 md:h-10 object-contain" alt="Rainfall" />
@@ -353,10 +334,9 @@
                   'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 cursor-pointer select-none card-hover card-transition touch-manipulation transition-all duration-500 ease-in-out',
                   cardsDarkened ? 'card-dark' : '',
                   isTransformingTemperature ? 'transform-to-table' : '',
-                  showTemperatureTable ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100',
-                  isTransitioning ? 'card-transition-out' : 'card-from-left'
-                ]" 
-                role="button" :aria-expanded="showTemperatureTable" @click="toggleTemperatureTable"
+                  showTemperatureTable && !isTransformingTemperature ? 'hidden' : 'opacity-100 scale-100',
+                  getCardAnimationClass(1)
+                ]" role="button" :aria-expanded="showTemperatureTable" @click="toggleTemperatureTable"
                   @keydown.enter="toggleTemperatureTable" @keydown.space.prevent="toggleTemperatureTable">
 
                   <!-- Card to Table Transformation Overlay -->
@@ -389,7 +369,7 @@
                     <div class="flex justify-between items-center">
                       <span class="text-white/80 text-xs md:text-sm">Feels like</span>
                       <span class="text-xs md:text-sm font-semibold text-orange-400">{{ currentStation.data.heatIndex
-                        }}°C</span>
+                      }}°C</span>
                     </div>
                     <div class="flex justify-end items-center space-x-1">
                       <span class="text-xs md:text-sm font-semibold text-white-400 text-right">
@@ -405,17 +385,15 @@
                 </div>
 
                 <!-- Wind -->
-                <div data-card-id="Wind"
-                  :class="[
-                    'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 cursor-pointer select-none card-hover card-transition touch-manipulation transition-all duration-500 ease-in-out',
-                    cardsDarkened ? 'card-dark' : '',
-                    isTransformingWind ? 'transform-to-table' : '',
-                    showWindSpeedTable ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100',
-                    isTransitioning ? 'card-transition-out' : 'card-from-right'
-                  ]"
-                  role="button" :aria-expanded="showWindSpeedTable" @click="toggleWindChart" @keydown.enter="toggleWindChart"
-                  @keydown.space.prevent="toggleWindChart">
-                  
+                <div data-card-id="Wind" :class="[
+                  'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 cursor-pointer select-none card-hover card-transition touch-manipulation transition-all duration-500 ease-in-out',
+                  cardsDarkened ? 'card-dark' : '',
+                  isTransformingWind ? 'transform-to-table' : '',
+                  showWindSpeedTable && !isTransformingWind ? 'hidden' : 'opacity-100 scale-100',
+                  getCardAnimationClass(2)
+                ]" role="button" :aria-expanded="showWindSpeedTable" @click="toggleWindChart"
+                  @keydown.enter="toggleWindChart" @keydown.space.prevent="toggleWindChart">
+
                   <!-- Card to Table Transformation Overlay -->
                   <div v-if="isTransformingWind" class="transform-overlay">
                     <div class="transform-particles">
@@ -423,14 +401,16 @@
                     </div>
                     <div class="transform-text">
                       <svg class="transform-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path v-if="!showWindSpeedTable" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
-                        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                        <path v-if="!showWindSpeedTable" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
                       </svg>
                       <span v-if="!showWindSpeedTable">Expanding to table...</span>
                       <span v-else>Collapsing to card...</span>
                     </div>
                   </div>
-                  
+
                   <div class="flex items-center justify-between mb-3 md:mb-4">
                     <h3 class="text-sm font-semibold text-white">Wind</h3>
                     <WindCompass :windDirection="currentStation.data.windAngle || 0"
@@ -445,23 +425,21 @@
                     <div class="flex justify-between items-center">
                       <span class="text-white/80 text-xs md:text-sm">Direction</span>
                       <span class="text-xs md:text-sm font-semibold text-blue-400">{{ currentStation.data.windDirection
-                        }}</span>
+                      }}</span>
                     </div>
                   </div>
                 </div>
 
                 <!-- Precipitation -->
-                <div data-card-id="Precipitation"
-                  :class="[
-                    'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 cursor-pointer select-none card-hover card-transition touch-manipulation transition-all duration-500 ease-in-out',
-                    cardsDarkened ? 'card-dark' : '',
-                    isTransformingRainfall ? 'transform-to-table' : '',
-                    showRainfallTable ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100',
-                    isTransitioning ? 'card-transition-out' : 'card-from-bottom'
-                  ]"
-                  role="button" :aria-expanded="showRainfallTable" @click="toggleRainfallChart"
+                <div data-card-id="Precipitation" :class="[
+                  'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 cursor-pointer select-none card-hover card-transition touch-manipulation transition-all duration-500 ease-in-out',
+                  cardsDarkened ? 'card-dark' : '',
+                  isTransformingRainfall ? 'transform-to-table' : '',
+                  showRainfallTable && !isTransformingRainfall ? 'hidden' : 'opacity-100 scale-100',
+                  getCardAnimationClass(3)
+                ]" role="button" :aria-expanded="showRainfallTable" @click="toggleRainfallChart"
                   @keydown.enter="toggleRainfallChart" @keydown.space.prevent="toggleRainfallChart">
-                  
+
                   <!-- Card to Table Transformation Overlay -->
                   <div v-if="isTransformingRainfall" class="transform-overlay">
                     <div class="transform-particles">
@@ -469,14 +447,16 @@
                     </div>
                     <div class="transform-text">
                       <svg class="transform-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path v-if="!showRainfallTable" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
-                        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                        <path v-if="!showRainfallTable" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
                       </svg>
                       <span v-if="!showRainfallTable">Expanding to table...</span>
                       <span v-else>Collapsing to card...</span>
                     </div>
                   </div>
-                  
+
                   <div class="flex items-center justify-between mb-3 md:mb-4">
                     <h3 class="text-sm font-semibold text-white">Precipitation</h3>
                     <span class="text-xl md:text-2xl">🌧️</span>
@@ -485,12 +465,12 @@
                     <div class="flex justify-between items-center">
                       <span class="text-white/80 text-xs md:text-sm">Rainfall</span>
                       <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{ currentStation.data.rainfall
-                        }} mm</span>
+                      }} mm</span>
                     </div>
                     <div class="flex justify-between items-center">
                       <span class="text-white/80 text-xs md:text-sm">Humidity</span>
                       <span class="text-xs md:text-sm font-semibold text-blue-400">{{ currentStation.data.humidity
-                        }}%</span>
+                      }}%</span>
                     </div>
                   </div>
                 </div>
@@ -498,12 +478,11 @@
 
 
                 <!-- Atmospheric -->
-                <div data-card-id="Atmospheric"
-                  :class="[
-                    'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation',
-                    cardsDarkened ? 'card-dark' : '',
-                    isTransitioning ? 'card-transition-out' : 'card-from-top-left'
-                  ]">
+                <div data-card-id="Atmospheric" :class="[
+                  'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation',
+                  cardsDarkened ? 'card-dark' : '',
+                  getCardAnimationClass(4)
+                ]">
                   <div class="flex items-center justify-between mb-3 md:mb-4">
                     <h3 class="text-sm font-semibold text-white">Atmospheric</h3>
                     <span class="text-xl md:text-2xl">🧪</span>
@@ -512,7 +491,7 @@
                     <div class="flex justify-between items-center">
                       <span class="text-white/80 text-xs md:text-sm">Pressure</span>
                       <span class="text-base md:text-lg lg:text-xl font-bold text-white">{{ currentStation.data.pressure
-                        }} hPa</span>
+                      }} hPa</span>
                     </div>
                     <div class="flex justify-between items-center">
                       <span class="text-white/80 text-xs md:text-sm">Solar</span>
@@ -522,12 +501,11 @@
                   </div>
                 </div>
                 <!-- Soil Moisture -->
-                <div data-card-id="SoilMoisture"
-                  :class="[
-                    'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation',
-                    cardsDarkened ? 'card-dark' : '',
-                    isTransitioning ? 'card-transition-out' : 'card-from-top-right'
-                  ]">
+                <div data-card-id="SoilMoisture" :class="[
+                  'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation',
+                  cardsDarkened ? 'card-dark' : '',
+                  getCardAnimationClass(5)
+                ]">
                   <div class="flex items-center justify-between mb-3 md:mb-4">
                     <h3 class="text-sm font-semibold text-white">Soil Moisture</h3>
                     <span class="text-xl md:text-2xl">🌱</span>
@@ -543,12 +521,11 @@
                   </div>
                 </div>
                 <!-- Soil Temperature -->
-                <div data-card-id="SoilTemp"
-                  :class="[
-                    'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation',
-                    cardsDarkened ? 'card-dark' : '',
-                    isTransitioning ? 'card-transition-out' : 'card-from-bottom-left'
-                  ]">
+                <div data-card-id="SoilTemp" :class="[
+                  'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation',
+                  cardsDarkened ? 'card-dark' : '',
+                  getCardAnimationClass(6)
+                ]">
                   <div class="flex items-center justify-between mb-3 md:mb-4">
                     <h3 class="text-sm font-semibold text-white">Soil Temperature</h3>
                     <span class="text-xl md:text-2xl">🌡️</span>
@@ -560,12 +537,11 @@
                   </div>
                 </div>
                 <!-- Light Intensity -->
-                <div data-card-id="LightIntensity"
-                  :class="[
-                    'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation',
-                    cardsDarkened ? 'card-dark' : '',
-                    isTransitioning ? 'card-transition-out' : 'card-from-bottom-right'
-                  ]">
+                <div data-card-id="LightIntensity" :class="[
+                  'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation',
+                  cardsDarkened ? 'card-dark' : '',
+                  getCardAnimationClass(7)
+                ]">
                   <div class="flex items-center justify-between mb-3 md:mb-4">
                     <h3 class="text-sm font-semibold text-white">Light Intensity</h3>
                     <span class="text-xl md:text-2xl">💡</span>
@@ -601,14 +577,8 @@
         <HeatAlert ref="heatAlertRef" />
 
         <!-- Interactive Map Component -->
-        <InteractiveMap 
-          :is-open="isMapModalOpen"
-          :stations="stationsWithData"
-          :current-station="currentStation"
-          :selected-station="selectedStation"
-          @close="closeMapModal"
-          @station-selected="handleMapStationSelection"
-        />
+        <InteractiveMap :is-open="isMapModalOpen" :stations="stationsWithData" :current-station="currentStation"
+          :selected-station="selectedStation" @close="closeMapModal" @station-selected="handleMapStationSelection" />
       </div>
     </div>
   </IonContent>
@@ -622,7 +592,7 @@ import HeatAlert from '../components/HeatAlert.vue';
 import InteractiveMap from '../components/InteractiveMap.vue';
 import CloudAnimation from '../components/CloudAnimation.vue';
 import RainAnimation from '../components/RainAnimation.vue';
-import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { IonContent, IonRefresher, IonRefresherContent } from '@ionic/vue';
 import WindCompass from '../components/WindCompass.vue';
 import { db } from '../firebase';
@@ -658,6 +628,19 @@ const heroSection = ref<HTMLElement | null>(null);
 // Station transition animation states
 const isTransitioning = ref(false);
 const transitionDirection = ref<'left' | 'right'>('left');
+const cardAnimationPattern = ref<string>('default');
+const staggerDelay = ref(0);
+const cardRefreshKey = ref(0); // Force card re-render for animations
+
+// Swipe functionality
+const touchStartX = ref(0);
+const touchStartY = ref(0);
+const touchEndX = ref(0);
+const touchEndY = ref(0);
+const isSwipeActive = ref(false);
+const swipeThreshold = 50; // Minimum distance to trigger swipe
+const swipeTimeThreshold = 300; // Maximum time for a valid swipe (ms)
+const swipeStartTime = ref(0);
 
 // Side navigation state
 const isNavOpen = ref(false);
@@ -669,12 +652,12 @@ function toggleWindChart() {
   if (!showWindSpeedTable.value) {
     // Starting transformation - show animation
     isTransformingWind.value = true;
-    
+
     // After a delay, show the table and hide transformation
     setTimeout(() => {
       showWindSpeedTable.value = true;
       isTransformingWind.value = false;
-      
+
       // Trigger data fetch
       setTimeout(() => {
         try {
@@ -690,13 +673,13 @@ function toggleWindChart() {
   } else {
     // Closing table - start reverse transformation
     isTransformingWind.value = true;
-    
+
     // First hide the table with exit animation
     const child: any = windSpeedTableRef.value;
     if (child && child.$el) {
       child.$el.classList.add('table-exiting');
     }
-    
+
     // After table exit animation, show card transformation
     setTimeout(() => {
       showWindSpeedTable.value = false;
@@ -728,12 +711,12 @@ function toggleRainfallChart() {
   if (!showRainfallTable.value) {
     // Starting transformation - show animation
     isTransformingRainfall.value = true;
-    
+
     // After a delay, show the table and hide transformation
     setTimeout(() => {
       showRainfallTable.value = true;
       isTransformingRainfall.value = false;
-      
+
       // Trigger data fetch
       setTimeout(() => {
         try {
@@ -749,13 +732,13 @@ function toggleRainfallChart() {
   } else {
     // Closing table - start reverse transformation
     isTransformingRainfall.value = true;
-    
+
     // First hide the table with exit animation
     const child: any = rainfallTableRef.value;
     if (child && child.$el) {
       child.$el.classList.add('table-exiting');
     }
-    
+
     // After table exit animation, show card transformation
     setTimeout(() => {
       showRainfallTable.value = false;
@@ -872,26 +855,86 @@ const cardsDarkened = computed(() => scrollOffset.value > 100);
 // Station change with parallax transition
 function changeStation(stationId: string, index: number) {
   if (stationId === selectedStation.value || isTransitioning.value) return;
-  
+
   // Close navigation
   isNavOpen.value = false;
-  
+
   // Determine direction based on current vs new station index
   const currentIndex = stations.value.findIndex(s => s.id === selectedStation.value);
   transitionDirection.value = index > currentIndex ? 'right' : 'left';
+
+  // Create different animation patterns based on transition direction and randomness
+  const patterns = [
+    'spiral-in',      // Cards spiral in from outside
+    'cascade-wave',   // Cards come in like a wave
+    'radial-burst',   // Cards burst from center outward
+    'corner-sweep',   // Cards sweep in from corners
+    'zigzag-flow',    // Cards flow in zigzag pattern
+    'layered-depth'   // Cards come in with depth layers
+  ];
   
+  // Select pattern based on station index for consistency but with variation
+  cardAnimationPattern.value = patterns[index % patterns.length];
+  
+  // Add some randomness to stagger delay
+  staggerDelay.value = 50 + Math.random() * 100;
+
   // Start transition
   isTransitioning.value = true;
-  
+
   // Change station after initial animation
   setTimeout(() => {
     selectedStation.value = stationId;
-    
+
     // End transition after data loads and animations complete
     setTimeout(() => {
       isTransitioning.value = false;
-    }, 1200); // Increased to allow for staggered card animations
+      
+      // Reset and re-trigger card animations
+      nextTick(() => {
+        cardAnimationPattern.value = 'default';
+        // Force cards to re-render with new animations
+        cardRefreshKey.value += 1;
+        
+        // Reset all card animations and re-trigger them
+        nextTick(() => {
+          resetAndTriggerCardAnimations();
+        });
+      });
+    }, 1500); // Increased for more complex animations
   }, 400);
+}
+
+// Function to reset and re-trigger card animations
+function resetAndTriggerCardAnimations() {
+  const cards = document.querySelectorAll('[data-card-id]');
+  
+  cards.forEach((card, index) => {
+    const htmlCard = card as HTMLElement;
+    
+    // Remove all animation classes
+    htmlCard.classList.remove('card-spiral-in', 'card-cascade-wave', 'card-radial-burst', 
+                             'card-corner-sweep', 'card-zigzag-flow', 'card-layered-depth',
+                             'card-default-in', 'card-transition-out');
+    
+    // Remove delay classes
+    for (let i = 0; i <= 600; i += 60) {
+      htmlCard.classList.remove(`animation-delay-${i}`);
+    }
+    
+    // Force reflow
+    htmlCard.offsetHeight;
+    
+    // Re-add animation classes after a brief delay
+    setTimeout(() => {
+      const patterns = ['spiral-in', 'cascade-wave', 'radial-burst', 'corner-sweep', 'zigzag-flow', 'layered-depth'];
+      const cardPattern = patterns[index % patterns.length];
+      const delay = index * 80;
+      
+      htmlCard.classList.add(`card-${cardPattern}`);
+      htmlCard.classList.add(`animation-delay-${Math.min(delay, 500)}`);
+    }, 50);
+  });
 }
 
 // Side navigation functions
@@ -901,6 +944,82 @@ function toggleNav() {
 
 function closeNav() {
   isNavOpen.value = false;
+}
+
+// Swipe functionality for station switching
+function handleTouchStart(event: TouchEvent) {
+  if (isTransitioning.value || isNavOpen.value) return;
+  
+  const touch = event.touches[0];
+  touchStartX.value = touch.clientX;
+  touchStartY.value = touch.clientY;
+  touchEndX.value = touch.clientX;
+  touchEndY.value = touch.clientY;
+  isSwipeActive.value = true;
+  swipeStartTime.value = Date.now();
+}
+
+function handleTouchMove(event: TouchEvent) {
+  if (!isSwipeActive.value) return;
+  
+  const touch = event.touches[0];
+  touchEndX.value = touch.clientX;
+  touchEndY.value = touch.clientY;
+  
+  // Prevent default scroll behavior for horizontal swipes
+  const deltaX = Math.abs(touchEndX.value - touchStartX.value);
+  const deltaY = Math.abs(touchEndY.value - touchStartY.value);
+  
+  if (deltaX > deltaY && deltaX > 20) {
+    event.preventDefault();
+  }
+}
+
+function handleTouchEnd(event: TouchEvent) {
+  if (!isSwipeActive.value) return;
+  
+  isSwipeActive.value = false;
+  const swipeTime = Date.now() - swipeStartTime.value;
+  
+  // Check if swipe was fast enough
+  if (swipeTime > swipeTimeThreshold) return;
+  
+  const deltaX = touchEndX.value - touchStartX.value;
+  const deltaY = touchEndY.value - touchStartY.value;
+  
+  // Check if horizontal swipe distance is greater than vertical (avoid interfering with scrolling)
+  if (Math.abs(deltaX) < Math.abs(deltaY)) return;
+  
+  // Check if swipe distance meets threshold
+  if (Math.abs(deltaX) < swipeThreshold) return;
+  
+  // Add haptic feedback if available
+  if ('vibrate' in navigator) {
+    navigator.vibrate(50);
+  }
+  
+  // Determine swipe direction and switch station
+  if (deltaX > 0) {
+    // Swipe right - go to previous station
+    switchToPreviousStation();
+  } else {
+    // Swipe left - go to next station
+    switchToNextStation();
+  }
+}
+
+function switchToNextStation() {
+  const currentIndex = stations.value.findIndex(s => s.id === selectedStation.value);
+  const nextIndex = (currentIndex + 1) % stations.value.length;
+  const nextStation = stations.value[nextIndex];
+  changeStation(nextStation.id, nextIndex);
+}
+
+function switchToPreviousStation() {
+  const currentIndex = stations.value.findIndex(s => s.id === selectedStation.value);
+  const prevIndex = currentIndex === 0 ? stations.value.length - 1 : currentIndex - 1;
+  const prevStation = stations.value[prevIndex];
+  changeStation(prevStation.id, prevIndex);
 }
 
 function onScroll() {
@@ -1273,11 +1392,7 @@ function getRainfallCategory(): string {
   return 'Normal';
 }
 
-// Parallax effects and interactive scroll animations
-const scrollY = ref(0);
-const parallaxOffset = ref(0);
-const heroParallax = ref(0);
-const cardsParallax = ref(0);
+// Interactive mouse effects
 const mouseX = ref(0);
 const mouseY = ref(0);
 const scrollProgress = ref(0);
@@ -1286,10 +1401,10 @@ const scrollProgress = ref(0);
 function throttle(func: Function, delay: number) {
   let timeoutId: NodeJS.Timeout | null = null;
   let lastExecTime = 0;
-  
+
   return function (...args: any[]) {
     const currentTime = Date.now();
-    
+
     if (currentTime - lastExecTime > delay) {
       func.apply(null, args);
       lastExecTime = currentTime;
@@ -1303,24 +1418,13 @@ function throttle(func: Function, delay: number) {
   };
 }
 
-// Mouse movement handler for interactive parallax
+// Mouse movement handler for basic mouse tracking
 const handleMouseMove = throttle((event: MouseEvent) => {
   const { clientX, clientY } = event;
   const { innerWidth, innerHeight } = window;
-  
+
   mouseX.value = (clientX / innerWidth - 0.5) * 20;
   mouseY.value = (clientY / innerHeight - 0.5) * 20;
-  
-  // Apply subtle mouse-based parallax to cards
-  const cards = document.querySelectorAll('.card-hover');
-  cards.forEach((card, index) => {
-    const factor = (index % 3 + 1) * 0.1;
-    const moveX = mouseX.value * factor;
-    const moveY = mouseY.value * factor;
-    
-    (card as HTMLElement).style.setProperty('--mouse-x', `${moveX}px`);
-    (card as HTMLElement).style.setProperty('--mouse-y', `${moveY}px`);
-  });
 }, 16); // ~60fps
 
 // Interactive scroll handler for parallax effects
@@ -1328,35 +1432,8 @@ const handleScroll = throttle(() => {
   const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
   const windowHeight = window.innerHeight;
   const documentHeight = document.documentElement.scrollHeight - windowHeight;
-  
-  scrollY.value = scrollTop;
+
   scrollProgress.value = Math.min(scrollTop / documentHeight, 1);
-  
-  // Calculate parallax offsets for different layers
-  parallaxOffset.value = scrollTop * 0.5;
-  heroParallax.value = scrollTop * 0.3;
-  cardsParallax.value = scrollTop * 0.1;
-  
-  // Update card animations based on scroll position
-  const cards = document.querySelectorAll('.card-hover');
-  cards.forEach((card, index) => {
-    const rect = card.getBoundingClientRect();
-    const cardTop = rect.top + scrollTop;
-    const cardVisible = rect.top < window.innerHeight && rect.bottom > 0;
-    
-    if (cardVisible) {
-      const scrollProgress = (scrollTop - cardTop + window.innerHeight) / (window.innerHeight + rect.height);
-      const clampedProgress = Math.max(0, Math.min(1, scrollProgress));
-      
-      // Apply interactive transform based on scroll progress
-      const translateY = (1 - clampedProgress) * 20;
-      const opacity = 0.7 + (clampedProgress * 0.3);
-      const scale = 0.98 + (clampedProgress * 0.02);
-      
-      (card as HTMLElement).style.transform = `translateY(${translateY}px) scale(${scale})`;
-      (card as HTMLElement).style.opacity = opacity.toString();
-    }
-  });
 }, 16); // ~60fps throttle
 
 const currentStation = computed(() => {
@@ -1402,6 +1479,30 @@ const currentStation = computed(() => {
   };
 });
 
+// Dynamic animation classes based on pattern and card position
+const getCardAnimationClass = computed(() => {
+  return (cardIndex: number, baseClass: string = '') => {
+    if (isTransitioning.value) {
+      return `${baseClass} card-transition-out`;
+    }
+    
+    // Each card gets a different animation pattern based on its index
+    // This creates the multi-directional effect where cards come from different directions
+    const patterns = ['spiral-in', 'cascade-wave', 'radial-burst', 'corner-sweep', 'zigzag-flow', 'layered-depth'];
+    const cardPattern = patterns[cardIndex % patterns.length];
+    const delay = cardIndex * 80; // Stagger delay for each card
+    
+    // Use the pattern for the specific card
+    const animationClass = `card-${cardPattern}`;
+    const delayClass = `animation-delay-${Math.min(delay, 500)}`;
+    
+    // Include the refresh key to force re-computation
+    const refreshTrigger = cardRefreshKey.value;
+    
+    return `${baseClass} ${animationClass} ${delayClass}`;
+  };
+});
+
 // Watch for weather condition changes to update rain
 watch(() => {
   if (currentStation.value) {
@@ -1437,14 +1538,14 @@ onMounted(async () => {
   // Initialize parallax scroll effects and interactive animations
   window.addEventListener('scroll', handleScroll, { passive: true });
   window.addEventListener('mousemove', handleMouseMove, { passive: true });
-  
+
   // Initialize intersection observer for card animations
   const observerOptions = {
     root: null,
     rootMargin: '0px 0px -50px 0px',
     threshold: [0, 0.25, 0.5, 0.75, 1]
   };
-  
+
   const cardObserver = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       const card = entry.target as HTMLElement;
@@ -1456,7 +1557,7 @@ onMounted(async () => {
       }
     });
   }, observerOptions);
-  
+
   // Observe all cards for intersection
   setTimeout(() => {
     document.querySelectorAll('.card-hover').forEach(card => {
@@ -1473,12 +1574,13 @@ onMounted(async () => {
   };
 
   // Set up cleanup
- });
+});
 </script>
 
 <style scoped>
 /* Side Navigation Animations */
-.nav-slide-enter-active, .nav-slide-leave-active {
+.nav-slide-enter-active,
+.nav-slide-leave-active {
   transition: transform 0.3s cubic-bezier(0.0, 0.0, 0.2, 1);
 }
 
@@ -1490,11 +1592,13 @@ onMounted(async () => {
   transform: translateX(100%);
 }
 
-.nav-overlay-enter-active, .nav-overlay-leave-active {
+.nav-overlay-enter-active,
+.nav-overlay-leave-active {
   transition: opacity 0.3s ease;
 }
 
-.nav-overlay-enter-from, .nav-overlay-leave-to {
+.nav-overlay-enter-from,
+.nav-overlay-leave-to {
   opacity: 0;
 }
 
@@ -1529,11 +1633,11 @@ onMounted(async () => {
     width: 100vw !important;
     max-width: 100vw !important;
   }
-  
+
   .station-card {
     margin-bottom: 0.75rem;
   }
-  
+
   .nav-header {
     padding: 1rem 1.5rem;
   }
@@ -1551,7 +1655,7 @@ onMounted(async () => {
   .nav-panel {
     width: 400px;
   }
-  
+
   .station-card:hover {
     transform: translateX(-4px);
   }
@@ -1589,6 +1693,7 @@ onMounted(async () => {
     transform: translateX(0) scale(1);
     opacity: 1;
   }
+
   100% {
     transform: translateX(-50vw) scale(0.9);
     opacity: 0;
@@ -1600,6 +1705,7 @@ onMounted(async () => {
     transform: translateX(0) scale(1);
     opacity: 1;
   }
+
   100% {
     transform: translateX(50vw) scale(0.9);
     opacity: 0;
@@ -1611,6 +1717,7 @@ onMounted(async () => {
     transform: translateX(50vw) scale(0.9);
     opacity: 0;
   }
+
   100% {
     transform: translateX(0) scale(1);
     opacity: 1;
@@ -1622,6 +1729,7 @@ onMounted(async () => {
     transform: translateX(-50vw) scale(0.9);
     opacity: 0;
   }
+
   100% {
     transform: translateX(0) scale(1);
     opacity: 1;
@@ -1647,6 +1755,7 @@ onMounted(async () => {
     transform: translateY(-100vh) scale(0.8);
     opacity: 0;
   }
+
   100% {
     transform: translateY(0) scale(1);
     opacity: 1;
@@ -1658,6 +1767,7 @@ onMounted(async () => {
     transform: translateX(-100vw) scale(0.8);
     opacity: 0;
   }
+
   100% {
     transform: translateX(0) scale(1);
     opacity: 1;
@@ -1669,6 +1779,7 @@ onMounted(async () => {
     transform: translateX(100vw) scale(0.8);
     opacity: 0;
   }
+
   100% {
     transform: translateX(0) scale(1);
     opacity: 1;
@@ -1680,6 +1791,7 @@ onMounted(async () => {
     transform: translateY(100vh) scale(0.8);
     opacity: 0;
   }
+
   100% {
     transform: translateY(0) scale(1);
     opacity: 1;
@@ -1691,6 +1803,7 @@ onMounted(async () => {
     transform: translate(-70vw, -70vh) scale(0.8) rotate(-15deg);
     opacity: 0;
   }
+
   100% {
     transform: translate(0, 0) scale(1) rotate(0deg);
     opacity: 1;
@@ -1702,6 +1815,7 @@ onMounted(async () => {
     transform: translate(70vw, -70vh) scale(0.8) rotate(15deg);
     opacity: 0;
   }
+
   100% {
     transform: translate(0, 0) scale(1) rotate(0deg);
     opacity: 1;
@@ -1713,6 +1827,7 @@ onMounted(async () => {
     transform: translate(-70vw, 70vh) scale(0.8) rotate(15deg);
     opacity: 0;
   }
+
   100% {
     transform: translate(0, 0) scale(1) rotate(0deg);
     opacity: 1;
@@ -1724,6 +1839,7 @@ onMounted(async () => {
     transform: translate(70vw, 70vh) scale(0.8) rotate(-15deg);
     opacity: 0;
   }
+
   100% {
     transform: translate(0, 0) scale(1) rotate(0deg);
     opacity: 1;
@@ -1779,12 +1895,189 @@ onMounted(async () => {
   opacity: 0;
 }
 
+/* Enhanced Animation Patterns */
+@keyframes spiralIn {
+  0% {
+    transform: translateX(-200px) translateY(-200px) rotate(-360deg) scale(0.1);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(-100px) translateY(-100px) rotate(-180deg) scale(0.5);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateX(0) translateY(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes cascadeWave {
+  0% {
+    transform: translateY(-100px) rotateX(90deg);
+    opacity: 0;
+  }
+  30% {
+    transform: translateY(-50px) rotateX(45deg);
+    opacity: 0.5;
+  }
+  70% {
+    transform: translateY(10px) rotateX(-10deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(0) rotateX(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes radialBurst {
+  0% {
+    transform: scale(0) rotate(180deg);
+    opacity: 0;
+    filter: blur(10px);
+  }
+  50% {
+    transform: scale(1.1) rotate(90deg);
+    opacity: 0.8;
+    filter: blur(2px);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+@keyframes cornerSweep {
+  0% {
+    transform: translateX(-150px) translateY(-150px) rotate(-90deg) scale(0.3);
+    opacity: 0;
+  }
+  40% {
+    transform: translateX(-75px) translateY(-75px) rotate(-45deg) scale(0.7);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(0) translateY(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes zigzagFlow {
+  0% {
+    transform: translateX(-300px) translateY(0) skewX(30deg);
+    opacity: 0;
+  }
+  25% {
+    transform: translateX(-150px) translateY(-30px) skewX(15deg);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateX(-75px) translateY(15px) skewX(-15deg);
+    opacity: 0.6;
+  }
+  75% {
+    transform: translateX(-25px) translateY(-10px) skewX(5deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(0) translateY(0) skewX(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes layeredDepth {
+  0% {
+    transform: translateZ(-500px) scale(0.2) rotateY(45deg);
+    opacity: 0;
+    filter: blur(15px);
+  }
+  30% {
+    transform: translateZ(-300px) scale(0.5) rotateY(30deg);
+    opacity: 0.4;
+    filter: blur(8px);
+  }
+  70% {
+    transform: translateZ(-100px) scale(0.8) rotateY(10deg);
+    opacity: 0.8;
+    filter: blur(3px);
+  }
+  100% {
+    transform: translateZ(0) scale(1) rotateY(0deg);
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+/* Enhanced Animation Classes */
+.card-spiral-in {
+  animation: spiralIn 1.2s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  opacity: 0;
+}
+
+.card-cascade-wave {
+  animation: cascadeWave 1.0s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  opacity: 0;
+}
+
+.card-radial-burst {
+  animation: radialBurst 0.9s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  opacity: 0;
+}
+
+.card-corner-sweep {
+  animation: cornerSweep 1.1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  opacity: 0;
+}
+
+.card-zigzag-flow {
+  animation: zigzagFlow 1.3s cubic-bezier(0.39, 0.575, 0.565, 1) forwards;
+  opacity: 0;
+}
+
+.card-layered-depth {
+  animation: layeredDepth 1.4s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+  opacity: 0;
+  perspective: 1000px;
+}
+
+.card-default-in {
+  animation: cardFromTop 0.8s cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+  opacity: 0;
+}
+
+.card-transition-out {
+  animation: fadeOut 0.4s ease-out forwards;
+}
+
+/* Animation Delay Classes */
+.animation-delay-0 { animation-delay: 0ms; }
+.animation-delay-60 { animation-delay: 60ms; }
+.animation-delay-80 { animation-delay: 80ms; }
+.animation-delay-90 { animation-delay: 90ms; }
+.animation-delay-100 { animation-delay: 100ms; }
+.animation-delay-110 { animation-delay: 110ms; }
+.animation-delay-120 { animation-delay: 120ms; }
+.animation-delay-200 { animation-delay: 200ms; }
+.animation-delay-300 { animation-delay: 300ms; }
+.animation-delay-400 { animation-delay: 400ms; }
+.animation-delay-450 { animation-delay: 450ms; }
+.animation-delay-500 { animation-delay: 500ms; }
+.animation-delay-550 { animation-delay: 550ms; }
+.animation-delay-600 { animation-delay: 600ms; }
+
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 /* Station Transition Parallax Effects */
 @keyframes stationSlideOutLeft {
   0% {
     transform: translateX(0) scale(1);
     opacity: 1;
   }
+
   100% {
     transform: translateX(-100vw) scale(0.8);
     opacity: 0;
@@ -1796,6 +2089,7 @@ onMounted(async () => {
     transform: translateX(0) scale(1);
     opacity: 1;
   }
+
   100% {
     transform: translateX(100vw) scale(0.8);
     opacity: 0;
@@ -1807,6 +2101,7 @@ onMounted(async () => {
     transform: translateX(100vw) scale(0.8);
     opacity: 0;
   }
+
   100% {
     transform: translateX(0) scale(1);
     opacity: 1;
@@ -1818,6 +2113,7 @@ onMounted(async () => {
     transform: translateX(-100vw) scale(0.8);
     opacity: 0;
   }
+
   100% {
     transform: translateX(0) scale(1);
     opacity: 1;
@@ -1830,6 +2126,7 @@ onMounted(async () => {
     transform: translateX(0) translateY(0) scale(1);
     opacity: 1;
   }
+
   100% {
     transform: translateX(-50vw) translateY(-20px) scale(0.9);
     opacity: 0;
@@ -1841,6 +2138,7 @@ onMounted(async () => {
     transform: translateX(0) translateY(0) scale(1);
     opacity: 1;
   }
+
   100% {
     transform: translateX(50vw) translateY(-20px) scale(0.9);
     opacity: 0;
@@ -1852,6 +2150,7 @@ onMounted(async () => {
     transform: translateX(50vw) translateY(20px) scale(0.9);
     opacity: 0;
   }
+
   100% {
     transform: translateX(0) translateY(0) scale(1);
     opacity: 1;
@@ -1863,6 +2162,7 @@ onMounted(async () => {
     transform: translateX(-50vw) translateY(20px) scale(0.9);
     opacity: 0;
   }
+
   100% {
     transform: translateX(0) translateY(0) scale(1);
     opacity: 1;
@@ -1895,19 +2195,42 @@ onMounted(async () => {
   animation: cardsSlideInLeft 0.8s cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
 }
 
-.cards-transition-in > * {
+.cards-transition-in>* {
   animation-delay: calc(var(--card-index, 0) * 0.05s);
 }
 
 /* Individual card animations for more dynamic effect */
-.cards-transition-in > *:nth-child(1) { animation-delay: 0.1s; }
-.cards-transition-in > *:nth-child(2) { animation-delay: 0.15s; }
-.cards-transition-in > *:nth-child(3) { animation-delay: 0.2s; }
-.cards-transition-in > *:nth-child(4) { animation-delay: 0.25s; }
-.cards-transition-in > *:nth-child(5) { animation-delay: 0.3s; }
-.cards-transition-in > *:nth-child(6) { animation-delay: 0.35s; }
-.cards-transition-in > *:nth-child(7) { animation-delay: 0.4s; }
-.cards-transition-in > *:nth-child(8) { animation-delay: 0.45s; }
+.cards-transition-in>*:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.cards-transition-in>*:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.cards-transition-in>*:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.cards-transition-in>*:nth-child(4) {
+  animation-delay: 0.25s;
+}
+
+.cards-transition-in>*:nth-child(5) {
+  animation-delay: 0.3s;
+}
+
+.cards-transition-in>*:nth-child(6) {
+  animation-delay: 0.35s;
+}
+
+.cards-transition-in>*:nth-child(7) {
+  animation-delay: 0.4s;
+}
+
+.cards-transition-in>*:nth-child(8) {
+  animation-delay: 0.45s;
+}
 
 /* Fix scrolling issues and improve mobile performance */
 .min-h-screen {
@@ -2148,10 +2471,10 @@ ion-content {
 
 /* Interactive Parallax & Scroll Effects */
 .card-hover {
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-              opacity 0.3s ease,
-              box-shadow 0.3s ease,
-              border-color 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s ease,
+    box-shadow 0.3s ease,
+    border-color 0.3s ease;
   will-change: transform, opacity;
   --mouse-x: 0px;
   --mouse-y: 0px;
@@ -2194,6 +2517,7 @@ ion-content {
     opacity: 0;
     transform: translateY(30px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -2210,9 +2534,12 @@ ion-content {
 
 /* Enhanced parallax background effects */
 @keyframes parallaxFloat {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px) rotate(0deg);
   }
+
   50% {
     transform: translateY(-10px) rotate(1deg);
   }
@@ -2230,9 +2557,12 @@ ion-content {
 }
 
 @keyframes gradientShift {
-  0%, 100% {
+
+  0%,
+  100% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
