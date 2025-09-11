@@ -600,11 +600,48 @@ const heatAlertRef = ref<any>(null);
 // Map modal state
 const isMapModalOpen = ref(false);
 
-// Computed property for stations with current data
+// Store latest data for all stations
+const stationDataMap = ref<Record<string, any>>({});
+
+// Fetch latest sensors for all stations
+async function fetchAllStationsLatestSensors() {
+  // Remove all previous listeners
+  if (firebaseListeners.value && firebaseListeners.value.length) {
+    firebaseListeners.value.forEach(unsubscribe => {
+      try { unsubscribe(); } catch (e) {}
+    });
+    firebaseListeners.value = [];
+  }
+
+  for (const station of stations.value) {
+    const stationId = station.id;
+    const data: any = {};
+    let unsubList: (() => void)[] = [];
+    for (const sensor of sensorTypes) {
+      const sensorRef = dbRef(db, `${stationId}/data/sensors/${sensor.key}`);
+      const q = query(sensorRef, orderByKey(), limitToLast(1));
+      const unsub = onChildAdded(q, (snapshot) => {
+        const val = snapshot.val();
+        let finalValue: any = val?.val ?? val ?? 0;
+        if (sensor.key !== 'WD' && typeof finalValue === 'string') {
+          finalValue = parseFloat(finalValue) || 0;
+        }
+        data[sensor.label] = finalValue;
+        // Update the map reactively
+        stationDataMap.value = { ...stationDataMap.value, [stationId]: { ...stationDataMap.value[stationId], ...data } };
+      });
+      unsubList.push(unsub);
+    }
+    // Store all unsub functions for cleanup
+    firebaseListeners.value.push(...unsubList);
+  }
+}
+
+// Computed property for stations with their own data
 const stationsWithData = computed(() => {
   return stations.value.map(station => ({
     ...station,
-    data: station.id === selectedStation.value ? currentStation.value?.data : null
+    data: stationDataMap.value[station.id] || null
   }));
 });
 
@@ -1501,8 +1538,8 @@ watch(() => {
 }, { immediate: false });
 
 onMounted(async () => {
-  // Fetch initial data first
-  fetchLatestSensors(selectedStation.value);
+  // Fetch latest sensors for all stations
+  fetchAllStationsLatestSensors();
   fetchTodayRainfallTotal(selectedStation.value);
 
   // Add keyboard event listener for navigation
