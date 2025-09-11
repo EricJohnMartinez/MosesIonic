@@ -11,17 +11,7 @@
           :style="{ width: `${scrollProgress * 100}%` }"></div>
       </div>
 
-      <!-- Swipe Indicator -->
-      <div v-if="isSwipeActive" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none">
-        <div class="bg-black/70 backdrop-blur-md text-white px-4 py-2 rounded-lg flex items-center space-x-2">
-          <span class="text-sm">Swipe to switch stations</span>
-          <div class="flex space-x-1">
-            <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-            <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style="animation-delay: 0.2s;"></div>
-            <div class="w-2 h-2 bg-blue-400 rounded-full animate-pulse" style="animation-delay: 0.4s;"></div>
-          </div>
-        </div>
-      </div>
+    
 
       <div class="relative z-30 flex-1"
         :style="{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }">
@@ -219,21 +209,21 @@
             <section class="lg:-mt-20 md:-mt-24 sm:-mt-2 -mt-10">
               <!-- Weather Metrics Grid -->
               <transition name="fade">
-                <div v-if="showWindSpeedTable" class="mt-6">
+                <div v-if="showWindSpeedTable" class="mt-6" @touchstart.stop @touchmove.stop @touchend.stop>
                   <WindSpeedTable ref="windSpeedTableRef" :stationId="currentStation.id"
                     :currentWindSpeed="currentStation.data.windSpeed" :isTransforming="isTransformingWind"
                     @animation-complete="onWindAnimationComplete" @close-table="toggleWindChart" />
                 </div>
               </transition>
               <transition name="fade">
-                <div v-if="showRainfallTable" class="mt-6">
+                <div v-if="showRainfallTable" class="mt-6" @touchstart.stop @touchmove.stop @touchend.stop>
                   <RainfallTable ref="rainfallTableRef" :stationId="currentStation.id"
                     :currentRainfall="currentStation.data.rainfall" :isTransforming="isTransformingRainfall"
                     @animation-complete="onRainfallAnimationComplete" @close-table="toggleRainfallChart" />
                 </div>
               </transition>
               <transition name="fade">
-                <div v-if="showTemperatureTable" class="mt-6">
+                <div v-if="showTemperatureTable" class="mt-6" @touchstart.stop @touchmove.stop @touchend.stop>
                   <TemperatureTable ref="temperatureTableRef" :stationId="currentStation.id"
                     :currentTemperature="currentStation.data.temperature" :isTransforming="isTransformingTemperature"
                     @animation-complete="onTemperatureAnimationComplete" @close-table="toggleTemperatureTable" />
@@ -242,10 +232,7 @@
             </section>
 
 
-            <!-- Temporary Debug Component -->
-            <!-- <div class="mt-6">
-            <FirebaseDebug :stationId="selectedStation" />
-          </div> -->
+         
             <section class="lg:mt-1 md:mt-8 mt-10">
               <h2
                 class="text-lg sm:text-xl md:text-2xl font-bold text-white mb-3 sm:mb-4 md:mb-6 -mt-1 sm:mt-6 md:mt-10 text-center lg:text-left">
