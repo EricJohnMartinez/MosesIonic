@@ -124,7 +124,7 @@
               </div>
 
               <!-- Additional Navigation Options -->
-              <div class="mt-6 pt-6 border-t border-gray-700">
+              <div class="mt-6 pt-6 border-t border-gray-700 space-y-3">
                 <button @click="openMapModal"
                   class="w-full flex items-center space-x-3 p-4 rounded-xl bg-gray-800/50 border border-gray-600 hover:bg-gray-700/50 hover:border-gray-500 transition-all duration-200">
                   <span class="text-xl">🗺️</span>
@@ -134,6 +134,11 @@
                       d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                   </svg>
                 </button>
+
+                <!-- Notification Settings -->
+                <div class="bg-gray-800/30 border border-gray-600 rounded-xl p-4">
+                  <NotificationSettings />
+                </div>
               </div>
             </div>
           </div>
@@ -556,6 +561,13 @@
                 <span>🚨</span>
                 <span>Heat Alert Active</span>
               </button>
+
+              <!-- FCM Test Button (temporary for debugging) -->
+              <button @click="testFCM"
+                class="w-full sm:w-auto bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 sm:px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 touch-manipulation min-h-[44px]">
+                <span>🔔</span>
+                <span>Test FCM Setup</span>
+              </button>
             </section>
           </main>
         </div>
@@ -579,14 +591,32 @@ import HeatAlert from '../components/HeatAlert.vue';
 import InteractiveMap from '../components/InteractiveMap.vue';
 import CloudAnimation from '../components/CloudAnimation.vue';
 import RainAnimation from '../components/RainAnimation.vue';
+import NotificationSettings from '../components/NotificationSettings.vue';
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { IonContent, IonRefresher, IonRefresherContent } from '@ionic/vue';
 import WindCompass from '../components/WindCompass.vue';
 import { db } from '../firebase';
 import { ref as dbRef, query, orderByKey, limitToLast, onChildAdded, onValue, startAt } from 'firebase/database';
+import { useFCM } from '../utils/useFCM';
+import { weatherAlertSystem } from '../utils/weatherAlerts';
 
 // @ts-ignore
 declare global { interface Window { L: any } }
+
+// Initialize FCM
+const { initializeFCM, isSupported, testNotification, requestPermission } = useFCM();
+
+// FCM Test function for debugging
+const testFCM = async () => {
+  console.log('🧪 Manual FCM Test Started');
+  try {
+    await initializeFCM();
+    await testNotification();
+  } catch (error) {
+    console.error('FCM Test failed:', error);
+    alert('FCM Test failed - check console for details');
+  }
+};
 
 // Define stations
 const stations = ref([
@@ -1483,23 +1513,32 @@ const currentStation = computed(() => {
   }
 
   // final current station data prepared
+  const stationData = {
+    temperature,
+    humidity,
+    rainfall: sensorValues.value.RR,
+    windSpeed: sensorValues.value.WSP,
+    windDirection: sensorValues.value.WD,
+    heatIndex,
+    soilMoisture: sensorValues.value.SMD,
+    soilTemp: sensorValues.value.STD,
+    illumination: sensorValues.value.LUX,
+    solar: sensorValues.value.TSR,
+    windAngle: sensorValues.value.WA,
+    pressure: sensorValues.value.ATM,
+    dailyRainfall: dailyRainfallTotal.value
+  };
+
+  // Check for weather alerts
+  try {
+    weatherAlertSystem.checkWeatherConditions(stationData, station.name, station.id);
+  } catch (error) {
+    console.error('Weather alert check failed:', error);
+  }
 
   return {
     ...station,
-    data: {
-      temperature,
-      humidity,
-      rainfall: sensorValues.value.RR,
-      windSpeed: sensorValues.value.WSP,
-      windDirection: sensorValues.value.WD,
-      heatIndex,
-      soilMoisture: sensorValues.value.SMD,
-      soilTemp: sensorValues.value.STD,
-      illumination: sensorValues.value.LUX,
-      solar: sensorValues.value.TSR,
-      windAngle: sensorValues.value.WA,
-      pressure: sensorValues.value.ATM
-    }
+    data: stationData
   };
 });
 
@@ -1538,6 +1577,18 @@ watch(() => {
 }, { immediate: false });
 
 onMounted(async () => {
+  // Initialize Weather Alert System
+  weatherAlertSystem.initialize();
+  
+  // Auto-initialize FCM for push notifications (no user interaction required)
+  console.log('🚀 Starting automatic FCM initialization...');
+  try {
+    await initializeFCM();
+    console.log('✅ Auto FCM initialization completed');
+  } catch (error) {
+    console.error('❌ Auto FCM initialization failed:', error);
+  }
+
   // Fetch latest sensors for all stations and await for first render
   await fetchAllStationsLatestSensors();
   fetchTodayRainfallTotal(selectedStation.value);
@@ -1549,6 +1600,19 @@ onMounted(async () => {
     }
   };
   document.addEventListener('keydown', handleKeydown);
+
+  // Add global FCM test functions for debugging
+  (window as any).testFCM = async () => {
+    console.log('🧪 Console FCM Test');
+    await initializeFCM();
+  };
+  
+  (window as any).testNotifications = async () => {
+    console.log('🧪 Console Notification Test');
+    await testNotification();
+  };
+  
+  console.log('🔍 FCM Debug: Use testFCM() or testNotifications() in console to test manually');
 
   if (window.L) {
     try {

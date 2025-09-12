@@ -1,0 +1,27 @@
+{
+  "name": "Moses Weather Station",
+  "short_name": "Moses Weather",
+  "description": "Real-time weather monitoring system for agricultural and meteorological data",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e293b",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "orientation": "portrait-primary",
+  "categories": ["weather", "productivity", "utilities"],
+  "lang": "en",
+  "dir": "ltr"
+}

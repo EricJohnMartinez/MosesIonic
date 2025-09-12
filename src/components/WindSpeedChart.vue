@@ -62,8 +62,7 @@ const chartOptions = ref({
     categories: [],
     labels: {
       style: { colors: '#fff' },
-      rotate: -45,
-      rotateAlways: true, 
+    
     },
   },
   yaxis: {

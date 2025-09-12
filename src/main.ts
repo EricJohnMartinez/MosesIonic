@@ -49,4 +49,15 @@ app.component('apexchart', VueApexCharts);
 
 router.isReady().then(() => {
   app.mount('#app');
+  
+  // Register service worker for FCM (only in production or when needed)
+  if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+    navigator.serviceWorker.register('/firebase-messaging-sw.js')
+      .then((registration) => {
+        console.log('Service Worker registered successfully:', registration);
+      })
+      .catch((error) => {
+        console.error('Service Worker registration failed:', error);
+      });
+  }
 });
