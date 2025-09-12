@@ -1,7 +1,62 @@
 // src/utils/fcm.ts
-import { getToken, onMessage, Messaging } from 'firebase/messaging';
-import { messaging, VAPID_KEY } from '../firebase';
 import { isPlatform } from '@ionic/vue';
+
+// Conditional imports to prevent errors on unsupported browsers
+let getToken: any = null;
+let onMessage: any = null;
+let messaging: any = null;
+let VAPID_KEY: string = '';
+
+// Only import Firebase messaging if we're in a supported environment
+const initializeFirebaseMessaging = async () => {
+  try {
+    if (typeof window === 'undefined' || isPlatform('capacitor')) {
+      return false;
+    }
+
+    // Check basic browser support before importing
+    if (!('serviceWorker' in navigator) || !('Notification' in window) || !('PushManager' in window)) {
+      console.log('🔒 Skipping Firebase messaging import - browser lacks required APIs');
+      return false;
+    }
+
+    // Service Workers require HTTPS, except for localhost
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1';
+    const isHttps = window.location.protocol === 'https:';
+    
+    if (!isHttps && !isLocalhost) {
+      console.log('🔒 Service Workers require HTTPS (except on localhost)');
+      console.log('Current URL:', window.location.href);
+      console.log('Try accessing via localhost or enable HTTPS');
+      return false;
+    }
+
+    // Dynamic import to avoid errors on unsupported browsers
+    const [messagingModule, firebaseModule] = await Promise.all([
+      import('firebase/messaging'),
+      import('../firebase')
+    ]);
+
+    getToken = messagingModule.getToken;
+    onMessage = messagingModule.onMessage;
+    
+    // Initialize messaging using the new conditional method
+    messaging = await firebaseModule.initializeMessaging();
+    VAPID_KEY = firebaseModule.VAPID_KEY;
+
+    if (messaging) {
+      console.log('✅ Firebase messaging imported and initialized successfully');
+      return true;
+    } else {
+      console.log('🔒 Firebase messaging initialization returned null');
+      return false;
+    }
+  } catch (error) {
+    console.log('🔒 Firebase messaging not available:', error);
+    return false;
+  }
+};
 
 export interface NotificationPayload {
   title: string;
@@ -13,8 +68,17 @@ export interface NotificationPayload {
 class FCMService {
   private isSupported = false;
   private token: string | null = null;
+  private firebaseInitialized = false;
 
   constructor() {
+    this.initializeAsync();
+  }
+
+  private async initializeAsync() {
+    // First check if Firebase messaging can be initialized
+    this.firebaseInitialized = await initializeFirebaseMessaging();
+    
+    // Then check full support
     this.isSupported = this.checkSupport();
     
     // Check for existing token in localStorage
@@ -40,6 +104,12 @@ class FCMService {
       return false;
     }
 
+    // Check if Firebase messaging was successfully initialized
+    if (!this.firebaseInitialized) {
+      console.log('Firebase messaging not initialized');
+      return false;
+    }
+
     // Check if service workers are supported
     if (!('serviceWorker' in navigator)) {
       console.log('Service workers not supported');
@@ -49,6 +119,31 @@ class FCMService {
     // Check if notifications are supported
     if (!('Notification' in window)) {
       console.log('Notifications not supported');
+      return false;
+    }
+
+    // Check if PushManager is supported
+    if (!('PushManager' in window)) {
+      console.log('PushManager not supported');
+      return false;
+    }
+
+    // Check if addEventListener exists on serviceWorker
+    if (!navigator.serviceWorker || typeof navigator.serviceWorker.addEventListener !== 'function') {
+      console.log('serviceWorker.addEventListener not supported');
+      return false;
+    }
+
+    // Check if showNotification exists on ServiceWorkerRegistration
+    if (typeof window.ServiceWorkerRegistration === 'undefined' ||
+        typeof window.ServiceWorkerRegistration.prototype.showNotification !== 'function') {
+      console.log('ServiceWorkerRegistration.showNotification not supported');
+      return false;
+    }
+
+    // Check if messaging is available after initialization
+    if (!messaging) {
+      console.log('Firebase messaging not available');
       return false;
     }
 
@@ -173,7 +268,7 @@ class FCMService {
   onForegroundMessage(callback: (payload: any) => void): void {
     if (!this.isSupported || !messaging) return;
 
-    onMessage(messaging, (payload) => {
+    onMessage(messaging, (payload: any) => {
       console.log('Message received in foreground:', payload);
       callback(payload);
     });
@@ -266,14 +361,21 @@ class FCMService {
 export const fcmService = new FCMService();
 
 // Auto-initialize FCM when the module loads (in supported browsers)
-if (typeof window !== 'undefined' && fcmService.isNotificationSupported()) {
-  // Small delay to ensure DOM is ready
+if (typeof window !== 'undefined') {
+  // Small delay to ensure DOM is ready and async initialization completes
   setTimeout(async () => {
-    console.log('🚀 Auto-initializing FCM on module load...');
     try {
-      await fcmService.getTokenAutomatically();
+      // Wait a bit more for async initialization to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      if (fcmService.isNotificationSupported()) {
+        console.log('🚀 Auto-initializing FCM on module load...');
+        await fcmService.getTokenAutomatically();
+      } else {
+        console.log('🔒 FCM not initialized: Browser does not support required APIs.');
+      }
     } catch (error) {
       console.log('Auto FCM initialization completed with error (normal if permissions denied):', error);
     }
-  }, 1000);
+  }, 1500);
 }

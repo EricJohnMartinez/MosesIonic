@@ -11,9 +11,32 @@
     <ion-card-content>
       <div v-if="!isSupported" class="text-center p-4">
         <ion-icon :icon="warningOutline" color="warning" size="large"></ion-icon>
-        <p class="mt-2 text-gray-600">
+        <p class="mt-2 text-gray-600 font-medium">
           Push notifications are not supported on this device
         </p>
+        
+        <!-- Detailed browser compatibility info -->
+        <div class="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg text-left text-sm">
+          <p class="text-orange-800 font-medium mb-2">📱 Browser Requirements:</p>
+          <div class="space-y-1 text-orange-700">
+            <p>• Service Workers: {{ hasServiceWorker ? '✅' : '❌' }}</p>
+            <p>• Notifications API: {{ hasNotifications ? '✅' : '❌' }}</p>
+            <p>• Push Manager: {{ hasPushManager ? '✅' : '❌' }}</p>
+          </div>
+          
+          <div class="mt-3 pt-3 border-t border-orange-200">
+            <p class="text-orange-800 font-medium mb-1">✅ Supported Browsers:</p>
+            <p class="text-xs text-orange-600">Chrome Mobile, Firefox Mobile, Safari Mobile (11.1+), Samsung Internet</p>
+            
+            <p class="text-orange-800 font-medium mb-1 mt-2">❌ Not Supported:</p>
+            <p class="text-xs text-orange-600">Opera Mini, UC Browser, older browsers</p>
+          </div>
+          
+          <div class="mt-3 pt-3 border-t border-orange-200">
+            <p class="text-orange-800 font-medium mb-1">💡 Try:</p>
+            <p class="text-xs text-orange-600">Open this app in Chrome Mobile or another supported browser</p>
+          </div>
+        </div>
       </div>
 
       <div v-else>
@@ -45,16 +68,34 @@
           </ion-button>
 
           <!-- Manual permission request if denied -->
-          <ion-button 
-            v-if="notificationPermission === 'denied'"
-            expand="block" 
-            fill="outline"
-            color="warning"
-            @click="showPermissionHelp"
-          >
-            <ion-icon :icon="warningOutline" class="mr-2"></ion-icon>
-            Permission Denied - Help
-          </ion-button>
+          <div v-if="notificationPermission === 'denied'" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div class="flex items-center mb-2">
+              <ion-icon :icon="warningOutline" color="danger" class="mr-2"></ion-icon>
+              <span class="text-red-800 font-medium">Notifications Blocked</span>
+            </div>
+            <p class="text-red-700 text-sm mb-3">
+              You previously denied notification permissions. To enable notifications:
+            </p>
+            <div class="text-sm text-red-600 space-y-1 mb-3">
+              <p><strong>Chrome Mobile:</strong></p>
+              <p>• Tap the lock icon 🔒 in the address bar</p>
+              <p>• Set "Notifications" to "Allow"</p>
+              <p>• Refresh this page</p>
+              
+              <p class="mt-2"><strong>Safari Mobile:</strong></p>
+              <p>• Go to iPhone Settings → Safari → Website Settings</p>
+              <p>• Find this site and enable notifications</p>
+            </div>
+            <ion-button 
+              size="small"
+              fill="outline"
+              color="danger"
+              @click="showPermissionHelp"
+            >
+              <ion-icon :icon="warningOutline" class="mr-2"></ion-icon>
+              Detailed Help
+            </ion-button>
+          </div>
         </div>
 
         <div v-else class="space-y-4">
@@ -234,8 +275,48 @@ const notificationPermission = computed(() => {
     : 'unknown';
 });
 
+// Browser feature detection for detailed feedback
+const hasServiceWorker = computed(() => {
+  return typeof window !== 'undefined' && 'serviceWorker' in navigator;
+});
+
+const hasNotifications = computed(() => {
+  return typeof window !== 'undefined' && 'Notification' in window;
+});
+
+const hasPushManager = computed(() => {
+  return typeof window !== 'undefined' && 'PushManager' in window;
+});
+
 const showPermissionHelp = () => {
-  alert('Notifications were denied. To enable:\n\n1. Click the lock icon in your browser address bar\n2. Set Notifications to "Allow"\n3. Refresh this page\n4. Try enabling notifications again');
+  const helpText = `📱 ENABLE NOTIFICATIONS HELP
+
+🔧 CHROME MOBILE:
+1. Tap the lock icon 🔒 in address bar
+2. Tap "Permissions"
+3. Set "Notifications" to "Allow"
+4. Refresh this page
+
+🔧 FIREFOX MOBILE:
+1. Tap menu (⋮) → Settings
+2. Tap "Site Settings"
+3. Find this website
+4. Enable "Notifications"
+
+🔧 SAFARI MOBILE (iOS):
+1. Open iPhone Settings
+2. Go to Safari → Website Settings
+3. Find this website
+4. Enable "Notifications"
+
+🔧 ALTERNATIVE METHOD:
+1. Clear this website's data in browser settings
+2. Visit the site again
+3. Accept notification permission when prompted
+
+Still having issues? Try opening this app in Chrome Mobile for best compatibility.`;
+
+  alert(helpText);
 };
 
 const updateSettings = () => {

@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:https": "vite",
     "dev:ngrok": "node ./scripts/dev-ngrok.js",
     "build": "vue-tsc && vite build",
     "preview": "vite preview",
