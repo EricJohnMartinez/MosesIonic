@@ -1538,8 +1538,8 @@ watch(() => {
 }, { immediate: false });
 
 onMounted(async () => {
-  // Fetch latest sensors for all stations
-  fetchAllStationsLatestSensors();
+  // Fetch latest sensors for all stations and await for first render
+  await fetchAllStationsLatestSensors();
   fetchTodayRainfallTotal(selectedStation.value);
 
   // Add keyboard event listener for navigation
