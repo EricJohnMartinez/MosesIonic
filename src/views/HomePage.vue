@@ -30,6 +30,12 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
+            <!-- Debug: FCM Token Display -->
+            <div class="mt-2 p-2 bg-gray-900/80 text-xs text-green-400 rounded break-all max-w-xs shadow-lg select-all">
+              <div v-if="webFcmToken">Web FCM Token: {{ webFcmToken }}</div>
+              <div v-if="nativeFcmToken">Android FCM Token: {{ nativeFcmToken }}</div>
+              <div v-if="!webFcmToken && !nativeFcmToken" class="text-gray-400">FCM token not available</div>
+            </div>
           </div>
 
           <!-- Side Navigation Overlay -->
@@ -598,13 +604,23 @@ import WindCompass from '../components/WindCompass.vue';
 import { db } from '../firebase';
 import { ref as dbRef, query, orderByKey, limitToLast, onChildAdded, onValue, startAt } from 'firebase/database';
 import { useFCM } from '../utils/useFCM';
+import { useNativeFCM } from '../utils/useNativeFCM';
+import { ref as vueRef, toRef } from 'vue';
 import { weatherAlertSystem } from '../utils/weatherAlerts';
 
 // @ts-ignore
 declare global { interface Window { L: any } }
 
-// Initialize FCM
-const { initializeFCM, isSupported, testNotification, requestPermission } = useFCM();
+// Initialize FCM (web and native)
+const { initializeFCM, isSupported, testNotification, requestPermission, token: webFcmToken } = useFCM();
+const nativeFcmToken = vueRef<string|null>(null);
+const { getToken: getNativeFcmToken } = useNativeFCM();
+
+onMounted(async () => {
+  // Try to get native FCM token (Android)
+  const nativeToken = await getNativeFcmToken();
+  if (nativeToken) nativeFcmToken.value = nativeToken;
+});
 
 // FCM Test function for debugging
 const testFCM = async () => {

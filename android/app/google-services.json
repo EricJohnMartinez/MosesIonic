@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "885584398219",
+    "firebase_url": "https://weather-station-c541d-default-rtdb.firebaseio.com",
+    "project_id": "weather-station-c541d",
+    "storage_bucket": "weather-station-c541d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:885584398219:android:ccfecccd2b2ab101fc518e",
+        "android_client_info": {
+          "package_name": "io.ionic.starter"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "885584398219-go8kv0mg6mcdr7fevj85cd9akcqc38vu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDGMm4AN58meNODbITRh3i8eqjN4FJtirQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "885584398219-go8kv0mg6mcdr7fevj85cd9akcqc38vu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
