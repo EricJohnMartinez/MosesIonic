@@ -1579,7 +1579,7 @@ watch(() => {
 onMounted(async () => {
   // Initialize Weather Alert System
   weatherAlertSystem.initialize();
-  
+
   // Auto-initialize FCM for push notifications (no user interaction required)
   console.log('🚀 Starting automatic FCM initialization...');
   try {
@@ -1591,6 +1591,8 @@ onMounted(async () => {
 
   // Fetch latest sensors for all stations and await for first render
   await fetchAllStationsLatestSensors();
+  // Fetch latest sensors and rainfall for the initially selected station
+  fetchLatestSensors(selectedStation.value);
   fetchTodayRainfallTotal(selectedStation.value);
 
   // Add keyboard event listener for navigation
@@ -1606,12 +1608,12 @@ onMounted(async () => {
     console.log('🧪 Console FCM Test');
     await initializeFCM();
   };
-  
+
   (window as any).testNotifications = async () => {
     console.log('🧪 Console Notification Test');
     await testNotification();
   };
-  
+
   console.log('🔍 FCM Debug: Use testFCM() or testNotifications() in console to test manually');
 
   if (window.L) {
