@@ -659,6 +659,8 @@ async function fetchAllStationsLatestSensors() {
     firebaseListeners.value = [];
   }
 
+  console.log('[fetchAllStationsLatestSensors] Called on app start. Stations:', stations.value.map(s => s.id));
+
   for (const station of stations.value) {
     const stationId = station.id;
     const data: any = {};
@@ -673,6 +675,8 @@ async function fetchAllStationsLatestSensors() {
           finalValue = parseFloat(finalValue) || 0;
         }
         data[sensor.label] = finalValue;
+        // Debug log for each station and sensor
+        console.log(`[fetchAllStationsLatestSensors] stationId: ${stationId}, sensor: ${sensor.key}, snapshot:`, val, 'finalValue:', finalValue);
         // Update the map reactively
         stationDataMap.value = { ...stationDataMap.value, [stationId]: { ...stationDataMap.value[stationId], ...data } };
       });
@@ -1266,6 +1270,8 @@ function fetchLatestSensors(stationId: string) {
   });
   firebaseListeners.value = [];
 
+  console.log('[fetchLatestSensors] Fetching sensors for station:', stationId);
+
   sensorTypes.forEach(sensor => {
     const sensorRef = dbRef(db, `${stationId}/data/sensors/${sensor.key}`);
     const q = query(sensorRef, orderByKey(), limitToLast(1));
@@ -1274,6 +1280,9 @@ function fetchLatestSensors(stationId: string) {
     const unsubscribe = onChildAdded(q, (snapshot) => {
       const val = snapshot.val();
       let finalValue: any = val?.val ?? val ?? 0;
+
+      // Debug log for each sensor value
+      console.log(`[fetchLatestSensors] stationId: ${stationId}, sensor: ${sensor.key}, snapshot:`, val, 'finalValue:', finalValue);
 
       // Convert string numbers to actual numbers for numeric sensors
       if (sensor.key !== 'WD' && typeof finalValue === 'string') {
@@ -1285,7 +1294,6 @@ function fetchLatestSensors(stationId: string) {
       else if (sensor.key === 'HUM') sensorValues.value.HUM = finalValue;
       else if (sensor.key === 'RR') {
         sensorValues.value.RR = finalValue;
-
       }
       else if (sensor.key === 'WSP') sensorValues.value.WSP = finalValue;
       else if (sensor.key === 'WD') sensorValues.value.WD = finalValue;
@@ -1293,7 +1301,6 @@ function fetchLatestSensors(stationId: string) {
       else if (sensor.key === 'STD') sensorValues.value.STD = finalValue;
       else if (sensor.key === 'LUX') {
         sensorValues.value.LUX = finalValue;
-
       }
       else if (sensor.key === 'TSR') sensorValues.value.TSR = finalValue;
       else if (sensor.key === 'WA') sensorValues.value.WA = finalValue;
@@ -1510,11 +1517,21 @@ const currentStation = computed(() => {
   const station = stations.value.find((s) => s.id === selectedStation.value);
   if (!station) return null;
 
-  // Calculate heat index from temperature and humidity only if both are valid and non-zero
-  const temperature = sensorValues.value.TEM;
-  const humidity = sensorValues.value.HUM;
+  // Prefer data from stationDataMap (populated by fetchAllStationsLatestSensors)
+  const stationDataFromMap = stationDataMap.value[station.id] || {};
 
-  // current sensor values in computed are available
+  // Fallback to sensorValues if stationDataFromMap is empty (e.g., after station change)
+  const temperature = stationDataFromMap.temperature ?? sensorValues.value.TEM;
+  const humidity = stationDataFromMap.humidity ?? sensorValues.value.HUM;
+  const rainfall = stationDataFromMap.rainfall ?? sensorValues.value.RR;
+  const windSpeed = stationDataFromMap.windSpeed ?? sensorValues.value.WSP;
+  const windDirection = stationDataFromMap.windDirection ?? sensorValues.value.WD;
+  const soilMoisture = stationDataFromMap.soilMoisture ?? sensorValues.value.SMD;
+  const soilTemp = stationDataFromMap.soilTemp ?? sensorValues.value.STD;
+  const illumination = stationDataFromMap.illumination ?? sensorValues.value.LUX;
+  const solar = stationDataFromMap.solar ?? sensorValues.value.TSR;
+  const windAngle = stationDataFromMap.windAngle ?? sensorValues.value.WA;
+  const pressure = stationDataFromMap.pressure ?? sensorValues.value.ATM;
 
   let heatIndex = 0;
   if (
@@ -1523,29 +1540,23 @@ const currentStation = computed(() => {
     !isNaN(temperature) && !isNaN(humidity)
   ) {
     heatIndex = calculateHeatIndex(temperature, humidity);
-    // heat index calculated
-  } else {
-    // heat index calculation skipped due to invalid values
   }
 
-  // final current station data prepared
   const stationData = {
     temperature,
     humidity,
-    rainfall: sensorValues.value.RR,
-    windSpeed: sensorValues.value.WSP,
-    windDirection: sensorValues.value.WD,
+    rainfall,
+    windSpeed,
+    windDirection,
     heatIndex,
-    soilMoisture: sensorValues.value.SMD,
-    soilTemp: sensorValues.value.STD,
-    illumination: sensorValues.value.LUX,
-    solar: sensorValues.value.TSR,
-    windAngle: sensorValues.value.WA,
-    pressure: sensorValues.value.ATM,
+    soilMoisture,
+    soilTemp,
+    illumination,
+    solar,
+    windAngle,
+    pressure,
     dailyRainfall: dailyRainfallTotal.value
   };
-
-  // Check for weather alerts
   try {
     weatherAlertSystem.checkWeatherConditions(stationData, station.name, station.id);
   } catch (error) {
@@ -1607,8 +1618,7 @@ onMounted(async () => {
 
   // Fetch latest sensors for all stations and await for first render
   await fetchAllStationsLatestSensors();
-  // Fetch latest sensors and rainfall for the initially selected station
-  fetchLatestSensors(selectedStation.value);
+  // Fetch today's rainfall for the initially selected station (if needed for UI)
   fetchTodayRainfallTotal(selectedStation.value);
 
   // Add keyboard event listener for navigation
