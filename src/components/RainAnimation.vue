@@ -228,11 +228,11 @@ let rainSystem: RainParticleSystem | null = null;
 function initializeRainSystem() {
   nextTick(() => {
     if (rainCanvas.value && !rainSystem) {
-      console.log('RainAnimation Component: Initializing rain system');
+      
       rainSystem = new RainParticleSystem(rainCanvas.value);
       updateRainSystem();
     } else if (!rainCanvas.value) {
-      console.log('RainAnimation Component: Canvas not available yet, retrying...');
+     
       setTimeout(() => initializeRainSystem(), 100);
     }
   });
@@ -242,17 +242,17 @@ function initializeRainSystem() {
 function updateRainSystem() {
   if (rainSystem) {
     const intensity = props.isVisible ? props.intensity : 'none';
-    console.log('RainAnimation Component: isVisible =', props.isVisible, 'intensity =', props.intensity, 'final intensity =', intensity);
+    
     rainSystem.updateIntensity(intensity);
   } else {
-    console.log('RainAnimation Component: rainSystem not initialized, trying to initialize...');
+    
     initializeRainSystem();
   }
 }
 
 // Lifecycle hooks
 onMounted(() => {
-  console.log('RainAnimation Component: Component mounted');
+ 
   nextTick(() => {
     setTimeout(() => {
       initializeRainSystem();
@@ -261,7 +261,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  console.log('RainAnimation Component: Component unmounted');
+  
   if (rainSystem) {
     rainSystem.destroy();
     rainSystem = null;
@@ -270,7 +270,7 @@ onUnmounted(() => {
 
 // Watch for prop changes
 watch(() => props.isVisible, (newValue, oldValue) => {
-  console.log('RainAnimation Component: isVisible changed from', oldValue, 'to', newValue);
+  
   if (newValue && !rainSystem) {
     // If becoming visible but no rain system, try to initialize
     setTimeout(() => {
@@ -281,14 +281,14 @@ watch(() => props.isVisible, (newValue, oldValue) => {
 }, { immediate: true });
 
 watch(() => props.intensity, (newValue) => {
-  console.log('RainAnimation Component: intensity changed to', newValue);
+
   updateRainSystem();
 });
 
 // Watch for canvas availability
 watch(rainCanvas, (newCanvas) => {
   if (newCanvas && !rainSystem) {
-    console.log('RainAnimation Component: Canvas became available');
+    
     initializeRainSystem();
   }
 });
