@@ -56,7 +56,7 @@ export function useFCM() {
         await sendTokenToServer(fcmToken);
         
         // Show success message
-        showToast('🔔 Push notifications ready!', 'success');
+        // showToast('🔔 Push notifications ready!', 'success');
       } else {
         error.value = 'FCM token not available - notifications may be disabled';
         console.log('ℹ️ FCM token not available, but continuing app functionality');

@@ -100,15 +100,13 @@
 
           <!-- Additional Navigation Options -->
           <div class="mt-6 pt-6 border-t border-gray-700 space-y-3">
-            <button @click="openMapModal"
+            <router-link to="/home"
               class="w-full flex items-center space-x-3 p-4 rounded-xl bg-gray-800/50 border border-gray-600 hover:bg-gray-700/50 hover:border-gray-500 transition-all duration-200">
-              <span class="text-xl">🗺️</span>
-              <span class="text-white font-medium">View Map</span>
-              <svg class="w-4 h-4 text-gray-400 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
               </svg>
-            </button>
+              <span class="text-white font-medium">Back to Dashboard</span>
+            </router-link>
           </div>
         </div>
       </div>
@@ -276,17 +274,6 @@
           >
             Refresh Data
           </button>
-        </div>
-
-        <!-- Back Button -->
-        <div class="flex justify-center mt-8 pb-safe">
-          <router-link to="/home"
-            class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-300 font-semibold">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back to Dashboard
-          </router-link>
         </div>
       </main>
     </div>

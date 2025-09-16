@@ -254,7 +254,7 @@
                 <!-- Temperature & Humidity -->
                 <!-- Enhanced Rainfall Card -->
                 <div data-card-id="RainfallIntensity" :class="[
-                  'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation col-span-2 sm:col-span-2 md:col-span-3',
+                  'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-3 sm:p-4 md:p-3 shadow-md border border-slate-700/50 card-hover card-transition touch-manipulation col-span-2 sm:col-span-2 md:col-span-1 lg:col-span-3',
                   cardsDarkened ? 'card-dark' : '',
                   getCardAnimationClass(0)
                 ]">
@@ -263,9 +263,9 @@
                     <img src="/images/rainfall.png" class="w-8 h-8 md:w-10 md:h-10 object-contain" alt="Rainfall" />
                   </div>
 
-                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <!-- Rainfall Icon and Current Reading -->
-                    <div class="flex items-center justify-center sm:col-span-1">
+                    <div class="flex items-center justify-center lg:col-span-1">
                       <div class="text-center">
                         <div class="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-1">
                           {{ currentStation.data.rainfall }}<span class="text-sm md:text-base">mm</span>
@@ -275,15 +275,15 @@
                     </div>
 
                     <!-- Rainfall Details -->
-                    <div class="sm:col-span-2 space-y-3">
+                    <div class="lg:col-span-2 space-y-3">
                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                         <div>
                           <p class="text-xs md:text-sm text-white/80">Daily Total</p>
-                          <h1 class="text-xl md:text-lg font-bold text-white">{{ todayTotalRain.toFixed(2) }} mm</h1>
+                          <h1 class="text-lg md:text-xl font-bold text-white">{{ todayTotalRain.toFixed(2) }} mm</h1>
                         </div>
                         <div>
                           <p class="text-xs md:text-sm text-white/80">Category</p>
-                          <h1 class="text-xl md:text-lg text-white font-semibold">{{ getRainfallCategory() }}</h1>
+                          <h1 class="text-lg md:text-xl text-white font-semibold">{{ getRainfallCategory() }}</h1>
                         </div>
                       </div>
 
@@ -292,31 +292,31 @@
                         <p class="text-xs text-white/80">Warning Levels</p>
                         <div class="flex gap-1">
                           <!-- Yellow Warning -->
-                          <div
-                            :class="todayTotalRain >= 50.0 && todayTotalRain <= 100.0 ? 'w-full bg-yellow-500 transition-all duration-300' : 'bg-gray-600/50 w-8'"
-                            class="h-4 flex items-center justify-center rounded-l-lg rounded-r-sm relative">
-                            <p :class="todayTotalRain >= 50.0 && todayTotalRain <= 100.0 ? 'text-white text-[10px] md:text-xs opacity-100' : 'hidden'"
-                              class="absolute inset-0 flex items-center justify-center font-bold">
+                          <div class="h-4 flex items-center justify-center rounded-l-lg rounded-r-sm relative overflow-hidden"
+                               :class="todayTotalRain >= 50 ? 'bg-yellow-500' : 'bg-gray-600/50'"
+                               :style="{ width: getWarningBarWidth('yellow') }">
+                            <p class="absolute inset-0 flex items-center justify-center font-bold text-[10px] md:text-xs"
+                               :class="todayTotalRain >= 50 && todayTotalRain <= 100 ? 'text-white' : 'invisible'">
                               YELLOW (50-100mm)
                             </p>
                           </div>
 
                           <!-- Orange Warning -->
-                          <div
-                            :class="todayTotalRain >= 101.0 && todayTotalRain <= 200.0 ? 'w-full bg-orange-600 transition-all duration-300' : 'bg-gray-600/50 w-8'"
-                            class="h-4 flex items-center justify-center rounded-sm relative">
-                            <p :class="todayTotalRain >= 101.0 && todayTotalRain <= 200.0 ? 'text-white text-[10px] md:text-xs opacity-100' : 'hidden'"
-                              class="absolute inset-0 flex items-center justify-center font-bold">
+                          <div class="h-4 flex items-center justify-center rounded-sm relative overflow-hidden"
+                               :class="todayTotalRain >= 101 ? 'bg-orange-600' : 'bg-gray-600/50'"
+                               :style="{ width: getWarningBarWidth('orange') }">
+                            <p class="absolute inset-0 flex items-center justify-center font-bold text-[10px] md:text-xs"
+                               :class="todayTotalRain >= 101 && todayTotalRain <= 200 ? 'text-white' : 'invisible'">
                               ORANGE (101-200mm)
                             </p>
                           </div>
 
                           <!-- Red Warning -->
-                          <div
-                            :class="todayTotalRain >= 201.0 ? 'w-full bg-red-700 transition-all duration-300' : 'bg-gray-600/50 w-8'"
-                            class="h-4 flex items-center justify-center rounded-r-lg rounded-l-sm relative">
-                            <p :class="todayTotalRain >= 201.0 ? 'text-white text-[10px] md:text-xs opacity-100' : 'hidden'"
-                              class="absolute inset-0 flex items-center justify-center font-bold">
+                          <div class="h-4 flex items-center justify-center rounded-r-lg rounded-l-sm relative overflow-hidden"
+                               :class="todayTotalRain >= 201 ? 'bg-red-700' : 'bg-gray-600/50'"
+                               :style="{ width: getWarningBarWidth('red') }">
+                            <p class="absolute inset-0 flex items-center justify-center font-bold text-[10px] md:text-xs"
+                               :class="todayTotalRain >= 201 ? 'text-white' : 'invisible'">
                               RED (201mm+)
                             </p>
                           </div>
@@ -553,11 +553,11 @@
 
             <!-- Action Buttons -->
             <section class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8 mt-6 px-4">
-              <router-link to="/summary"
+              <!-- <router-link to="/summary"
                 class="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 sm:px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 touch-manipulation min-h-[44px]">
                 <span>📊</span>
                 <span>View 7-Day Summary</span>
-              </router-link>
+              </router-link> -->
 
               <button v-if="currentStation && currentStation.data.heatIndex > 35" @click="openHeatAlert"
                 class="w-full sm:w-auto bg-gradient-to-r from-red-500 to-red-600 text-white px-6 sm:px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 animate-pulse touch-manipulation min-h-[44px]">
@@ -566,11 +566,11 @@
               </button>
 
               <!-- FCM Test Button (temporary for debugging) -->
-              <button @click="testFCM"
+              <!-- <button @click="testFCM"
                 class="w-full sm:w-auto bg-gradient-to-r from-purple-500 to-purple-600 text-white px-6 sm:px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 touch-manipulation min-h-[44px]">
                 <span>🔔</span>
                 <span>Test FCM Setup</span>
-              </button>
+              </button> -->
             </section>
           </main>
         </div>
@@ -599,7 +599,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { IonContent, IonRefresher, IonRefresherContent } from '@ionic/vue';
 import WindCompass from '../components/WindCompass.vue';
 import { db } from '../firebase';
-import { ref as dbRef, query, orderByKey, limitToLast, onChildAdded, onValue, startAt } from 'firebase/database';
+import { ref as dbRef, query, orderByKey, limitToLast, onChildAdded, onValue, startAt, get } from 'firebase/database';
 import { useFCM } from '../utils/useFCM';
 import { useNativeFCM } from '../utils/useNativeFCM';
 import { ref as vueRef, toRef } from 'vue';
@@ -621,7 +621,7 @@ onMounted(async () => {
 
 // FCM Test function for debugging
 const testFCM = async () => {
-  console.log('🧪 Manual FCM Test Started');
+ 
   try {
     await initializeFCM();
     await testNotification();
@@ -656,7 +656,7 @@ async function fetchAllStationsLatestSensors() {
     firebaseListeners.value = [];
   }
 
-  console.log('[fetchAllStationsLatestSensors] Called on app start. Stations:', stations.value.map(s => s.id));
+
 
   for (const station of stations.value) {
     const stationId = station.id;
@@ -673,7 +673,7 @@ async function fetchAllStationsLatestSensors() {
         }
         data[sensor.label] = finalValue;
         // Debug log for each station and sensor
-        console.log(`[fetchAllStationsLatestSensors] stationId: ${stationId}, sensor: ${sensor.key}, snapshot:`, val, 'finalValue:', finalValue);
+       
         // Update the map reactively
         stationDataMap.value = { ...stationDataMap.value, [stationId]: { ...stationDataMap.value[stationId], ...data } };
       });
@@ -1161,13 +1161,13 @@ function determineWeatherCondition(weather: any) {
   } else if (rr > 0 && rr <= 50) {
     wType = 'Light Rain';
     condition = lightRainIcon;
-  } else if (rr === 0 && lux <= 10000) {
+  } else if (rr === 0 && lux <= 2000) {
     wType = 'Cloudy';
     condition = cloudyIcon;
-  } else if (rr === 0 && lux > 10000 && lux <= 30000) {
+  } else if (rr === 0 && lux > 2000 && lux <= 3000) {
     wType = 'Partly Cloudy';
     condition = partlyCloudyIcon;
-  } else if (rr === 0 && lux > 30000) {
+  } else if (rr === 0 && lux > 3000) {
     wType = 'Sunny';
     condition = sunnyIcon;
   } else {
@@ -1188,18 +1188,18 @@ function isCloudyWeather(): boolean {
 
 function isRainingWeather(): boolean {
   if (!currentStation.value || !currentStation.value.data) {
-    console.log('RainAnimation Debug: No currentStation or data');
+  
     return false;
   }
   const weatherCondition = determineWeatherCondition(currentStation.value.data);
   const isRaining = weatherCondition.wType.includes('Rain');
-  console.log('RainAnimation Debug: Weather type:', weatherCondition.wType, 'Is raining:', isRaining, 'Rainfall:', currentStation.value.data.rainfall);
+ 
   return isRaining;
 }
 
 function getRainIntensity(): string {
   if (!currentStation.value || !currentStation.value.data) {
-    console.log('RainAnimation Debug: No currentStation or data for intensity');
+   
     return 'none';
   }
   const weatherCondition = determineWeatherCondition(currentStation.value.data);
@@ -1208,7 +1208,7 @@ function getRainIntensity(): string {
   else if (weatherCondition.wType.includes('Heavy')) intensity = 'heavy';
   else if (weatherCondition.wType.includes('Moderate')) intensity = 'moderate';
   else if (weatherCondition.wType.includes('Light')) intensity = 'light';
-  console.log('RainAnimation Debug: Intensity determined as:', intensity, 'Weather type:', weatherCondition.wType);
+ 
   return intensity;
 }
 
@@ -1248,8 +1248,7 @@ function fetchLatestSensors(stationId: string) {
   });
   firebaseListeners.value = [];
 
-  console.log('[fetchLatestSensors] Fetching sensors for station:', stationId);
-
+ 
   sensorTypes.forEach(sensor => {
     const sensorRef = dbRef(db, `${stationId}/data/sensors/${sensor.key}`);
     const q = query(sensorRef, orderByKey(), limitToLast(1));
@@ -1260,7 +1259,7 @@ function fetchLatestSensors(stationId: string) {
       let finalValue: any = val?.val ?? val ?? 0;
 
       // Debug log for each sensor value
-      console.log(`[fetchLatestSensors] stationId: ${stationId}, sensor: ${sensor.key}, snapshot:`, val, 'finalValue:', finalValue);
+  
 
       // Convert string numbers to actual numbers for numeric sensors
       if (sensor.key !== 'WD' && typeof finalValue === 'string') {
@@ -1375,63 +1374,68 @@ async function fetchTodayRainfallTotal(stationId: string) {
     // Reset the daily total
     dailyRainfallTotal.value = 0;
 
-    // Calculate start of today with timezone adjustment (like your working code)
-    const today = new Date();
-    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    // Add 8 hours timezone offset (matching your working code's addHours(startOfDay(new Date()), 8))
-    startOfToday.setHours(8, 0, 0, 0);
-    const startTime = Math.floor(startOfToday.getTime() / 1000); // Convert to Unix timestamp in seconds
+    // Use the correct Firebase path (matching working RainfallTable component)
+    const rainfallRef = dbRef(db, `${stationId}/data/sensors/RR`);
 
+    // Get today's data - accounting for UTC storage (matching working component)
+    const now = new Date();
+    const todayStartLocal = getTodayStartTimestamp();
+    const todayStartUTC = todayStartLocal + (8 * 60 * 60); // Add 8 hours to convert to UTC
 
-
-    // Query Firebase for today's rainfall data (matching your working code structure exactly)
-    const collectionRef = dbRef(db, `station${stationId}/data/sensors/RR/`);
-    const q = query(collectionRef, orderByKey(), startAt(startTime.toString()));
+    const todayQuery = query(rainfallRef, orderByKey(), startAt(todayStartUTC.toString()));
+    const snapshot = await get(todayQuery);
 
     let accumulatedTotal = 0;
     let readingCount = 0;
 
-    // Use onChildAdded to accumulate all rainfall readings for today (same as working code)
-    const unsubscribe = onChildAdded(q, (snapshot) => {
-      const newData = snapshot.val();
+    if (snapshot.exists()) {
+      snapshot.forEach(child => {
+        const val = child.val();
+        const timestamp = parseInt(child.key || '0');
 
-      // Handle the data structure like your working code
-      let rainfall = 0;
-      if (newData && typeof newData === 'object' && newData.val !== undefined) {
-        rainfall = parseFloat(newData.val);
-      } else if (typeof newData === 'number') {
-        rainfall = newData;
-      } else if (typeof newData === 'string') {
-        rainfall = parseFloat(newData);
-      }
-
-      // Only add valid rainfall values (same validation as working code)
-      if (!isNaN(rainfall) && rainfall >= 0) {
-        accumulatedTotal += rainfall;
-        readingCount++;
-
-        // Update the daily total
-        dailyRainfallTotal.value = accumulatedTotal;
-
-        const timestamp = snapshot.key;
-        if (timestamp) {
-          const readingTime = new Date(parseInt(timestamp) * 1000);
-
-        } else {
-
+        let rainfall = 0;
+        if (typeof val === 'object' && val !== null && val.val !== undefined) {
+          rainfall = parseFloat(val.val) || 0;
+        } else if (typeof val === 'number') {
+          rainfall = val;
+        } else if (typeof val === 'string') {
+          rainfall = parseFloat(val) || 0;
         }
-      }
-    });
 
-    // Log completion after a short delay to see the final result
-    setTimeout(() => {
+        if (rainfall >= 0) {
+          // Check if this reading is from today (matching working component logic)
+          const date = getLocalDate(timestamp);
+          const adjustedDate = new Date(date.getTime() - 8 * 60 * 60 * 1000);
+          const entryDate = new Date(adjustedDate.getFullYear(), adjustedDate.getMonth(), adjustedDate.getDate());
+          const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    }, 2000);
+          if (entryDate.getTime() === todayDate.getTime()) {
+            accumulatedTotal += rainfall;
+            readingCount++;
+          }
+        }
+      });
+
+      // Update the daily total
+      dailyRainfallTotal.value = Math.round(accumulatedTotal * 100) / 100;
+    }
 
   } catch (error) {
     console.error('Error fetching daily rainfall total:', error);
     dailyRainfallTotal.value = 0;
   }
+}
+
+// Helper function to get today's start timestamp (matching working component)
+function getTodayStartTimestamp(): number {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.floor(todayStart.getTime() / 1000);
+}
+
+// Helper function to get local date from timestamp (matching working component)
+function getLocalDate(timestamp: number): Date {
+  return new Date(timestamp * 1000);
 }
 
 const todayTotalRain = computed(() => {
@@ -1445,6 +1449,32 @@ function getRainfallCategory(): string {
   if (total >= 101) return 'ORANGE Warning - Moderate to Heavy';
   if (total >= 50) return 'YELLOW Warning - Light to Moderate';
   return 'Normal';
+}
+
+function getWarningBarWidth(level: string): string {
+  const total = todayTotalRain.value;
+  
+  switch (level) {
+    case 'yellow':
+      if (total >= 50 && total <= 100) return '100%';
+      if (total > 100) return '33.33%'; // Show partial when higher levels are active
+      return '33.33%'; // Default width
+      
+    case 'orange':
+      if (total >= 101 && total <= 200) return '100%';
+      if (total > 200) return '33.33%'; // Show partial when red is active
+      if (total >= 50) return '33.33%'; // Show when yellow is active
+      return '33.33%'; // Default width
+      
+    case 'red':
+      if (total >= 201) return '100%';
+      if (total >= 101) return '33.33%'; // Show when orange is active
+      if (total >= 50) return '33.33%'; // Show when yellow is active
+      return '33.33%'; // Default width
+      
+    default:
+      return '33.33%';
+  }
 }
 
 // Interactive mouse effects
@@ -1572,10 +1602,10 @@ onMounted(async () => {
   weatherAlertSystem.initialize();
 
   // Auto-initialize FCM for push notifications (no user interaction required)
-  console.log('🚀 Starting automatic FCM initialization...');
+
   try {
     await initializeFCM();
-    console.log('✅ Auto FCM initialization completed');
+   
   } catch (error) {
     console.error('❌ Auto FCM initialization failed:', error);
   }
@@ -1601,16 +1631,16 @@ onMounted(async () => {
 
   // Add global FCM test functions for debugging
   (window as any).testFCM = async () => {
-    console.log('🧪 Console FCM Test');
+  
     await initializeFCM();
   };
 
   (window as any).testNotifications = async () => {
-    console.log('🧪 Console Notification Test');
+   
     await testNotification();
   };
 
-  console.log('🔍 FCM Debug: Use testFCM() or testNotifications() in console to test manually');
+  
 
   if (window.L) {
     try {
