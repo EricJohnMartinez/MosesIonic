@@ -5,11 +5,6 @@
       <IonRefresherContent pulling-text="Pull to refresh" refreshing-spinner="lines" />
     </IonRefresher>
     <div class="relative min-h-screen flex flex-col bg-gradient-to-br from-gray-900 via-slate-800 to-gray-900">
-      <!-- Scroll Progress Indicator -->
-      <div class="fixed top-0 left-0 w-full h-1 bg-gray-800/50 z-50">
-        <div class="h-full scroll-progress transition-all duration-200 ease-out"
-          :style="{ width: `${scrollProgress * 100}%` }"></div>
-      </div>
 
     
 
@@ -149,28 +144,22 @@
             </div>
           </div>
           <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 transition-all duration-1000 ease-out" :class="{
-            'station-transition-out-left': isTransitioning && transitionDirection === 'left',
-            'station-transition-out-right': isTransitioning && transitionDirection === 'right',
-            'station-transition-in': !isTransitioning
           }" v-if="currentStation"
           @touchstart="handleTouchStart"
           @touchmove="handleTouchMove" 
           @touchend="handleTouchEnd">
 
+            <!-- Cloud Background Animation - Only for Cloudy Weather (full container) -->
+            <div class="absolute inset-0 w-full h-full z-0 pointer-events-none">
+              <CloudAnimation :is-visible="isCloudyWeather()" />
+            </div>
+
             <!-- Current Weather Hero Section -->
             <div :class="[
-              'w-full flex items-center justify-center min-h-[50vh] sm:min-h-[45vh] md:min-h-[40vh] lg:min-h-[35vh] pt-8 sm:pt-12 md:pt-16 lg:pt-20 pb-4 sm:pb-6 md:pb-8 lg:pb-12 transition-all duration-700 ease-out relative overflow-hidden',
-              isTransitioning && transitionDirection === 'left' ? 'hero-transition-out-left' : '',
-              isTransitioning && transitionDirection === 'right' ? 'hero-transition-out-right' : '',
-              !isTransitioning ? 'hero-transition-in' : ''
+              'w-full flex items-center justify-center min-h-[50vh] sm:min-h-[45vh] md:min-h-[40vh] lg:min-h-[35vh] pt-8 sm:pt-12 md:pt-16 lg:pt-20 pb-4 sm:pb-6 md:pb-8 lg:pb-12 relative overflow-hidden'
             ]" ref="heroSection">
-
-              <!-- Cloud Background Animation - Only for Cloudy Weather -->
-              <CloudAnimation :is-visible="isCloudyWeather()" />
-
               <!-- Rain Animation - Only for Rainy Weather -->
               <RainAnimation :is-visible="isRainingWeather()" :intensity="getRainIntensity()" />
-
               <section class="w-full relative z-20 mt-4 sm:mt-6 md:mt-8 lg:-mt-5 ">
                 <div class="w-full max-w-5xl mx-auto rounded-3xl p-4 sm:p-6 md:p-8 lg:p-10">
                   <div class="flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-6 lg:gap-8">
@@ -696,7 +685,6 @@ const stationsWithData = computed(() => {
 });
 
 // Parallax effect for hero section
-const scrollOffset = ref(0);
 const heroSection = ref<HTMLElement | null>(null);
 
 // Station transition animation states
@@ -924,59 +912,14 @@ function getStationWeatherIcon(stationData: any): string {
 }
 
 // Computed property for card darkening based on scroll
-const cardsDarkened = computed(() => scrollOffset.value > 100);
+const cardsDarkened = computed(() => false);
 
 // Station change with parallax transition
 function changeStation(stationId: string, index: number) {
-  if (stationId === selectedStation.value || isTransitioning.value) return;
-
+  if (stationId === selectedStation.value) return;
   // Close navigation
   isNavOpen.value = false;
-
-  // Determine direction based on current vs new station index
-  const currentIndex = stations.value.findIndex(s => s.id === selectedStation.value);
-  transitionDirection.value = index > currentIndex ? 'right' : 'left';
-
-  // Create different animation patterns based on transition direction and randomness
-  const patterns = [
-    'spiral-in',      // Cards spiral in from outside
-    'cascade-wave',   // Cards come in like a wave
-    'radial-burst',   // Cards burst from center outward
-    'corner-sweep',   // Cards sweep in from corners
-    'zigzag-flow',    // Cards flow in zigzag pattern
-    'layered-depth'   // Cards come in with depth layers
-  ];
-  
-  // Select pattern based on station index for consistency but with variation
-  cardAnimationPattern.value = patterns[index % patterns.length];
-  
-  // Add some randomness to stagger delay
-  staggerDelay.value = 50 + Math.random() * 100;
-
-  // Start transition
-  isTransitioning.value = true;
-
-  // Change station after initial animation
-  setTimeout(() => {
-    selectedStation.value = stationId;
-
-    // End transition after data loads and animations complete
-    setTimeout(() => {
-      isTransitioning.value = false;
-      
-      // Reset and re-trigger card animations
-      nextTick(() => {
-        cardAnimationPattern.value = 'default';
-        // Force cards to re-render with new animations
-        cardRefreshKey.value += 1;
-        
-        // Reset all card animations and re-trigger them
-        nextTick(() => {
-          resetAndTriggerCardAnimations();
-        });
-      });
-    }, 1500); // Increased for more complex animations
-  }, 400);
+  selectedStation.value = stationId;
 }
 
 // Function to reset and re-trigger card animations
@@ -1103,8 +1046,7 @@ function onScroll() {
 
 // Ionic IonContent scroll handler with parallax
 function handleIonScroll(ev: any) {
-  const y = ev?.detail?.scrollTop ?? 0;
-  scrollOffset.value = y;
+  // No scroll progress or parallax effect
 }
 // Sensor types and mapping
 const sensorTypes = [
@@ -1470,9 +1412,7 @@ function getRainfallCategory(): string {
 }
 
 // Interactive mouse effects
-const mouseX = ref(0);
-const mouseY = ref(0);
-const scrollProgress = ref(0);
+// Removed interactive mouse and scroll state
 
 // Throttle function for performance
 function throttle(func: Function, delay: number) {
@@ -1496,22 +1436,10 @@ function throttle(func: Function, delay: number) {
 }
 
 // Mouse movement handler for basic mouse tracking
-const handleMouseMove = throttle((event: MouseEvent) => {
-  const { clientX, clientY } = event;
-  const { innerWidth, innerHeight } = window;
-
-  mouseX.value = (clientX / innerWidth - 0.5) * 20;
-  mouseY.value = (clientY / innerHeight - 0.5) * 20;
-}, 16); // ~60fps
+// Removed mouse movement handler
 
 // Interactive scroll handler for parallax effects
-const handleScroll = throttle(() => {
-  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-  const windowHeight = window.innerHeight;
-  const documentHeight = document.documentElement.scrollHeight - windowHeight;
-
-  scrollProgress.value = Math.min(scrollTop / documentHeight, 1);
-}, 16); // ~60fps throttle
+// Removed interactive scroll handler
 
 const currentStation = computed(() => {
   const station = stations.value.find((s) => s.id === selectedStation.value);
@@ -1651,9 +1579,7 @@ onMounted(async () => {
     }
   }
 
-  // Initialize parallax scroll effects and interactive animations
-  window.addEventListener('scroll', handleScroll, { passive: true });
-  window.addEventListener('mousemove', handleMouseMove, { passive: true });
+  // Removed parallax and mouse event listeners
 
   // Initialize intersection observer for card animations
   const observerOptions = {
@@ -1683,10 +1609,8 @@ onMounted(async () => {
 
   // Store the cleanup function for onUnmounted
   const cleanup = () => {
-    document.removeEventListener('keydown', handleKeydown);
-    window.removeEventListener('scroll', handleScroll);
-    window.removeEventListener('mousemove', handleMouseMove);
-    cardObserver.disconnect();
+  document.removeEventListener('keydown', handleKeydown);
+  cardObserver.disconnect();
   };
 
   // Set up cleanup

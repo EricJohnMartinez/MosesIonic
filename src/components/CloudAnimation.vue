@@ -4,14 +4,14 @@
     <img 
       src="/images/Clouds/cloud1.png" 
       alt="Cloud"
-      class="cloud-animation-xl absolute top-[5%] left-0 w-80 sm:w-96 md:w-[32rem] lg:w-[40rem] xl:w-[48rem] opacity-35 pointer-events-none"
+      class="cloud-animation-xl absolute top-[5%] left-0 w-80 sm:w-96 md:w-[32rem] lg:w-[40rem] xl:w-[48rem] opacity-35 pointer-events-none cloud-fade"
       style="transform: translateX(-100%)" 
     />
 
     <img 
       src="/images/Clouds/Cloud2.png" 
       alt="Cloud"
-      class="cloud-animation-xl-slow absolute top-[15%] left-0 w-72 sm:w-88 md:w-[28rem] lg:w-[36rem] xl:w-[44rem] opacity-30 pointer-events-none"
+      class="cloud-animation-xl-slow absolute top-[15%] left-0 w-72 sm:w-88 md:w-[28rem] lg:w-[36rem] xl:w-[44rem] opacity-30 pointer-events-none cloud-fade"
       style="transform: translateX(-120%); animation-delay: 10s;" 
     />
 
@@ -19,14 +19,14 @@
     <img 
       src="/images/Clouds/Cloud3.png" 
       alt="Cloud"
-      class="cloud-animation-large absolute top-[25%] left-0 w-64 sm:w-80 md:w-96 lg:w-[32rem] xl:w-[40rem] opacity-28 pointer-events-none"
+      class="cloud-animation-large absolute top-[25%] left-0 w-64 sm:w-80 md:w-96 lg:w-[32rem] xl:w-[40rem] opacity-28 pointer-events-none cloud-fade"
       style="transform: translateX(-110%); animation-delay: 20s;" 
     />
 
     <img 
       src="/images/Clouds/cloud1.png" 
       alt="Cloud"
-      class="cloud-animation-large-reverse absolute top-[8%] right-0 w-68 sm:w-84 md:w-[30rem] lg:w-[38rem] xl:w-[46rem] opacity-25 pointer-events-none"
+      class="cloud-animation-large-reverse absolute top-[8%] right-0 w-68 sm:w-84 md:w-[30rem] lg:w-[38rem] xl:w-[46rem] opacity-25 pointer-events-none cloud-fade"
       style="transform: translateX(100%); animation-delay: 5s;" 
     />
 
@@ -34,14 +34,14 @@
     <img 
       src="/images/Clouds/Cloud2.png" 
       alt="Cloud"
-      class="cloud-animation-medium absolute top-[35%] left-0 w-56 sm:w-72 md:w-88 lg:w-[28rem] xl:w-[36rem] opacity-22 pointer-events-none"
+      class="cloud-animation-medium absolute top-[35%] left-0 w-56 sm:w-72 md:w-88 lg:w-[28rem] xl:w-[36rem] opacity-22 pointer-events-none cloud-fade"
       style="transform: translateX(-130%); animation-delay: 30s;" 
     />
 
     <img 
       src="/images/Clouds/Cloud3.png" 
       alt="Cloud"
-      class="cloud-animation-medium-reverse absolute top-[12%] right-0 w-60 sm:w-76 md:w-92 lg:w-[30rem] xl:w-[38rem] opacity-20 pointer-events-none"
+      class="cloud-animation-medium-reverse absolute top-[12%] right-0 w-60 sm:w-76 md:w-92 lg:w-[30rem] xl:w-[38rem] opacity-20 pointer-events-none cloud-fade"
       style="transform: translateX(110%); animation-delay: 15s;" 
     />
 
@@ -49,14 +49,14 @@
     <img 
       src="/images/Clouds/cloud1.png" 
       alt="Cloud"
-      class="cloud-animation-small absolute top-[45%] left-0 w-48 sm:w-64 md:w-80 lg:w-96 xl:w-[32rem] opacity-18 pointer-events-none"
+      class="cloud-animation-small absolute top-[45%] left-0 w-48 sm:w-64 md:w-80 lg:w-96 xl:w-[32rem] opacity-18 pointer-events-none cloud-fade"
       style="transform: translateX(-140%); animation-delay: 40s;" 
     />
 
     <img 
       src="/images/Clouds/Cloud2.png" 
       alt="Cloud"
-      class="cloud-animation-small-reverse absolute top-[20%] right-0 w-44 sm:w-60 md:w-76 lg:w-92 xl:w-[30rem] opacity-16 pointer-events-none"
+      class="cloud-animation-small-reverse absolute top-[20%] right-0 w-44 sm:w-60 md:w-76 lg:w-92 xl:w-[30rem] opacity-16 pointer-events-none cloud-fade"
       style="transform: translateX(120%); animation-delay: 25s;" 
     />
 
@@ -64,14 +64,14 @@
     <img 
       src="/images/Clouds/Cloud3.png" 
       alt="Cloud"
-      class="cloud-animation-drift absolute top-[50%] left-0 w-40 sm:w-56 md:w-72 lg:w-88 xl:w-[28rem] opacity-14 pointer-events-none"
+      class="cloud-animation-drift absolute top-[50%] left-0 w-40 sm:w-56 md:w-72 lg:w-88 xl:w-[28rem] opacity-14 pointer-events-none cloud-fade"
       style="transform: translateX(-150%); animation-delay: 50s;" 
     />
 
     <img 
       src="/images/Clouds/cloud1.png" 
       alt="Cloud"
-      class="cloud-animation-drift-reverse absolute top-[3%] right-0 w-36 sm:w-52 md:w-68 lg:w-84 xl:w-[26rem] opacity-12 pointer-events-none"
+      class="cloud-animation-drift-reverse absolute top-[3%] right-0 w-36 sm:w-52 md:w-68 lg:w-84 xl:w-[26rem] opacity-12 pointer-events-none cloud-fade"
       style="transform: translateX(130%); animation-delay: 35s;" 
     />
 
@@ -79,14 +79,14 @@
     <img 
       src="/images/Clouds/Cloud2.png" 
       alt="Cloud"
-      class="cloud-animation-frequent1 absolute top-[30%] left-0 w-52 sm:w-68 md:w-84 lg:w-[26rem] xl:w-[34rem] opacity-15 pointer-events-none"
+      class="cloud-animation-frequent1 absolute top-[30%] left-0 w-52 sm:w-68 md:w-84 lg:w-[26rem] xl:w-[34rem] opacity-15 pointer-events-none cloud-fade"
       style="transform: translateX(-160%); animation-delay: 60s;" 
     />
 
     <img 
       src="/images/Clouds/Cloud3.png" 
       alt="Cloud"
-      class="cloud-animation-frequent2 absolute top-[40%] right-0 w-48 sm:w-64 md:w-80 lg:w-96 xl:w-[32rem] opacity-17 pointer-events-none"
+      class="cloud-animation-frequent2 absolute top-[40%] right-0 w-48 sm:w-64 md:w-80 lg:w-96 xl:w-[32rem] opacity-17 pointer-events-none cloud-fade"
       style="transform: translateX(140%); animation-delay: 45s;" 
     />
   </div>
@@ -103,6 +103,17 @@ withDefaults(defineProps<Props>(), {
 </script>
 
 <style scoped>
+/* Fade mask for cloud edges (left/right and top/bottom) */
+.cloud-fade {
+  mask-image: 
+    linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+  -webkit-mask-image: 
+    linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%),
+    linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+  mask-composite: intersect;
+  -webkit-mask-composite: source-in;
+}
 .cloud-container {
   overflow: hidden;
 }
