@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 
 // Props
 interface Props {
@@ -40,6 +40,7 @@ class RainParticleSystem {
   private animationId: number | null = null;
   private intensity: string = 'none';
   private windEffect: number = 0;
+  private logged: boolean = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -63,13 +64,13 @@ class RainParticleSystem {
 
   private getDropCount(): number {
     const area = this.canvas.width * this.canvas.height;
-    const baseCount = area / 50000; // Base density
+    const baseCount = area / 15000; // Much higher density for more droplets
 
     switch (this.intensity) {
-      case 'light': return Math.floor(baseCount * 0.3);
-      case 'moderate': return Math.floor(baseCount * 0.6);
-      case 'heavy': return Math.floor(baseCount * 1.0);
-      case 'intense': return Math.floor(baseCount * 1.5);
+      case 'light': return Math.floor(baseCount * 0.8);
+      case 'moderate': return Math.floor(baseCount * 1.5);
+      case 'heavy': return Math.floor(baseCount * 2.5);
+      case 'intense': return Math.floor(baseCount * 4.0);
       default: return 0;
     }
   }
@@ -81,27 +82,27 @@ class RainParticleSystem {
     switch (this.intensity) {
       case 'light':
         speed = 2 + Math.random() * 3;
-        length = 10 + Math.random() * 10;
-        width = 0.5 + Math.random() * 0.5;
-        opacity = 0.3 + Math.random() * 0.3;
+        length = 12 + Math.random() * 12;
+        width = 1 + Math.random() * 1; // Thicker drops
+        opacity = 0.5 + Math.random() * 0.3; // More opaque
         break;
       case 'moderate':
         speed = 4 + Math.random() * 4;
-        length = 15 + Math.random() * 15;
-        width = 0.8 + Math.random() * 0.7;
-        opacity = 0.4 + Math.random() * 0.4;
+        length = 18 + Math.random() * 18;
+        width = 1.5 + Math.random() * 1; // Thicker
+        opacity = 0.6 + Math.random() * 0.3; // More opaque
         break;
       case 'heavy':
         speed = 6 + Math.random() * 6;
-        length = 20 + Math.random() * 20;
-        width = 1 + Math.random() * 1;
-        opacity = 0.5 + Math.random() * 0.4;
+        length = 25 + Math.random() * 25;
+        width = 2 + Math.random() * 1.5; // Thicker
+        opacity = 0.7 + Math.random() * 0.3; // More opaque
         break;
       case 'intense':
         speed = 8 + Math.random() * 8;
-        length = 25 + Math.random() * 25;
-        width = 1.2 + Math.random() * 1.3;
-        opacity = 0.6 + Math.random() * 0.4;
+        length = 30 + Math.random() * 30;
+        width = 2.5 + Math.random() * 2; // Thicker
+        opacity = 0.8 + Math.random() * 0.2; // More opaque
         break;
       default:
         speed = 0; length = 0; width = 0; opacity = 0;
@@ -137,9 +138,13 @@ class RainParticleSystem {
   private drawDrop(drop: RainDrop) {
     this.ctx.save();
     this.ctx.globalAlpha = drop.opacity;
-    this.ctx.strokeStyle = `rgba(200, 220, 255, ${drop.opacity})`;
+    this.ctx.strokeStyle = `rgba(220, 240, 255, ${drop.opacity})`; // Brighter color for clarity
     this.ctx.lineWidth = drop.width;
     this.ctx.lineCap = 'round';
+
+    // Add glow effect for clarity
+    this.ctx.shadowColor = 'rgba(200, 220, 255, 0.8)';
+    this.ctx.shadowBlur = 3;
 
     this.ctx.beginPath();
     this.ctx.moveTo(drop.x, drop.y);
@@ -160,6 +165,14 @@ class RainParticleSystem {
       this.drawDrop(drop);
     });
 
+    // Debug: Log once per second
+    if (Math.floor(Date.now() / 1000) % 5 === 0 && !this.logged) {
+      console.log(`RainAnimation System: Animating ${this.drops.length} drops`);
+      this.logged = true;
+    } else if (Math.floor(Date.now() / 1000) % 5 !== 0) {
+      this.logged = false;
+    }
+
     this.animationId = requestAnimationFrame(this.animate);
   };
 
@@ -172,6 +185,8 @@ class RainParticleSystem {
     for (let i = 0; i < dropCount; i++) {
       this.drops.push(this.createDrop());
     }
+
+    console.log(`RainAnimation System: Starting with ${dropCount} drops for intensity: ${intensity}`);
 
     // Start animation
     if (this.animationId) {
@@ -211,28 +226,42 @@ let rainSystem: RainParticleSystem | null = null;
 
 // Initialize rain system
 function initializeRainSystem() {
-  if (rainCanvas.value) {
-    rainSystem = new RainParticleSystem(rainCanvas.value);
-    updateRainSystem();
-  }
+  nextTick(() => {
+    if (rainCanvas.value && !rainSystem) {
+      console.log('RainAnimation Component: Initializing rain system');
+      rainSystem = new RainParticleSystem(rainCanvas.value);
+      updateRainSystem();
+    } else if (!rainCanvas.value) {
+      console.log('RainAnimation Component: Canvas not available yet, retrying...');
+      setTimeout(() => initializeRainSystem(), 100);
+    }
+  });
 }
 
 // Update rain system intensity
 function updateRainSystem() {
   if (rainSystem) {
     const intensity = props.isVisible ? props.intensity : 'none';
+    console.log('RainAnimation Component: isVisible =', props.isVisible, 'intensity =', props.intensity, 'final intensity =', intensity);
     rainSystem.updateIntensity(intensity);
+  } else {
+    console.log('RainAnimation Component: rainSystem not initialized, trying to initialize...');
+    initializeRainSystem();
   }
 }
 
 // Lifecycle hooks
 onMounted(() => {
-  setTimeout(() => {
-    initializeRainSystem();
-  }, 100);
+  console.log('RainAnimation Component: Component mounted');
+  nextTick(() => {
+    setTimeout(() => {
+      initializeRainSystem();
+    }, 100);
+  });
 });
 
 onUnmounted(() => {
+  console.log('RainAnimation Component: Component unmounted');
   if (rainSystem) {
     rainSystem.destroy();
     rainSystem = null;
@@ -240,12 +269,28 @@ onUnmounted(() => {
 });
 
 // Watch for prop changes
-watch(() => props.isVisible, (newValue) => {
+watch(() => props.isVisible, (newValue, oldValue) => {
+  console.log('RainAnimation Component: isVisible changed from', oldValue, 'to', newValue);
+  if (newValue && !rainSystem) {
+    // If becoming visible but no rain system, try to initialize
+    setTimeout(() => {
+      initializeRainSystem();
+    }, 200);
+  }
+  updateRainSystem();
+}, { immediate: true });
+
+watch(() => props.intensity, (newValue) => {
+  console.log('RainAnimation Component: intensity changed to', newValue);
   updateRainSystem();
 });
 
-watch(() => props.intensity, (newValue) => {
-  updateRainSystem();
+// Watch for canvas availability
+watch(rainCanvas, (newCanvas) => {
+  if (newCanvas && !rainSystem) {
+    console.log('RainAnimation Component: Canvas became available');
+    initializeRainSystem();
+  }
 });
 </script>
 

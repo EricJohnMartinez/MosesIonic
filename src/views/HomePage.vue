@@ -26,11 +26,11 @@
               </svg>
             </button>
             <!-- Debug: FCM Token Display -->
-            <div class="mt-2 p-2 bg-gray-900/80 text-xs text-green-400 rounded break-all max-w-xs shadow-lg select-all">
+            <!-- <div class="mt-2 p-2 bg-gray-900/80 text-xs text-green-400 rounded break-all max-w-xs shadow-lg select-all">
               <div v-if="webFcmToken">Web FCM Token: {{ webFcmToken }}</div>
               <div v-if="nativeFcmToken">Android FCM Token: {{ nativeFcmToken }}</div>
               <div v-if="!webFcmToken && !nativeFcmToken" class="text-gray-400">FCM token not available</div>
-            </div>
+            </div> -->
           </div>
 
           <!-- Side Navigation Overlay -->
@@ -143,11 +143,12 @@
               </div>
             </div>
           </div>
-          <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 transition-all duration-1000 ease-out" :class="{
-          }" v-if="currentStation"
-          @touchstart="handleTouchStart"
-          @touchmove="handleTouchMove" 
-          @touchend="handleTouchEnd">
+          <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 transition-all duration-1000 ease-out"
+            :class="getParallaxClass()"
+            v-if="currentStation"
+            @touchstart="handleTouchStart"
+            @touchmove="handleTouchMove" 
+            @touchend="handleTouchEnd">
 
             <!-- Cloud Background Animation - Only for Cloudy Weather (full container) -->
             <div class="absolute inset-0 w-full h-full z-0 pointer-events-none">
@@ -155,18 +156,22 @@
             </div>
 
             <!-- Current Weather Hero Section -->
-            <div :class="[
-              'w-full flex items-center justify-center min-h-[50vh] sm:min-h-[45vh] md:min-h-[40vh] lg:min-h-[35vh] pt-8 sm:pt-12 md:pt-16 lg:pt-20 pb-4 sm:pb-6 md:pb-8 lg:pb-12 relative overflow-hidden'
+            <div :class=" [
+              'w-full flex items-center justify-center min-h-[50vh] sm:min-h-[45vh] md:min-h-[40vh] lg:min-h-[35vh] pt-8 sm:pt-12 md:pt-16 lg:pt-20 pb-4 sm:pb-6 md:pb-8 lg:pb-12 relative overflow-hidden',
+              isTransitioning ? 'hero-stack-anim' : ''
             ]" ref="heroSection">
               <!-- Rain Animation - Only for Rainy Weather -->
-              <RainAnimation :is-visible="isRainingWeather()" :intensity="getRainIntensity()" />
+              <RainAnimation 
+                :key="selectedStation" 
+                :is-visible="isRainingWeather()" 
+                :intensity="getRainIntensity()" 
+              />
               <section class="w-full relative z-20 mt-4 sm:mt-6 md:mt-8 lg:-mt-5 ">
                 <div class="w-full max-w-5xl mx-auto rounded-3xl p-4 sm:p-6 md:p-8 lg:p-10">
                   <div class="flex flex-col lg:flex-row items-center justify-between gap-4 sm:gap-6 lg:gap-8">
                     <!-- Main Weather Display -->
-                    <div class="text-center  pr-16 sm:text-center lg:text-center mb-4 lg:mb-0 flex-1">
-                      <div
-                        class="flex flex-col sm:flex-row items-start justify-start space-y-3 sm:space-y-0 sm:space-x-4 mb-3 pr-10">
+                    <div class="text-center pr-16 sm:text-center lg:text-center mb-4 lg:mb-0 flex-1 hero-card">
+                      <div class="flex flex-col sm:flex-row items-start justify-start space-y-3 sm:space-y-0 sm:space-x-4 mb-3 pr-10">
                         <div class="text-9xl sm:text-9xl md:text-[10rem] lg:text-[12rem] animate-bounce text-left">
                           {{ getWeatherIcon() }}
                         </div>
@@ -187,16 +192,12 @@
 
                       <!-- Quick Stats -->
                       <div class="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 max-w-xs sm:max-w-sm mx-auto lg:mx-0 ">
-                        <div
-                          class="bg-slate-800/80 backdrop-blur-sm rounded-xl p-4 sm:p-6  text-center border border-slate-700/50">
-                          <div class="text-lg sm:text-xl md:text-2xl font-bold text-blue-400 lg:text-4xl">{{
-                            currentStation.data.humidity }}%</div>
+                        <div class="bg-slate-800/80 backdrop-blur-sm rounded-xl p-4 sm:p-6  text-center border border-slate-700/50 hero-card">
+                          <div class="text-lg sm:text-xl md:text-2xl font-bold text-blue-400 lg:text-4xl">{{ currentStation.data.humidity }}%</div>
                           <div class="text-xs sm:text-sm lg:text-xl text-blue-300">Humidity</div>
                         </div>
-                        <div
-                          class="bg-slate-800/80 backdrop-blur-sm rounded-xl p-4 sm:p-6 text-center border border-slate-700/50">
-                          <div class="text-lg sm:text-xl md:text-2xl font-bold lg:text-4xl text-orange-400">
-                            {{ currentStation.data.heatIndex }}°</div>
+                        <div class="bg-slate-800/80 backdrop-blur-sm rounded-xl p-4 sm:p-6 text-center border border-slate-700/50 hero-card">
+                          <div class="text-lg sm:text-xl md:text-2xl font-bold lg:text-4xl text-orange-400">{{ currentStation.data.heatIndex }}°</div>
                           <div class="text-xs sm:text-sm text-orange-300 lg:text-xl">Heat Index</div>
                         </div>
                       </div>
@@ -919,7 +920,25 @@ function changeStation(stationId: string, index: number) {
   if (stationId === selectedStation.value) return;
   // Close navigation
   isNavOpen.value = false;
-  selectedStation.value = stationId;
+  // Set transition direction for parallax
+  transitionDirection.value = index > stations.value.findIndex(s => s.id === selectedStation.value) ? 'left' : 'right';
+  isTransitioning.value = true;
+  // Trigger parallax animation for all main content items
+  setTimeout(() => {
+    selectedStation.value = stationId;
+    // End transition after animation duration
+    setTimeout(() => {
+      isTransitioning.value = false;
+    }, 600); // Match CSS animation duration
+  }, 10);
+}
+
+// Helper to get parallax class for main content
+function getParallaxClass() {
+  if (isTransitioning.value) {
+    return transitionDirection.value === 'left' ? 'parallax-left' : 'parallax-right';
+  }
+  return '';
 }
 
 // Function to reset and re-trigger card animations
@@ -1039,10 +1058,10 @@ function switchToPreviousStation() {
   changeStation(prevStation.id, prevIndex);
 }
 
-function onScroll() {
-  const y = window.scrollY || document.documentElement.scrollTop;
-  scrollOffset.value = y;
-}
+// function onScroll() {
+//   const y = window.scrollY || document.documentElement.scrollTop;
+//   scrollOffset.value = y;
+// }
 
 // Ionic IonContent scroll handler with parallax
 function handleIonScroll(ev: any) {
@@ -1161,19 +1180,29 @@ function isCloudyWeather(): boolean {
 }
 
 function isRainingWeather(): boolean {
-  if (!currentStation.value || !currentStation.value.data) return false;
+  if (!currentStation.value || !currentStation.value.data) {
+    console.log('RainAnimation Debug: No currentStation or data');
+    return false;
+  }
   const weatherCondition = determineWeatherCondition(currentStation.value.data);
-  return weatherCondition.wType.includes('Rain');
+  const isRaining = weatherCondition.wType.includes('Rain');
+  console.log('RainAnimation Debug: Weather type:', weatherCondition.wType, 'Is raining:', isRaining, 'Rainfall:', currentStation.value.data.rainfall);
+  return isRaining;
 }
 
 function getRainIntensity(): string {
-  if (!currentStation.value || !currentStation.value.data) return 'none';
+  if (!currentStation.value || !currentStation.value.data) {
+    console.log('RainAnimation Debug: No currentStation or data for intensity');
+    return 'none';
+  }
   const weatherCondition = determineWeatherCondition(currentStation.value.data);
-  if (weatherCondition.wType.includes('Intense')) return 'intense';
-  if (weatherCondition.wType.includes('Heavy')) return 'heavy';
-  if (weatherCondition.wType.includes('Moderate')) return 'moderate';
-  if (weatherCondition.wType.includes('Light')) return 'light';
-  return 'none';
+  let intensity = 'none';
+  if (weatherCondition.wType.includes('Intense')) intensity = 'intense';
+  else if (weatherCondition.wType.includes('Heavy')) intensity = 'heavy';
+  else if (weatherCondition.wType.includes('Moderate')) intensity = 'moderate';
+  else if (weatherCondition.wType.includes('Light')) intensity = 'light';
+  console.log('RainAnimation Debug: Intensity determined as:', intensity, 'Weather type:', weatherCondition.wType);
+  return intensity;
 }
 
 // Helper to compute heat index (Celsius)
@@ -1514,7 +1543,7 @@ const getCardAnimationClass = computed(() => {
     const animationClass = `card-${cardPattern}`;
     const delayClass = `animation-delay-${Math.min(delay, 500)}`;
     
-    // Include the refresh key to force re-computation
+    // Include the refresh trigger to force re-computation
     const refreshTrigger = cardRefreshKey.value;
     
     return `${baseClass} ${animationClass} ${delayClass}`;
@@ -1549,12 +1578,18 @@ onMounted(async () => {
   // Fetch today's rainfall for the initially selected station (if needed for UI)
   fetchTodayRainfallTotal(selectedStation.value);
 
+
+
+
+
+
   // Add keyboard event listener for navigation
-  const handleKeydown = (event: KeyboardEvent) => {
+
+  function handleKeydown(event: KeyboardEvent) {
     if (event.key === 'Escape' && isNavOpen.value) {
       closeNav();
     }
-  };
+  }
   document.addEventListener('keydown', handleKeydown);
 
   // Add global FCM test functions for debugging
@@ -1609,8 +1644,8 @@ onMounted(async () => {
 
   // Store the cleanup function for onUnmounted
   const cleanup = () => {
-  document.removeEventListener('keydown', handleKeydown);
-  cardObserver.disconnect();
+    document.removeEventListener('keydown', handleKeydown);
+    cardObserver.disconnect();
   };
 
   // Set up cleanup
@@ -2090,6 +2125,74 @@ onMounted(async () => {
   animation: fadeOut 0.4s ease-out forwards;
 }
 
+/* Stacking card animation for hero section */
+.hero-stack-anim .hero-card {
+  position: relative;
+  z-index: 1;
+  animation: stackCardAnim 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+.hero-stack-anim .hero-card:nth-child(2) {
+  z-index: 2;
+  animation-delay: 0.08s;
+}
+.hero-stack-anim .hero-card:nth-child(3) {
+  z-index: 3;
+  animation-delay: 0.16s;
+}
+@keyframes stackCardAnim {
+  0% {
+    transform: translateY(40px) scale(0.95) rotate(-3deg);
+    opacity: 0.7;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  }
+  60% {
+    transform: translateY(-8px) scale(1.03) rotate(2deg);
+    opacity: 1;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.22);
+  }
+  100% {
+    transform: translateY(0) scale(1) rotate(0deg);
+    opacity: 1;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  }
+}
+
+/* Parallax transition for main content */
+.parallax-left {
+  animation: parallaxLeft 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+.parallax-right {
+  animation: parallaxRight 0.6s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+@keyframes parallaxLeft {
+  0% {
+    opacity: 0.7;
+    transform: translateX(60px) scale(0.98);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(-8px) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+@keyframes parallaxRight {
+  0% {
+    opacity: 0.7;
+    transform: translateX(-60px) scale(0.98);
+  }
+  60% {
+    opacity: 1;
+    transform: translateX(8px) scale(1.01);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
 /* Animation Delay Classes */
 .animation-delay-0 { animation-delay: 0ms; }
 .animation-delay-60 { animation-delay: 60ms; }
@@ -2158,68 +2261,6 @@ onMounted(async () => {
     transform: translateX(0) scale(1);
     opacity: 1;
   }
-}
-
-/* Card-specific parallax animations with staggered delays */
-@keyframes cardsSlideOutLeft {
-  0% {
-    transform: translateX(0) translateY(0) scale(1);
-    opacity: 1;
-  }
-
-  100% {
-    transform: translateX(-50vw) translateY(-20px) scale(0.9);
-    opacity: 0;
-  }
-}
-
-@keyframes cardsSlideOutRight {
-  0% {
-    transform: translateX(0) translateY(0) scale(1);
-    opacity: 1;
-  }
-
-  100% {
-    transform: translateX(50vw) translateY(-20px) scale(0.9);
-    opacity: 0;
-  }
-}
-
-@keyframes cardsSlideInLeft {
-  0% {
-    transform: translateX(50vw) translateY(20px) scale(0.9);
-    opacity: 0;
-  }
-
-  100% {
-    transform: translateX(0) translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes cardsSlideInRight {
-  0% {
-    transform: translateX(-50vw) translateY(20px) scale(0.9);
-    opacity: 0;
-  }
-
-  100% {
-    transform: translateX(0) translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-/* Station transition classes */
-.station-transition-out-left {
-  animation: stationSlideOutLeft 0.6s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
-}
-
-.station-transition-out-right {
-  animation: stationSlideOutRight 0.6s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
-}
-
-.station-transition-in {
-  animation: stationSlideInLeft 0.8s cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
 }
 
 /* Cards transition classes with staggered effects */
@@ -2437,44 +2478,6 @@ ion-content {
   }
 }
 
-/* Animation delays for staggered effects */
-.animate-delay-100 {
-  animation-delay: 0.1s;
-}
-
-.animate-delay-200 {
-  animation-delay: 0.2s;
-}
-
-.animate-delay-300 {
-  animation-delay: 0.3s;
-}
-
-/* Progressive enhancement for better performance */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* Fade transition for WindSpeedChart toggle */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.25s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-.fade-enter-to,
-.fade-leave-from {
-  opacity: 1;
-}
-
 /* Enhanced card hover / focus lift effect */
 .card-hover {
   transition: transform 180ms cubic-bezier(.2, .8, .2, 1), box-shadow 180ms cubic-bezier(.2, .8, .2, 1), border-color 180ms;
@@ -2487,7 +2490,7 @@ ion-content {
   .card-hover:hover,
   .card-hover:focus {
     transform: translateY(-6px) scale(1.01);
-    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.35);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
     outline: none;
   }
 
@@ -2543,7 +2546,7 @@ ion-content {
 
 .card-hover:hover {
   transform: translateY(-8px) translateX(var(--mouse-x)) translateY(var(--mouse-y)) scale(1.03) !important;
-  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.3), 0 0 30px rgba(59, 130, 246, 0.1) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3), 0 0 30px rgba(59, 130, 246, 0.1) !important;
   border-color: rgba(59, 130, 246, 0.3) !important;
 }
 
