@@ -25,6 +25,7 @@
     "@ionic/vue": "^8.0.0",
     "@ionic/vue-router": "^8.0.0",
     "apexcharts": "^5.3.3",
+    "chart.js": "^4.5.0",
     "date-fns": "^4.1.0",
     "firebase": "^12.2.1",
     "ionicons": "^7.0.0",
