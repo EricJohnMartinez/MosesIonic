@@ -41,7 +41,7 @@
 
           <!-- Side Navigation Panel -->
           <div
-            class="fixed top-0 right-0 h-full w-80 max-w-[90vw] bg-gray-900/95 backdrop-blur-lg border-l border-gray-700 shadow-2xl z-50 transform transition-transform duration-300 ease-out nav-panel"
+            class="fixed top-0 right-0 h-full w-80 max-w-[90vw] bg-gray-900/95 backdrop-blur-lg border-l border-gray-700 shadow-2xl z-50 transform transition-transform duration-300 ease-out nav-panel overflow-hidden"
             :class="{ 'translate-x-0': isNavOpen, 'translate-x-full': !isNavOpen }"
             :style="{ paddingTop: 'env(safe-area-inset-top)' }">
 
@@ -56,89 +56,96 @@
               </button>
             </div>
 
-            <!-- Station List -->
-            <div class="flex-1 overflow-y-auto p-4">
-              <div class="space-y-3">
-                <div v-for="(station, index) in stations" :key="station.id" @click="changeStation(station.id, index)"
-                  :class="[
-                    'group relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg station-card',
-                    selectedStation === station.id
-                      ? 'active bg-blue-600/20 border-blue-500 shadow-blue-500/20'
-                      : 'bg-gray-800/50 border-gray-600 hover:border-gray-500 hover:bg-gray-700/50'
-                  ]">
+            <!-- Scrollable Navigation Content -->
+            <div class="flex-1 overflow-y-auto">
+              <!-- Station List -->
+              <div class="p-4">
+                <div class="space-y-3">
+                  <div v-for="(station, index) in stations" :key="station.id" @click="changeStation(station.id, index)"
+                    :class="[
+                      'group relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg station-card',
+                      selectedStation === station.id
+                        ? 'active bg-blue-600/20 border-blue-500 shadow-blue-500/20'
+                        : 'bg-gray-800/50 border-gray-600 hover:border-gray-500 hover:bg-gray-700/50'
+                    ]">
 
-                  <!-- Station Icon and Status -->
-                  <div class="flex items-center space-x-3 mb-3">
-                    <div :class="[
-                      'w-4 h-4 rounded-full transition-all duration-300',
-                      selectedStation === station.id ? 'bg-green-400 animate-pulse' : 'bg-gray-500'
-                    ]"></div>
-                    <span class="text-lg">📍</span>
-                    <span :class="[
-                      'font-semibold transition-colors duration-200',
-                      selectedStation === station.id ? 'text-blue-300' : 'text-white group-hover:text-blue-200'
-                    ]">{{ station.name }}</span>
+                    <!-- Station Icon and Status -->
+                    <div class="flex items-center space-x-3 mb-3">
+                      <div :class="[
+                        'w-4 h-4 rounded-full transition-all duration-300',
+                        selectedStation === station.id ? 'bg-green-400 animate-pulse' : 'bg-gray-500'
+                      ]"></div>
+                      <span class="text-lg">📍</span>
+                      <span :class="[
+                        'font-semibold transition-colors duration-200',
+                        selectedStation === station.id ? 'text-blue-300' : 'text-white group-hover:text-blue-200'
+                      ]">{{ station.name }}</span>
 
-                    <!-- Selected Badge -->
-                    <div v-if="selectedStation === station.id"
-                      class="ml-auto bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                      Active
+                      <!-- Selected Badge -->
+                      <div v-if="selectedStation === station.id"
+                        class="ml-auto bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                        Active
+                      </div>
                     </div>
-                  </div>
 
-                  <!-- Station Preview Data (if it's the selected station) -->
-                  <div v-if="selectedStation === station.id && currentStation" class="grid grid-cols-2 gap-3 text-sm">
-                    <div class="bg-gray-800/60 rounded-lg p-3">
-                      <div class="text-gray-400 text-xs mb-1">Temperature</div>
-                      <div class="text-white font-bold">{{ currentStation.data.temperature }}°C</div>
+                    <!-- Station Preview Data (if it's the selected station) -->
+                    <div v-if="selectedStation === station.id && currentStation" class="grid grid-cols-2 gap-3 text-sm">
+                      <div class="bg-gray-800/60 rounded-lg p-3">
+                        <div class="text-gray-400 text-xs mb-1">Temperature</div>
+                        <div class="text-white font-bold">{{ currentStation.data.temperature }}°C</div>
+                      </div>
+                      <div class="bg-gray-800/60 rounded-lg p-3">
+                        <div class="text-gray-400 text-xs mb-1">Humidity</div>
+                        <div class="text-white font-bold">{{ currentStation.data.humidity }}%</div>
+                      </div>
+                      <div class="bg-gray-800/60 rounded-lg p-3">
+                        <div class="text-gray-400 text-xs mb-1">Wind Speed</div>
+                        <div class="text-white font-bold">{{ currentStation.data.windSpeed }} m/s</div>
+                      </div>
+                      <div class="bg-gray-800/60 rounded-lg p-3">
+                        <div class="text-gray-400 text-xs mb-1">Rainfall</div>
+                        <div class="text-white font-bold">{{ currentStation.data.rainfall }} mm</div>
+                      </div>
                     </div>
-                    <div class="bg-gray-800/60 rounded-lg p-3">
-                      <div class="text-gray-400 text-xs mb-1">Humidity</div>
-                      <div class="text-white font-bold">{{ currentStation.data.humidity }}%</div>
-                    </div>
-                    <div class="bg-gray-800/60 rounded-lg p-3">
-                      <div class="text-gray-400 text-xs mb-1">Wind Speed</div>
-                      <div class="text-white font-bold">{{ currentStation.data.windSpeed }} m/s</div>
-                    </div>
-                    <div class="bg-gray-800/60 rounded-lg p-3">
-                      <div class="text-gray-400 text-xs mb-1">Rainfall</div>
-                      <div class="text-white font-bold">{{ currentStation.data.rainfall }} mm</div>
-                    </div>
-                  </div>
 
-                  <!-- Coordinates for non-selected stations -->
-                  <div v-else class="text-gray-400 text-sm">
-                    <div class="flex items-center space-x-2">
-                      <span>📍</span>
-                      <span>{{ station.lat.toFixed(4) }}, {{ station.lng.toFixed(4) }}</span>
+                    <!-- Coordinates for non-selected stations -->
+                    <div v-else class="text-gray-400 text-sm">
+                      <div class="flex items-center space-x-2">
+                        <span>📍</span>
+                        <span>{{ station.lat.toFixed(4) }}, {{ station.lng.toFixed(4) }}</span>
+                      </div>
                     </div>
-                  </div>
 
-                  <!-- Hover Arrow -->
-                  <div
-                    class="absolute right-4 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
+                    <!-- Hover Arrow -->
+                    <div
+                      class="absolute right-4 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Additional Navigation Options -->
-              <div class="mt-6 pt-6 border-t border-gray-700 space-y-3">
-                <button @click="openMapModal"
-                  class="w-full flex items-center space-x-3 p-4 rounded-xl bg-gray-800/50 border border-gray-600 hover:bg-gray-700/50 hover:border-gray-500 transition-all duration-200">
-                  <span class="text-xl">🗺️</span>
-                  <span class="text-white font-medium">View Map</span>
-                  <svg class="w-4 h-4 text-gray-400 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </button>
+                <!-- Additional Navigation Options -->
+                <div class="mt-6 pt-6 border-t border-gray-700 space-y-3">
+                  <button @click="openMapModal"
+                    class="w-full flex items-center space-x-3 p-4 rounded-xl bg-gray-800/50 border border-gray-600 hover:bg-gray-700/50 hover:border-gray-500 transition-all duration-200">
+                    <span class="text-xl">🗺️</span>
+                    <span class="text-white font-medium">View Map</span>
+                    <svg class="w-4 h-4 text-gray-400 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </button>
 
-                <!-- Notification Settings -->
-                <div class="bg-gray-800/30 border border-gray-600 rounded-xl p-4">
-                  <NotificationSettings />
+                  <router-link to="/summary"
+                    class="w-full flex items-center space-x-3 p-4 rounded-xl bg-gray-800/50 border border-gray-600 hover:bg-gray-700/50 hover:border-gray-500 transition-all duration-200">
+                    <span class="text-xl">📊</span>
+                    <span class="text-white font-medium">View 7-Day Summary</span>
+                    <svg class="w-4 h-4 text-gray-400 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </router-link>
                 </div>
               </div>
             </div>
