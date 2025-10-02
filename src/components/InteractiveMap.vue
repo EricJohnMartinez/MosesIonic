@@ -401,12 +401,14 @@ watch(() => props.isOpen, (isOpen) => {
   }
 });
 
-watch(() => props.stations, () => {
+// Only watch station count changes or additions/removals, not data updates
+watch(() => props.stations.length, () => {
   if (map) {
     updateMarkers();
   }
-}, { deep: true });
+});
 
+// Only update markers when selected station changes
 watch(() => props.selectedStation, () => {
   if (map) {
     updateMarkers();

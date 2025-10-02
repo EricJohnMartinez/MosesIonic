@@ -16,21 +16,20 @@
 
           <!-- Station selector button - positioned responsively -->
           <div class="fixed top-4 right-4 z-50" :style="{ top: 'calc(env(safe-area-inset-top) + 1rem)' }">
-            <button type="button" aria-label="Open Stations Menu" @click="toggleNav"
-              class="bg-gray-800/90 backdrop-blur-md text-white p-3 rounded-xl shadow-lg border border-gray-700 hover:bg-gray-700/90 transition-all duration-200 flex items-center space-x-2 min-h-[44px]">
-              <span class="text-lg">📍</span>
-              <span class="font-medium text-sm hidden sm:inline">{{ currentStation?.name || 'Select Station' }}</span>
-              <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': isNavOpen }" fill="none"
-                stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <!-- Debug: FCM Token Display -->
-            <!-- <div class="mt-2 p-2 bg-gray-900/80 text-xs text-green-400 rounded break-all max-w-xs shadow-lg select-all">
-              <div v-if="webFcmToken">Web FCM Token: {{ webFcmToken }}</div>
-              <div v-if="nativeFcmToken">Android FCM Token: {{ nativeFcmToken }}</div>
-              <div v-if="!webFcmToken && !nativeFcmToken" class="text-gray-400">FCM token not available</div>
-            </div> -->
+            <div class="flex items-center space-x-2">
+              <!-- Sync Status Indicator -->
+           
+
+              <button type="button" aria-label="Open Stations Menu" @click="toggleNav"
+                class="bg-gray-800/90 backdrop-blur-md text-white p-3 rounded-xl shadow-lg border border-gray-700 hover:bg-gray-700/90 transition-all duration-200 flex items-center space-x-2 min-h-[44px]">
+                <span class="text-lg">📍</span>
+                <span class="font-medium text-sm hidden sm:inline">{{ currentStation?.name || 'Select Station' }}</span>
+                <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': isNavOpen }" fill="none"
+                  stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+            </div>
           </div>
 
           <!-- Side Navigation Overlay -->
@@ -542,8 +541,7 @@
                     <span class="text-xl md:text-2xl">💡</span>
                   </div>
                   <div class="text-center">
-                    <div class="text-lg md:text-xl lg:text-2xl font-bold text-purple-400 mb-2">{{
-                      currentStation.data.illumination }}</div>
+                    <div class="text-lg md:text-xl lg:text-2xl font-bold text-purple-400 mb-2">{{ currentStation.data.illumination }}</div>
                     <div class="text-xs md:text-sm text-white/80">lux</div>
                   </div>
                 </div>
@@ -596,6 +594,7 @@ import CloudAnimation from '../components/CloudAnimation.vue';
 import RainAnimation from '../components/RainAnimation.vue';
 import NotificationSettings from '../components/NotificationSettings.vue';
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
+import { Preferences } from '@capacitor/preferences';
 import { IonContent, IonRefresher, IonRefresherContent } from '@ionic/vue';
 import WindCompass from '../components/WindCompass.vue';
 import { db } from '../firebase';
@@ -631,6 +630,23 @@ const testFCM = async () => {
   }
 };
 
+// Manual sync function for debugging
+const manualSync = async () => {
+  console.log('🔄 Manual sync triggered');
+  if (syncStatus.value === 'syncing') {
+    console.log('⚠️ Sync already in progress, skipping...');
+    return;
+  }
+
+  try {
+    await fetchAllStationsLatestSensors();
+    console.log('✅ Manual sync completed');
+  } catch (error) {
+    console.error('❌ Manual sync failed:', error);
+    syncStatus.value = 'error';
+  }
+};
+
 // Define stations
 const stations = ref([
   { id: 'station1', name: 'MinSU Station', lat: 13.153925, lng: 121.185337 },
@@ -646,8 +662,47 @@ const isMapModalOpen = ref(false);
 // Store latest data for all stations
 const stationDataMap = ref<Record<string, any>>({});
 
-// Fetch latest sensors for all stations
+// Store Firebase listeners for cleanup
+const firebaseListeners = ref<(() => void)[]>([]);
+
+// Sync status and timing
+const syncStatus = ref<'idle' | 'syncing' | 'synced' | 'error'>('idle');
+const lastSyncTime = ref<Date | null>(null);
+const autoRefreshInterval = ref<NodeJS.Timeout | null>(null);
+
+// Card styling
+const cardsDarkened = ref(false);
+
+// Load cached data with optimized performance
+async function loadCachedData() {
+  try {
+    const { value } = await Preferences.get({ key: 'latestStationData' });
+    if (value) {
+      const cachedData = JSON.parse(value);
+      const lastUpdated = cachedData.lastUpdated;
+
+      // Check if cache is still valid (not expired - increased to 2 hours)
+      if (!isCacheExpired(lastUpdated)) {
+        stationDataMap.value = cachedData;
+        syncStatus.value = 'synced'; // Set sync status when loading from cache
+        lastSyncTime.value = new Date(lastUpdated);
+        console.log('✅ Loaded cached station data');
+        return true; // Return success indicator
+      } else {
+        console.log('📅 Cached data expired, will fetch fresh data');
+      }
+    }
+    return false; // No valid cache found
+  } catch (error) {
+    console.warn('Failed to load cached data:', error);
+    return false;
+  }
+}
+
+// Fetch latest sensors for all stations with prioritized loading
 async function fetchAllStationsLatestSensors() {
+  console.log('🔄 Starting sync process...');
+
   // Remove all previous listeners
   if (firebaseListeners.value && firebaseListeners.value.length) {
     firebaseListeners.value.forEach(unsubscribe => {
@@ -656,35 +711,163 @@ async function fetchAllStationsLatestSensors() {
     firebaseListeners.value = [];
   }
 
+  // Set sync status
+  syncStatus.value = 'syncing';
+  console.log('📊 Sync status set to: syncing');
 
+  try {
+    // Track data reception for proper sync status management
+    let dataReceivedCount = 0;
+    let expectedDataCount = 0;
+    let syncTimeoutId: NodeJS.Timeout | null = null;
+
+    // Calculate expected data count (stations * high priority sensors)
+    const highPriority = sensorTypes.filter(s => s.priority === 'high');
+    expectedDataCount = stations.value.length * highPriority.length;
+
+    console.log(`📊 Expecting ${expectedDataCount} high priority data points`);
+
+    // Function to check if sync is complete
+    const checkSyncComplete = () => {
+      if (dataReceivedCount >= expectedDataCount && syncStatus.value === 'syncing') {
+        syncStatus.value = 'synced';
+        lastSyncTime.value = new Date();
+        console.log('✅ Sync status set to: synced (data received)');
+
+        // Clear the timeout since we got data
+        if (syncTimeoutId) {
+          clearTimeout(syncTimeoutId);
+          syncTimeoutId = null;
+        }
+      }
+    };
+
+    // Set up timeout fallback (increased to 10 seconds to allow for network latency and Firebase connection)
+    syncTimeoutId = setTimeout(() => {
+      if (syncStatus.value === 'syncing') {
+        if (dataReceivedCount > 0) {
+          // We got some data, consider it synced
+          syncStatus.value = 'synced';
+          lastSyncTime.value = new Date();
+          console.log('✅ Sync status set to: synced (timeout with partial data)');
+        } else {
+          // No data received, mark as error
+          syncStatus.value = 'error';
+          console.log('❌ Sync status set to: error (timeout with no data)');
+        }
+      }
+    }, 10000); // Increased from 5 to 10 seconds
+
+    // Load sensors by priority for faster initial load
+    console.log('🎯 Loading high priority sensors...');
+    // Load high priority sensors immediately
+    await loadSensorsByPriority(highPriority, 0, () => {
+      dataReceivedCount++;
+      console.log(`📊 Data received: ${dataReceivedCount}/${expectedDataCount}`);
+      checkSyncComplete();
+    });
+
+    console.log('⏳ Loading medium priority sensors after delay...');
+    // Load medium priority sensors after a short delay
+    setTimeout(() => loadSensorsByPriority(mediumPriority, 0), 500);
+
+    console.log('⏳ Loading low priority sensors after longer delay...');
+    // Load low priority sensors after a longer delay
+    setTimeout(() => loadSensorsByPriority(lowPriority, 0), 1000);
+
+  } catch (error) {
+    console.error('❌ Sync failed:', error);
+    syncStatus.value = 'error';
+  }
+}
+
+// Helper function to load sensors for all stations by priority
+async function loadSensorsByPriority(sensorList: any[], delay: number = 0, onDataReceived?: () => void) {
+  if (delay > 0) {
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+
+  console.log(`📡 Setting up listeners for ${sensorList.length} sensors...`);
 
   for (const station of stations.value) {
     const stationId = station.id;
     const data: any = {};
     let unsubList: (() => void)[] = [];
-    for (const sensor of sensorTypes) {
+
+    console.log(`🏢 Setting up sensors for station: ${stationId}`);
+
+    for (const sensor of sensorList) {
       const sensorRef = dbRef(db, `${stationId}/data/sensors/${sensor.key}`);
+
+      // Use limitToLast(1) with onChildAdded for better performance
       const q = query(sensorRef, orderByKey(), limitToLast(1));
       const unsub = onChildAdded(q, (snapshot) => {
-        const val = snapshot.val();
-        let finalValue: any = val?.val ?? val ?? 0;
-        if (sensor.key !== 'WD' && typeof finalValue === 'string') {
-          finalValue = parseFloat(finalValue) || 0;
+        if (snapshot.exists()) {
+          const val = snapshot.val();
+          let finalValue: any = val?.val ?? val ?? 0;
+
+          console.log(`📊 Received ${sensor.key} for ${stationId}:`, finalValue);
+
+          // Convert string numbers to actual numbers for numeric sensors
+          if (sensor.key !== 'WD' && typeof finalValue === 'string') {
+            finalValue = parseFloat(finalValue) || 0;
+          }
+
+          data[sensor.label] = finalValue;
+
+          // Update last sync time
+          lastSyncTime.value = new Date();
+
+          // Update the map reactively
+          stationDataMap.value = {
+            ...stationDataMap.value,
+            [stationId]: {
+              ...stationDataMap.value[stationId],
+              ...data,
+              lastUpdated: new Date().toISOString()
+            }
+          };
+
+          // Cache the updated station data locally (throttled)
+          if (Math.random() < 0.1) { // Only cache 10% of updates to reduce I/O
+            try {
+              Preferences.set({
+                key: 'latestStationData',
+                value: JSON.stringify(stationDataMap.value)
+              });
+            } catch (cacheError) {
+              console.warn('Failed to cache station data locally:', cacheError);
+            }
+          }
+
+          // Call the callback to track data reception
+          if (onDataReceived) {
+            onDataReceived();
+          }
+        } else {
+          console.warn(`⚠️ No data found for ${sensor.key} in ${stationId}`);
         }
-        data[sensor.label] = finalValue;
-        // Debug log for each station and sensor
-       
-        // Update the map reactively
-        stationDataMap.value = { ...stationDataMap.value, [stationId]: { ...stationDataMap.value[stationId], ...data } };
+      }, (error) => {
+        console.error(`❌ Error listening to ${sensor.key} for ${stationId}:`, error);
+        syncStatus.value = 'error';
+
+        // Retry sync after a delay if we're online
+        if (isOnline.value) {
+          setTimeout(() => {
+            retryFailedSync();
+          }, 5000);
+        }
       });
+
       unsubList.push(unsub);
     }
+
     // Store all unsub functions for cleanup
     firebaseListeners.value.push(...unsubList);
   }
-}
 
-// Computed property for stations with their own data
+  console.log(`✅ Finished setting up listeners for ${sensorList.length} sensors`);
+}// Computed property for stations with their own data
 const stationsWithData = computed(() => {
   return stations.value.map(station => ({
     ...station,
@@ -919,8 +1102,12 @@ function getStationWeatherIcon(stationData: any): string {
   return '⛅';
 }
 
-// Computed property for card darkening based on scroll
-const cardsDarkened = computed(() => false);
+// Computed property for connection status text
+const connectionStatusText = computed(() => {
+  if (!isOnline.value) return 'Offline';
+  if (connectionStatus.value === 'slow') return 'Slow connection';
+  return 'Online';
+});
 
 // Station change with parallax transition
 function changeStation(stationId: string, index: number) {
@@ -1074,20 +1261,28 @@ function switchToPreviousStation() {
 function handleIonScroll(ev: any) {
   // No scroll progress or parallax effect
 }
-// Sensor types and mapping
+// Sensor types and mapping - prioritized for faster loading
 const sensorTypes = [
-  { key: 'TEM', label: 'temperature' },
-  { key: 'HUM', label: 'humidity' },
-  { key: 'RR', label: 'rainfall' },
-  { key: 'WSP', label: 'windSpeed' },
-  { key: 'WD', label: 'windDirection' },
-  { key: 'SMD', label: 'soilMoisture' },
-  { key: 'STD', label: 'soilTemp' },
-  { key: 'LUX', label: 'illumination' },
-  { key: 'TSR', label: 'solar' },
-  { key: 'WA', label: 'windAngle' },
-  { key: 'ATM', label: 'pressure' }
+  // Essential sensors loaded first
+  { key: 'TEM', label: 'temperature', priority: 'high' },
+  { key: 'HUM', label: 'humidity', priority: 'high' },
+  { key: 'RR', label: 'rainfall', priority: 'high' },
+  { key: 'WSP', label: 'windSpeed', priority: 'high' },
+  { key: 'WD', label: 'windDirection', priority: 'high' },
+  // Secondary sensors loaded after essential ones
+  { key: 'ATM', label: 'pressure', priority: 'medium' },
+  { key: 'LUX', label: 'illumination', priority: 'medium' },
+  { key: 'TSR', label: 'solar', priority: 'medium' },
+  // Optional sensors loaded last
+  { key: 'SMD', label: 'soilMoisture', priority: 'low' },
+  { key: 'STD', label: 'soilTemp', priority: 'low' },
+  { key: 'WA', label: 'windAngle', priority: 'low' }
 ];
+
+// Priority-based sensor arrays
+const highPriority = sensorTypes.filter(s => s.priority === 'high');
+const mediumPriority = sensorTypes.filter(s => s.priority === 'medium');
+const lowPriority = sensorTypes.filter(s => s.priority === 'low');
 
 const sensorValues = ref({
   TEM: 0,
@@ -1103,7 +1298,21 @@ const sensorValues = ref({
   ATM: 0
 });
 
-// Helper functions for weather display
+// Helper function to format last sync time
+function formatLastSyncTime(date: Date | null): string {
+  if (!date) return '';
+
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+  if (diffMins < 1) return 'now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
 
 
 
@@ -1188,28 +1397,24 @@ function isCloudyWeather(): boolean {
 
 function isRainingWeather(): boolean {
   if (!currentStation.value || !currentStation.value.data) {
-  
     return false;
   }
   const weatherCondition = determineWeatherCondition(currentStation.value.data);
   const isRaining = weatherCondition.wType.includes('Rain');
- 
   return isRaining;
 }
 
-function getRainIntensity(): string {
+function getRainIntensity(): 'light' | 'moderate' | 'heavy' | 'torrential' {
   if (!currentStation.value || !currentStation.value.data) {
-   
-    return 'none';
+    return 'light';
   }
   const weatherCondition = determineWeatherCondition(currentStation.value.data);
-  let intensity = 'none';
-  if (weatherCondition.wType.includes('Intense')) intensity = 'intense';
-  else if (weatherCondition.wType.includes('Heavy')) intensity = 'heavy';
-  else if (weatherCondition.wType.includes('Moderate')) intensity = 'moderate';
-  else if (weatherCondition.wType.includes('Light')) intensity = 'light';
- 
-  return intensity;
+  if (weatherCondition.wType.includes('Torrential')) return 'torrential';
+  if (weatherCondition.wType.includes('Intense')) return 'heavy'; // Intense can map to heavy
+  if (weatherCondition.wType.includes('Heavy')) return 'heavy';
+  if (weatherCondition.wType.includes('Moderate')) return 'moderate';
+  if (weatherCondition.wType.includes('Light')) return 'light';
+  return 'light'; // Default
 }
 
 // Helper to compute heat index (Celsius)
@@ -1234,8 +1439,125 @@ function calculateHeatIndex(T: number, RH: number): number {
   return result;
 }
 
-// Store Firebase listeners for cleanup
-const firebaseListeners = ref<(() => void)[]>([]);
+// Auto-refresh setup - increased to 10 minutes for better performance
+function setupAutoRefresh() {
+  // Clear any existing interval
+  if (autoRefreshInterval.value) {
+    clearInterval(autoRefreshInterval.value);
+  }
+
+  // Set up auto-refresh every 10 minutes (increased from 5)
+  autoRefreshInterval.value = setInterval(async () => {
+    if (syncStatus.value !== 'syncing') {
+      console.log('🔄 Auto-refreshing data...');
+      await fetchAllStationsLatestSensors();
+    }
+  }, 10 * 60 * 1000); // 10 minutes
+}
+
+function stopAutoRefresh() {
+  if (autoRefreshInterval.value) {
+    clearInterval(autoRefreshInterval.value);
+    autoRefreshInterval.value = null;
+  }
+}
+
+// Cache expiration check - increased to 2 hours for better performance
+function isCacheExpired(lastUpdated: string | undefined): boolean {
+  if (!lastUpdated) return true;
+
+  const lastUpdate = new Date(lastUpdated);
+  const now = new Date();
+  const hoursDiff = (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60);
+
+  // Consider cache expired after 2 hours (increased from 1 hour)
+  return hoursDiff > 2;
+}
+
+// Connection monitoring
+const isOnline = ref(navigator.onLine);
+const connectionStatus = ref<'online' | 'offline' | 'slow'>('online');
+
+// Monitor network connectivity
+function setupConnectionMonitoring() {
+  window.addEventListener('online', handleOnline);
+  window.addEventListener('offline', handleOffline);
+
+  // Monitor connection quality
+  if ('connection' in navigator) {
+    const connection = (navigator as any).connection;
+    if (connection) {
+      connection.addEventListener('change', handleConnectionChange);
+      updateConnectionStatus(connection);
+    }
+  }
+}
+
+function handleOnline() {
+  isOnline.value = true;
+  connectionStatus.value = 'online';
+  syncStatus.value = 'syncing';
+
+  console.log('🌐 Connection restored, syncing data...');
+
+  // Retry sync when connection is restored
+  setTimeout(async () => {
+    await fetchAllStationsLatestSensors();
+  }, 1000);
+}
+
+function handleOffline() {
+  isOnline.value = false;
+  connectionStatus.value = 'offline';
+  syncStatus.value = 'idle';
+
+  console.log('📴 Connection lost, using cached data');
+}
+
+function handleConnectionChange() {
+  const connection = (navigator as any).connection;
+  if (connection) {
+    updateConnectionStatus(connection);
+  }
+}
+
+function updateConnectionStatus(connection: any) {
+  const effectiveType = connection.effectiveType;
+
+  if (!isOnline.value) {
+    connectionStatus.value = 'offline';
+  } else if (effectiveType === 'slow-2g' || effectiveType === '2g') {
+    connectionStatus.value = 'slow';
+  } else {
+    connectionStatus.value = 'online';
+  }
+}
+
+// Enhanced error handling with retry logic
+async function retryFailedSync(maxRetries: number = 3, delay: number = 2000) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🔄 Sync attempt ${attempt}/${maxRetries}`);
+      await fetchAllStationsLatestSensors();
+
+      if (syncStatus.value !== 'error') {
+        console.log('✅ Sync successful after retry');
+        return;
+      }
+    } catch (error) {
+      console.error(`❌ Sync attempt ${attempt} failed:`, error);
+
+      if (attempt < maxRetries) {
+        console.log(`⏳ Waiting ${delay}ms before retry...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        delay *= 2; // Exponential backoff
+      }
+    }
+  }
+
+  console.error('💥 All sync attempts failed');
+  syncStatus.value = 'error';
+}
 
 function fetchLatestSensors(stationId: string) {
   // Clean up previous listeners first
@@ -1301,48 +1623,42 @@ onUnmounted(() => {
     }
   });
   firebaseListeners.value = [];
+
+  // Clean up auto-refresh
+  stopAutoRefresh();
+
+  // Clean up connection monitoring
+  window.removeEventListener('online', handleOnline);
+  window.removeEventListener('offline', handleOffline);
+
+  if ('connection' in navigator) {
+    const connection = (navigator as any).connection;
+    if (connection) {
+      connection.removeEventListener('change', handleConnectionChange);
+    }
+  }
 });
 
 watch(selectedStation, (newStation) => {
-  // Reset values
-  sensorValues.value.TEM = 0;
-  sensorValues.value.HUM = 0;
-  sensorValues.value.RR = 0;
-  sensorValues.value.WSP = 0;
-  sensorValues.value.WD = '';
-  sensorValues.value.SMD = 0;
-  sensorValues.value.STD = 0;
-  sensorValues.value.LUX = 0;
-  sensorValues.value.TSR = 0;
-  sensorValues.value.WA = 0;
-  sensorValues.value.ATM = 0;
-
-  fetchLatestSensors(newStation);
+  // Fetch today's rainfall for the newly selected station
   fetchTodayRainfallTotal(newStation);
-
-  // fetching latest sensors for station
-  // current sensor values updated
+  
+  // Note: No need to call fetchLatestSensors() because
+  // fetchAllStationsLatestSensors() already has listeners for all stations
+  // and updates stationDataMap automatically
 });
 
 // Pull-to-refresh handler
 const handleRefresh = async (event: any) => {
-  // user triggered refresh
+  console.log('🔄 User triggered refresh');
   try {
-    // Refresh latest sensor values for the currently selected station
-    fetchLatestSensors(selectedStation.value);
+    // Refresh all station data
+    await fetchAllStationsLatestSensors();
+    
+    // Refresh today's rainfall for current station
     fetchTodayRainfallTotal(selectedStation.value);
 
-    // Refresh child chart if available
-    try {
-      const child: any = windChartRef.value;
-      if (child && typeof child.fetchWindSpeedData === 'function') {
-        child.fetchWindSpeedData(selectedStation.value);
-      }
-    } catch (e) {
-      console.warn('Wind chart refresh failed or not available yet', e);
-    }
-
-    // Refresh temperature table if available
+    // Refresh child components if available
     try {
       const tempChild: any = temperatureTableRef.value;
       if (tempChild && typeof tempChild.fetchTemperatureData === 'function') {
@@ -1352,12 +1668,30 @@ const handleRefresh = async (event: any) => {
       console.warn('Temperature table refresh failed or not available yet', e);
     }
 
-    // Small delay to allow async updates to propagate (adjustable)
+    try {
+      const windChild: any = windSpeedTableRef.value;
+      if (windChild && typeof windChild.fetchWindData === 'function') {
+        windChild.fetchWindData(selectedStation.value);
+      }
+    } catch (e) {
+      console.warn('Wind speed table refresh failed or not available yet', e);
+    }
+
+    try {
+      const rainChild: any = rainfallTableRef.value;
+      if (rainChild && typeof rainChild.fetchRainfallData === 'function') {
+        rainChild.fetchRainfallData(selectedStation.value);
+      }
+    } catch (e) {
+      console.warn('Rainfall table refresh failed or not available yet', e);
+    }
+
+    // Small delay to allow async updates to propagate
     await new Promise((resolve) => setTimeout(resolve, 700));
   } catch (err) {
     console.error('Error during pull-to-refresh:', err);
   } finally {
-    // Signal Ionic the refresh is complete so it can close the refresher UI
+    // Signal Ionic the refresh is complete
     try { event.target.complete(); } catch (e) { /* ignore */ }
   }
 };
@@ -1511,21 +1845,21 @@ const currentStation = computed(() => {
   const station = stations.value.find((s) => s.id === selectedStation.value);
   if (!station) return null;
 
-  // Prefer data from stationDataMap (populated by fetchAllStationsLatestSensors)
+  // Get data from stationDataMap (populated by fetchAllStationsLatestSensors)
   const stationDataFromMap = stationDataMap.value[station.id] || {};
 
-  // Fallback to sensorValues if stationDataFromMap is empty (e.g., after station change)
-  const temperature = stationDataFromMap.temperature ?? sensorValues.value.TEM;
-  const humidity = stationDataFromMap.humidity ?? sensorValues.value.HUM;
-  const rainfall = stationDataFromMap.rainfall ?? sensorValues.value.RR;
-  const windSpeed = stationDataFromMap.windSpeed ?? sensorValues.value.WSP;
-  const windDirection = stationDataFromMap.windDirection ?? sensorValues.value.WD;
-  const soilMoisture = stationDataFromMap.soilMoisture ?? sensorValues.value.SMD;
-  const soilTemp = stationDataFromMap.soilTemp ?? sensorValues.value.STD;
-  const illumination = stationDataFromMap.illumination ?? sensorValues.value.LUX;
-  const solar = stationDataFromMap.solar ?? sensorValues.value.TSR;
-  const windAngle = stationDataFromMap.windAngle ?? sensorValues.value.WA;
-  const pressure = stationDataFromMap.pressure ?? sensorValues.value.ATM;
+  // Use data directly from stationDataMap
+  const temperature = stationDataFromMap.temperature ?? 0;
+  const humidity = stationDataFromMap.humidity ?? 0;
+  const rainfall = stationDataFromMap.rainfall ?? 0;
+  const windSpeed = stationDataFromMap.windSpeed ?? 0;
+  const windDirection = stationDataFromMap.windDirection ?? '';
+  const soilMoisture = stationDataFromMap.soilMoisture ?? 0;
+  const soilTemp = stationDataFromMap.soilTemp ?? 0;
+  const illumination = stationDataFromMap.illumination ?? 0;
+  const solar = stationDataFromMap.solar ?? 0;
+  const windAngle = stationDataFromMap.windAngle ?? 0;
+  const pressure = stationDataFromMap.pressure ?? 0;
 
   let heatIndex = 0;
   if (
@@ -1551,6 +1885,7 @@ const currentStation = computed(() => {
     pressure,
     dailyRainfall: dailyRainfallTotal.value
   };
+
   try {
     weatherAlertSystem.checkWeatherConditions(stationData, station.name, station.id);
   } catch (error) {
@@ -1562,6 +1897,12 @@ const currentStation = computed(() => {
     data: stationData
   };
 });
+
+// Clear cache when relevant data changes
+watch([selectedStation, stationDataMap, dailyRainfallTotal], () => {
+  // Removed stationDataCache as it's no longer needed
+  // Data updates automatically through Vue reactivity
+}, { deep: true });
 
 // Dynamic animation classes based on pattern and card position
 const getCardAnimationClass = computed(() => {
@@ -1602,17 +1943,35 @@ onMounted(async () => {
   weatherAlertSystem.initialize();
 
   // Auto-initialize FCM for push notifications (no user interaction required)
-
   try {
     await initializeFCM();
-   
   } catch (error) {
     console.error('❌ Auto FCM initialization failed:', error);
   }
 
-  // Fetch latest sensors for all stations and await for first render
-  await fetchAllStationsLatestSensors();
-  // Fetch today's rainfall for the initially selected station (if needed for UI)
+  // Set up connection monitoring
+  setupConnectionMonitoring();
+
+  // Load cached data with expiration check
+  const hasValidCache = await loadCachedData();
+
+  // Always fetch fresh data on initial load to ensure latest information
+  // This runs in parallel with displaying cached data (if available)
+  if (!hasValidCache) {
+    console.log('🔄 No valid cache - fetching fresh data before render');
+    // No cache, must wait for data before showing anything
+    await fetchAllStationsLatestSensors();
+  } else {
+    console.log('✅ Valid cache found - fetching fresh data in background');
+    // Have cache, show it but also refresh in background immediately
+    // Don't use setTimeout to avoid delay
+    fetchAllStationsLatestSensors(); // Fire and forget - will update UI when data arrives
+  }
+
+  // Set up auto-refresh
+  setupAutoRefresh();
+
+  // Fetch today's rainfall for the initially selected station
   fetchTodayRainfallTotal(selectedStation.value);
 
 
