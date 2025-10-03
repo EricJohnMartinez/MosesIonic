@@ -549,6 +549,11 @@
               </div>
             </section>
 
+            <!-- Water Level Monitoring Section -->
+            <section class="mt-8 md:mt-10">
+              <WaterLevel />
+            </section>
+
 
             <!-- Action Buttons -->
             <section class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8 mt-6 px-4">
@@ -595,6 +600,7 @@ import CloudAnimation from '../components/CloudAnimation.vue';
 import RainAnimation from '../components/RainAnimation.vue';
 import SunnyAnimation from '../components/SunnyAnimation.vue';
 import NotificationSettings from '../components/NotificationSettings.vue';
+import WaterLevel from '../components/WaterLevel.vue';
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { Preferences } from '@capacitor/preferences';
 import { IonContent, IonRefresher, IonRefresherContent } from '@ionic/vue';
