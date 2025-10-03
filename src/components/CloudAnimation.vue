@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isVisible" class="absolute inset-0 pointer-events-none z-0 cloud-container">
+  <div v-if="isVisible" class="fixed inset-0 pointer-events-none z-0 cloud-container">
     <!-- Extra Large clouds - Layer 1 -->
     <img 
       src="/images/Clouds/cloud1.png" 

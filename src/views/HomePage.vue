@@ -159,6 +159,7 @@
             <!-- Cloud Background Animation - Only for Cloudy Weather (full container) -->
             <div class="absolute inset-0 w-full h-full z-0 pointer-events-none">
               <CloudAnimation :is-visible="isCloudyWeather()" />
+              <SunnyAnimation :is-visible="isSunnyWeather()" :intensity="getSunIntensity()" />
             </div>
 
             <!-- Current Weather Hero Section -->
@@ -592,6 +593,7 @@ import HeatAlert from '../components/HeatAlert.vue';
 import InteractiveMap from '../components/InteractiveMap.vue';
 import CloudAnimation from '../components/CloudAnimation.vue';
 import RainAnimation from '../components/RainAnimation.vue';
+import SunnyAnimation from '../components/SunnyAnimation.vue';
 import NotificationSettings from '../components/NotificationSettings.vue';
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { Preferences } from '@capacitor/preferences';
@@ -1415,6 +1417,25 @@ function getRainIntensity(): 'light' | 'moderate' | 'heavy' | 'torrential' {
   if (weatherCondition.wType.includes('Moderate')) return 'moderate';
   if (weatherCondition.wType.includes('Light')) return 'light';
   return 'light'; // Default
+}
+
+function isSunnyWeather(): boolean {
+  if (!currentStation.value || !currentStation.value.data) return false;
+  const weatherCondition = determineWeatherCondition(currentStation.value.data);
+  return weatherCondition.wType.includes('Sunny') || weatherCondition.wType.includes('Partly Cloudy');
+}
+
+function getSunIntensity(): 'low' | 'medium' | 'high' {
+  if (!currentStation.value || !currentStation.value.data) {
+    return 'medium';
+  }
+  
+  const lux = currentStation.value.data.illumination || 0;
+  
+  // Determine sun intensity based on light levels
+  if (lux > 50000) return 'high'; // Very bright sunny day
+  if (lux > 10000) return 'medium'; // Normal sunny day
+  return 'low'; // Light sun (partly cloudy)
 }
 
 // Helper to compute heat index (Celsius)
