@@ -88,7 +88,7 @@
           </div>
         </div>
 
-        <!-- Map Legend - Fixed positioning -->
+          <!-- Map Legend - Fixed positioning -->
         <div class="absolute bottom-4 right-4 z-[1000] bg-white/95 backdrop-blur-[12px] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] border border-white/20 p-4 min-w-[140px]">
           <div class="text-sm font-semibold text-gray-800 mb-3">Legend</div>
           <div class="flex flex-col gap-2">
@@ -100,10 +100,12 @@
               <div class="w-3 h-3 bg-blue-500 rounded-full flex-shrink-0"></div>
               <span class="text-xs text-gray-700 font-medium">Available Station</span>
             </div>
+            <div class="flex items-center gap-2">
+              <div class="w-3 h-3 bg-red-500 rounded-full flex-shrink-0 animate-pulse"></div>
+              <span class="text-xs text-gray-700 font-medium">Your Location</span>
+            </div>
           </div>
-        </div>
-        
-        <!-- Loading Overlay -->
+        </div>        <!-- Loading Overlay -->
         <div v-if="isMapLoading" class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm flex items-center justify-center z-[2000]">
           <div class="bg-white rounded-2xl p-6 flex items-center gap-3 shadow-[0_20px_60px_rgba(0,0,0,0.3)]">
             <div class="w-6 h-6 border-3 border-gray-200 border-t-blue-500 rounded-full animate-spin"></div>
@@ -118,6 +120,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { IonModal, IonHeader, IonToolbar, IonTitle, IonButton, IonButtons, IonContent } from '@ionic/vue';
+import { Geolocation } from '@capacitor/geolocation';
 
 // @ts-ignore
 declare global { interface Window { L: any } }
@@ -157,6 +160,8 @@ const mapModal = ref();
 const mapContainer = ref<HTMLElement>();
 const isMapLoading = ref(true);
 const selectedMapStation = ref<Station | null>(null);
+const userLocation = ref<{ lat: number; lng: number } | null>(null);
+const userLocationMarker = ref<any>(null);
 
 // Map instances
 let map: any = null;
@@ -320,6 +325,86 @@ function createCustomMarker(station: Station, isActive: boolean = false) {
   return marker;
 }
 
+async function getUserLocation() {
+  try {
+    const permissions = await Geolocation.checkPermissions();
+    
+    if (permissions.location === 'denied') {
+      const requestPermissions = await Geolocation.requestPermissions();
+      if (requestPermissions.location === 'denied') {
+        console.warn('Location permission denied');
+        return null;
+      }
+    }
+    
+    const position = await Geolocation.getCurrentPosition({
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    });
+    
+    return {
+      lat: position.coords.latitude,
+      lng: position.coords.longitude
+    };
+  } catch (error) {
+    console.error('Error getting user location:', error);
+    return null;
+  }
+}
+
+function addUserLocationMarker(location: { lat: number; lng: number }) {
+  if (!map || !window.L) return;
+  
+  // Remove existing user location marker if it exists
+  if (userLocationMarker.value) {
+    map.removeLayer(userLocationMarker.value);
+  }
+  
+  // Create custom user location marker HTML
+  const markerHtml = `
+    <div class="user-location-marker">
+      <div class="user-location-pin">
+        <div class="user-location-icon">📍</div>
+      </div>
+      <div class="user-location-pulse"></div>
+    </div>
+  `;
+  
+  const icon = window.L.divIcon({
+    html: markerHtml,
+    className: 'user-location-container',
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
+    popupAnchor: [0, -20]
+  });
+  
+  userLocationMarker.value = window.L.marker([location.lat, location.lng], { icon })
+    .addTo(map)
+    .bindPopup(`
+      <div class="user-location-popup">
+        <div class="popup-header">
+          <span class="popup-icon">📍</span>
+          <div class="popup-title">Your Location</div>
+        </div>
+        <div class="popup-coords">${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}</div>
+      </div>
+    `, {
+      closeButton: false,
+      offset: [0, -10],
+      className: 'custom-popup'
+    });
+  
+  // Add accuracy circle
+  window.L.circle([location.lat, location.lng], {
+    color: '#3b82f6',
+    fillColor: '#3b82f6',
+    fillOpacity: 0.1,
+    radius: 100,
+    weight: 1
+  }).addTo(map);
+}
+
 function initializeMap() {
   if (!window.L || !mapContainer.value) return;
   
@@ -346,6 +431,14 @@ function initializeMap() {
     
     // Add station markers
     updateMarkers();
+    
+    // Get and add user location
+    getUserLocation().then(location => {
+      if (location) {
+        userLocation.value = location;
+        addUserLocationMarker(location);
+      }
+    });
     
     // Map loaded
     map.whenReady(() => {
@@ -394,6 +487,8 @@ function cleanupMap() {
   // Clear references
   currentBaseLayer = null;
   weatherLayer = null;
+  userLocationMarker.value = null;
+  userLocation.value = null;
   
   // Clear markers
   Object.keys(markerMap).forEach(key => {
@@ -605,6 +700,82 @@ onUnmounted(() => {
   100% {
     opacity: 0;
     transform: translateX(-50%) scale(1.5);
+  }
+}
+
+/* User Location Marker Styles */
+:deep(.user-location-container) {
+  background: none !important;
+  border: none !important;
+}
+
+:deep(.user-location-marker) {
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+
+:deep(.user-location-pin) {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border: 3px solid white;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
+  z-index: 2;
+  animation: user-location-bounce 2s infinite;
+}
+
+:deep(.user-location-icon) {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  line-height: 1;
+}
+
+:deep(.user-location-pulse) {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 30px;
+  height: 30px;
+  border: 2px solid #ef4444;
+  border-radius: 50%;
+  animation: user-location-pulse 2s infinite;
+}
+
+:deep(.user-location-popup) {
+  min-width: 180px;
+}
+
+@keyframes user-location-bounce {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+@keyframes user-location-pulse {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.8);
+  }
+  50% {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2);
   }
 }
 
