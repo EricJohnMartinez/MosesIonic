@@ -228,11 +228,25 @@ function getWeatherIcon(stationData: any): string {
   const rainfall = stationData.rainfall || 0;
   const lux = stationData.illumination || 0;
   
-  if (rainfall > 50) return '🌧️';
-  if (rainfall > 0) return '🌦️';
-  if (lux <= 10000) return '☁️';
-  if (lux <= 30000) return '⛅';
-  return '☀️';
+  // Detailed weather conditions based on rainfall and illumination
+  if (rainfall > 200) {
+    return '⛈️'; // Intense to Torrential Rain
+  } else if (rainfall > 100 && rainfall <= 200) {
+    return '🌧️'; // Heavy to Intense Rain
+  } else if (rainfall > 50 && rainfall <= 100) {
+    return '🌧️'; // Moderate to Heavy Rain
+  } else if (rainfall > 0 && rainfall <= 50) {
+    return '🌦️'; // Light Rain
+  } else if (rainfall === 0 && lux <= 2000) {
+    return '☁️'; // Cloudy
+  } else if (rainfall === 0 && lux > 2000 && lux <= 3000) {
+    return '⛅'; // Partly Cloudy
+  } else if (rainfall === 0 && lux > 3000) {
+    return '☀️'; // Sunny
+  } else {
+    // Fallback for any edge case
+    return '⛅';
+  }
 }
 
 function createCustomMarker(station: Station, isActive: boolean = false) {
