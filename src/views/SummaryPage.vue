@@ -119,7 +119,7 @@
         @touchend="handleTouchEnd">
 
         <!-- Header Section -->
-        <div class="text-center mb-6 sm:mb-8 pt-4">
+        <div class="text-center mb-6 sm:mb-8 pt-12">
           <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2 drop-shadow-lg">
             📊 7-Day Weather Summary
           </h1>
