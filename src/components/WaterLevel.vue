@@ -18,7 +18,7 @@
       <div 
         v-for="station in waterLevelData" 
         :key="station.id"
-        class="relative bg-slate-800/50 backdrop-blur-2xl border border-white/10 rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/30 hover:border-white/20 overflow-hidden"
+        class="relative bg-slate-800/50 backdrop-blur-2xl border border-white/10 rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/30 hover:border-white/20 overflow-hidden flex flex-col"
       >
         <!-- Status indicator bar at top -->
         <div 
@@ -52,10 +52,10 @@
         </div>
 
         <!-- Gauge and Data Section -->
-        <div class="flex gap-6 mb-4">
+        <div class="flex gap-6 mb-4 flex-1 items-stretch">
           <!-- Water Gauge -->
           <div class="flex-none w-[100px]">
-            <div class="relative h-[200px] bg-slate-900/60 border-2 border-blue-500/30 rounded-xl overflow-hidden">
+            <div class="relative h-full min-h-[180px] bg-slate-900/60 border-2 border-blue-500/30 rounded-xl overflow-hidden flex flex-col">
               <!-- Critical Level Line -->
               <div 
                 class="absolute left-0 right-0 h-0.5 bg-red-500 z-30 shadow-[0_0_8px_rgba(239,68,68,0.6)]"
@@ -364,38 +364,32 @@ function getStatusText(level: number, criticalLevel: number): string {
   }
 }
 
-/* Responsive */
+/* Responsive: keep gauge left and data right on small screens; only tweak sizes */
 @media (max-width: 640px) {
-  .flex.gap-6 {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .flex-none.w-\[100px\] {
-    width: 100%;
-  }
-  
+  /* Slightly reduce gauge height on small screens */
   .h-\[200px\] {
     height: 160px;
   }
-  
+
+  /* Keep the gauge column fixed width so it remains at left */
+  .flex-none.w-\[100px\] {
+    width: 92px;
+  }
+
+  /* Scale down the large reading value */
   .text-\[2\.5rem\] {
     font-size: 2rem;
   }
-  
-  .flex-col.gap-3 {
-    flex-direction: row;
+
+  /* Ensure the main gauge/data flex keeps horizontal flow */
+  .gauge-section {
+    gap: 0.75rem;
+    align-items: flex-start;
   }
-  
-  .flex.items-center.gap-3 {
-    flex: 1;
+
+  /* Make data grid adapt but remain stacked vertically inside the right column */
+  .data-grid {
     flex-direction: column;
-    text-align: center;
-    padding: 0.625rem;
-  }
-  
-  .text-xl {
-    font-size: 1.5rem;
   }
 }
 </style>
