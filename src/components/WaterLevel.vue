@@ -83,15 +83,15 @@
                 <div class="absolute -top-[10px] -left-1/2 w-[200%] h-[15px] bg-white/25 rounded-[40%] opacity-50 animate-[wave_5s_linear_infinite]"></div>
                 
                 <!-- Bubbles -->
-                <div class="absolute bottom-0 left-[15%] w-1.5 h-1.5 bg-gradient-radial from-white/80 to-white/30 rounded-full opacity-0 shadow-[0_0_4px_rgba(255,255,255,0.3)] animate-[bubble_3s_linear_infinite]"></div>
-                <div class="absolute bottom-0 left-[35%] w-2 h-2 bg-gradient-radial from-white/80 to-white/30 rounded-full opacity-0 shadow-[0_0_4px_rgba(255,255,255,0.3)] animate-[bubble_4s_linear_infinite_0.5s]"></div>
-                <div class="absolute bottom-0 left-[55%] w-[5px] h-[5px] bg-gradient-radial from-white/80 to-white/30 rounded-full opacity-0 shadow-[0_0_4px_rgba(255,255,255,0.3)] animate-[bubble_3.5s_linear_infinite_1s]"></div>
-                <div class="absolute bottom-0 left-[75%] w-[7px] h-[7px] bg-gradient-radial from-white/80 to-white/30 rounded-full opacity-0 shadow-[0_0_4px_rgba(255,255,255,0.3)] animate-[bubble_4.5s_linear_infinite_1.5s]"></div>
-                <div class="absolute bottom-0 left-[25%] w-1.5 h-1.5 bg-gradient-radial from-white/80 to-white/30 rounded-full opacity-0 shadow-[0_0_4px_rgba(255,255,255,0.3)] animate-[bubble_3.8s_linear_infinite_2s]"></div>
-                <div class="absolute bottom-0 left-[65%] w-[5px] h-[5px] bg-gradient-radial from-white/80 to-white/30 rounded-full opacity-0 shadow-[0_0_4px_rgba(255,255,255,0.3)] animate-[bubble_4.2s_linear_infinite_2.5s]"></div>
+                <div class="bubble bubble-1"></div>
+                <div class="bubble bubble-2"></div>
+                <div class="bubble bubble-3"></div>
+                <div class="bubble bubble-4"></div>
+                <div class="bubble bubble-5"></div>
+                <div class="bubble bubble-6"></div>
                 
                 <!-- Water shimmer -->
-                <div class="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-[shimmer_3s_ease-in-out_infinite]"></div>
+                <div class="water-shimmer"></div>
               </div>
 
               <!-- Scale Markers -->
@@ -245,6 +245,83 @@ function getStatusText(level: number, criticalLevel: number): string {
 </script>
 
 <style scoped>
+/* Bubble styles */
+.bubble {
+  position: absolute;
+  bottom: 0;
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.4));
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.5), inset -2px -2px 4px rgba(255, 255, 255, 0.3);
+  animation: bubble linear infinite;
+}
+
+.bubble-1 {
+  left: 15%;
+  width: 6px;
+  height: 6px;
+  animation-duration: 3s;
+  animation-delay: 0s;
+}
+
+.bubble-2 {
+  left: 35%;
+  width: 8px;
+  height: 8px;
+  animation-duration: 4s;
+  animation-delay: 0.5s;
+}
+
+.bubble-3 {
+  left: 55%;
+  width: 5px;
+  height: 5px;
+  animation-duration: 3.5s;
+  animation-delay: 1s;
+}
+
+.bubble-4 {
+  left: 75%;
+  width: 7px;
+  height: 7px;
+  animation-duration: 4.5s;
+  animation-delay: 1.5s;
+}
+
+.bubble-5 {
+  left: 25%;
+  width: 6px;
+  height: 6px;
+  animation-duration: 3.8s;
+  animation-delay: 2s;
+}
+
+.bubble-6 {
+  left: 65%;
+  width: 5px;
+  height: 5px;
+  animation-duration: 4.2s;
+  animation-delay: 2.5s;
+}
+
+/* Water shimmer */
+.water-shimmer {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.25) 50%,
+    transparent 100%
+  );
+  animation: shimmer 3s ease-in-out infinite;
+  transform: skewX(-20deg);
+  pointer-events: none;
+}
+
 /* Custom animations for water effects */
 @keyframes wave {
   0% {
@@ -265,16 +342,16 @@ function getStatusText(level: number, criticalLevel: number): string {
     opacity: 1;
   }
   50% {
-    opacity: 0.8;
-    transform: translateX(10px) scale(1.1);
+    opacity: 0.9;
+    transform: translateX(8px) scale(1.15);
   }
   90% {
-    opacity: 0.5;
+    opacity: 0.6;
   }
   100% {
     bottom: 100%;
     opacity: 0;
-    transform: translateX(-10px) scale(0.8);
+    transform: translateX(-8px) scale(0.7);
   }
 }
 
@@ -282,10 +359,7 @@ function getStatusText(level: number, criticalLevel: number): string {
   0% {
     left: -100%;
   }
-  50% {
-    left: 100%;
-  }
-  100% {
+  50%, 100% {
     left: 100%;
   }
 }
