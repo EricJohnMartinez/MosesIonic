@@ -127,9 +127,34 @@
         </div>
 
         <!-- Loading State -->
-        <div v-if="loading" class="flex justify-center items-center py-12">
-          <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-          <span class="ml-3 text-white">Loading weather data...</span>
+        <div v-if="loading" class="flex flex-col justify-center items-center py-12 space-y-6">
+          <!-- Weather Radar Loader -->
+          <div class="weather-radar-loader">
+            <div class="radar-background"></div>
+            <div class="radar-sweep"></div>
+            <div class="weather-icons">
+              <div class="weather-icon sun-icon">☀️</div>
+              <div class="weather-icon cloud-icon">☁️</div>
+              <div class="weather-icon rain-icon">🌧️</div>
+              <div class="weather-icon storm-icon">⛈️</div>
+            </div>
+            <div class="radar-pulse"></div>
+          </div>
+
+          <!-- Loading Text -->
+          <div class="text-center space-y-2">
+            <div class="text-xl font-semibold text-white animate-pulse">
+              Scanning weather patterns...
+            </div>
+            <div class="text-gray-300 text-sm">
+              Analyzing atmospheric data
+            </div>
+          </div>
+
+          <!-- Progress Wave -->
+          <div class="wave-progress">
+            <div class="wave-bar"></div>
+          </div>
         </div>
 
         <!-- Error State -->
@@ -137,7 +162,7 @@
           <div class="text-red-400 text-lg mb-2">⚠️ Error Loading Data</div>
           <p class="text-red-300">{{ error }}</p>
           <button
-            @click="fetchSummaryData"
+            @click="() => fetchSummaryData()"
             class="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
           >
             Retry
@@ -269,7 +294,7 @@
           <h3 class="text-xl font-semibold text-white mb-2">No Data Available</h3>
           <p class="text-gray-300 mb-4">Weather data for this station is not available yet.</p>
           <button
-            @click="fetchSummaryData"
+            @click="() => fetchSummaryData()"
             class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
           >
             Refresh Data
@@ -281,8 +306,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, nextTick } from 'vue';
-import { getDatabase, ref as dbRef, get, query, orderByKey, limitToLast, startAt } from 'firebase/database';
+import { ref, computed, onMounted, watch, nextTick, onUnmounted } from 'vue';
+import { getDatabase, ref as dbRef, get, query, orderByKey, limitToLast, startAt, endAt } from 'firebase/database';
 import { IonContent, IonRefresher, IonRefresherContent } from '@ionic/vue';
 
 // Reactive state
@@ -290,6 +315,9 @@ const selectedStation = ref('station1');
 const loading = ref(false);
 const error = ref('');
 const summaryData = ref<any[]>([]);
+
+// Loading animation state
+let loadingInterval: number | null = null;
 
 // Station configuration
 const stations = ref([
@@ -344,17 +372,65 @@ const totalRainfall = computed(() => {
 });
 
 // Firebase data fetching
-async function fetchSummaryData() {
+async function fetchSummaryData(forceRefresh = false) {
   if (!currentStation.value) return;
 
+  const stationId = selectedStation.value;
+  const cacheKey = `summaryData_${stationId}`;
+  const cacheExpiry = 60 * 60 * 1000; // 1 hour in milliseconds
+
+  // Always start with loading animation for fresh data fetch
+  startLoadingAnimation();
   loading.value = true;
   error.value = '';
+
+  // Try to load from cache first (but don't show it yet)
+  let hasCachedData = false;
+  if (!forceRefresh) {
+    const cached = loadFromCache(cacheKey, cacheExpiry);
+    if (cached && cached.data.length > 0) {
+      hasCachedData = true;
+      console.log('📱 SummaryPage: Cache available:', cached.data.length, 'records');
+    } else {
+      console.log('📱 SummaryPage: No valid cache found, fetching from Firebase');
+    }
+  }
+
+  try {
+    // Fetch fresh data
+    await fetchFreshData();
+
+    // If we had cached data but fresh fetch returned empty, keep cached data
+    if (hasCachedData && summaryData.value.length === 0) {
+      const cached = loadFromCache(cacheKey, cacheExpiry);
+      if (cached) {
+        console.log('📱 SummaryPage: Fresh data empty, keeping cached data');
+        summaryData.value = cached.data;
+      }
+    }
+  } catch (err) {
+    // If fresh fetch fails and we have cached data, use cached data
+    if (hasCachedData) {
+      const cached = loadFromCache(cacheKey, cacheExpiry);
+      if (cached) {
+        console.log('📱 SummaryPage: Fresh fetch failed, using cached data');
+        summaryData.value = cached.data;
+        error.value = ''; // Clear any error
+      }
+    }
+    // If no cached data, error will be set by fetchFreshData
+  }
+}
+
+async function fetchFreshData() {
+  if (!currentStation.value) return;
 
   try {
     const db = getDatabase();
     const stationId = selectedStation.value;
+    const cacheKey = `summaryData_${stationId}`;
 
-    console.log('🔍 SummaryPage: Fetching data for station:', stationId);
+    console.log('🔍 SummaryPage: Fetching fresh data for station:', stationId);
 
     // Define sensor types like in HomePage.vue
     const sensorTypes = [
@@ -373,14 +449,19 @@ async function fetchSummaryData() {
         const sensorRef = dbRef(db, `${stationId}/data/sensors/${sensor.key}`);
         console.log(`🔍 SummaryPage: Fetching ${sensor.key} from path:`, `${stationId}/data/sensors/${sensor.key}`);
 
-        // Get data from the last 7 days more precisely
+        // Get data from the last 7 days (October 10 to 16 for October 17)
         // Handle timezone conversion (Firebase stores in UTC, we need Philippines time UTC+8)
         const now = new Date()
         const sevenDaysAgoLocal = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000))
         const sevenDaysAgoLocalStart = new Date(sevenDaysAgoLocal.getFullYear(), sevenDaysAgoLocal.getMonth(), sevenDaysAgoLocal.getDate())
         const sevenDaysAgoUTC = Math.floor(sevenDaysAgoLocalStart.getTime() / 1000) + (8 * 60 * 60) // Convert to UTC timestamp
 
-        const sensorQuery = query(sensorRef, orderByKey(), startAt(sevenDaysAgoUTC.toString()))
+        // Calculate yesterday's end time
+        const yesterdayLocal = new Date(now.getTime() - (1 * 24 * 60 * 60 * 1000))
+        const yesterdayLocalEnd = new Date(yesterdayLocal.getFullYear(), yesterdayLocal.getMonth(), yesterdayLocal.getDate(), 23, 59, 59)
+        const yesterdayEndUTC = Math.floor(yesterdayLocalEnd.getTime() / 1000) + (8 * 60 * 60) // Convert to UTC timestamp
+
+        const sensorQuery = query(sensorRef, orderByKey(), startAt(sevenDaysAgoUTC.toString()), endAt(yesterdayEndUTC.toString()))
 
         const snapshot = await get(sensorQuery);
 
@@ -420,6 +501,7 @@ async function fetchSummaryData() {
     if (allSensorData.length === 0) {
       console.log('❌ SummaryPage: No sensor data found at all');
       summaryData.value = [];
+      saveToCache(cacheKey, []);
       return;
     }
 
@@ -480,17 +562,65 @@ async function fetchSummaryData() {
     processedData.sort((a, b) => a.date.getTime() - b.date.getTime());
 
     summaryData.value = processedData;
+    saveToCache(cacheKey, processedData);
 
     console.log('✅ SummaryPage: Final processed data:', processedData);
     console.log('✅ SummaryPage: Summary data length:', processedData.length);
+    console.log('💾 SummaryPage: Data cached for station:', stationId);
 
   } catch (err: any) {
     console.error('Error fetching summary data:', err);
     error.value = err.message || 'Failed to load weather data';
     summaryData.value = [];
   } finally {
-    loading.value = false;
+    // Add a small delay to ensure loading animation is visible
+    setTimeout(() => {
+      loading.value = false;
+      stopLoadingAnimation();
+    }, 500);
   }
+}
+
+// Cache helper functions
+function saveToCache(key: string, data: any) {
+  try {
+    const cacheData = {
+      data,
+      timestamp: Date.now()
+    };
+    localStorage.setItem(key, JSON.stringify(cacheData));
+  } catch (e) {
+    console.warn('Failed to save to cache:', e);
+  }
+}
+
+function loadFromCache(key: string, expiryMs: number): { data: any, timestamp: number } | null {
+  try {
+    const cached = localStorage.getItem(key);
+    if (!cached) return null;
+
+    const cacheData = JSON.parse(cached);
+    const now = Date.now();
+
+    if (now - cacheData.timestamp > expiryMs) {
+      localStorage.removeItem(key);
+      return null;
+    }
+
+    return cacheData;
+  } catch (e) {
+    console.warn('Failed to load from cache:', e);
+    return null;
+  }
+}
+
+// Loading animation functions
+function startLoadingAnimation() {
+  // CSS handles all animations now
+}
+
+function stopLoadingAnimation() {
+  // CSS handles all animations now
 }
 
 // Helper functions for styling
@@ -654,7 +784,7 @@ function switchToPreviousStation() {
 // Pull-to-refresh handler
 const handleRefresh = async (event: any) => {
   try {
-    await fetchSummaryData();
+    await fetchSummaryData(true); // Force refresh
     await new Promise((resolve) => setTimeout(resolve, 700));
   } catch (err) {
     console.error('Error during pull-to-refresh:', err);
@@ -695,6 +825,11 @@ watch(selectedStation, () => {
 // Initialize on mount
 onMounted(() => {
   fetchSummaryData();
+});
+
+// Cleanup on unmount
+onUnmounted(() => {
+  stopLoadingAnimation();
 });
 
 // Placeholder functions for navigation (can be implemented later)
@@ -986,6 +1121,184 @@ function openMapModal() {
   .nav-panel {
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+  }
+}
+
+/* Custom gradient for sun animation */
+.bg-gradient-radial {
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+}
+
+/* Weather Radar Loader Styles */
+.weather-radar-loader {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.radar-background {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border: 3px solid rgba(59, 130, 246, 0.3);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+}
+
+.radar-background::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  border: 2px solid rgba(59, 130, 246, 0.2);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.radar-background::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 60px;
+  height: 60px;
+  border: 1px solid rgba(59, 130, 246, 0.15);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.radar-sweep {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(59, 130, 246, 0.6) 30deg, transparent 60deg);
+  animation: radarSweep 3s linear infinite;
+  clip-path: circle(50%);
+}
+
+@keyframes radarSweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.weather-icons {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.weather-icon {
+  position: absolute;
+  font-size: 24px;
+  animation: weatherIconFloat 4s ease-in-out infinite;
+  opacity: 0.8;
+}
+
+.weather-icon.sun-icon {
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation-delay: 0s;
+  color: #fbbf24;
+}
+
+.weather-icon.cloud-icon {
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  animation-delay: 1s;
+  color: #9ca3af;
+}
+
+.weather-icon.rain-icon {
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation-delay: 2s;
+  color: #3b82f6;
+}
+
+.weather-icon.storm-icon {
+  top: 50%;
+  left: 20px;
+  transform: translateY(-50%);
+  animation-delay: 3s;
+  color: #6b7280;
+}
+
+@keyframes weatherIconFloat {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-10px) scale(1.1);
+    opacity: 1;
+  }
+}
+
+.radar-pulse {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: rgba(59, 130, 246, 0.8);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: radarPulse 2s ease-in-out infinite;
+}
+
+@keyframes radarPulse {
+  0%, 100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.5);
+    opacity: 0.3;
+  }
+}
+
+/* Wave Progress Bar */
+.wave-progress {
+  width: 200px;
+  height: 4px;
+  background: rgba(75, 85, 99, 0.3);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.wave-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #06b6d4, #3b82f6);
+  background-size: 200% 100%;
+  animation: waveProgress 2s ease-in-out infinite;
+  border-radius: 2px;
+}
+
+@keyframes waveProgress {
+  0% {
+    width: 0%;
+    background-position: 0% 50%;
+  }
+  50% {
+    width: 70%;
+    background-position: 100% 50%;
+  }
+  100% {
+    width: 100%;
+    background-position: 200% 50%;
   }
 }
 </style>
