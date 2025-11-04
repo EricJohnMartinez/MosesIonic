@@ -111,19 +111,60 @@
         </div>
       </div>
 
-      <main class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 transition-all duration-1000 ease-out"
+      <!-- Main Content -->
+      <div v-if="!currentStation" class="flex flex-col justify-center items-center h-screen">
+        <div class="text-center space-y-4">
+          <div class="text-6xl">⚠️</div>
+          <h2 class="text-2xl font-bold text-white">Loading Stations...</h2>
+          <p class="text-gray-300">Please wait while we initialize the app</p>
+        </div>
+      </div>
+
+      <main v-else-if="currentStation" class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 transition-all duration-1000 ease-out"
         :class="getParallaxClass()"
-        v-if="currentStation"
         @touchstart="handleTouchStart"
         @touchmove="handleTouchMove"
         @touchend="handleTouchEnd">
 
         <!-- Header Section -->
-        <div class="text-center mb-6 sm:mb-8 pt-12">
-          <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2 drop-shadow-lg">
-            📊 7-Day Weather Summary
-          </h1>
-          <p class="text-gray-300 text-sm sm:text-base">Historical weather data analysis</p>
+        <div class="relative text-center mb-8 sm:mb-12 pt-12">
+          <!-- Station Badge -->
+          <div class="inline-flex items-center gap-3 mb-4 px-5 py-2.5 bg-gray-800/60 backdrop-blur-xl rounded-full border border-gray-700/50 shadow-lg hover:border-gray-600/50 transition-all duration-300 hover:scale-105">
+            <div class="relative">
+              <div class="absolute inset-0 bg-white/20 rounded-full blur-sm opacity-50 animate-pulse"></div>
+              <span class="relative text-2xl">📍</span>
+            </div>
+            <h2 class="text-base sm:text-lg font-bold text-white">
+              {{ currentStation?.name }}
+            </h2>
+            <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
+          </div>
+
+          <!-- Main Title -->
+          <div class="relative inline-block mb-3">
+            <div class="absolute inset-0 bg-white/5 blur-2xl opacity-20"></div>
+            <h1 class="relative text-3xl sm:text-4xl lg:text-5xl font-black text-white drop-shadow-2xl tracking-tight">
+              7-Day Weather Summary
+            </h1>
+          </div>
+
+          <!-- Subtitle -->
+          <p class="text-gray-400 text-sm sm:text-base font-medium tracking-wide">
+            <span class="inline-flex items-center gap-2">
+              <span class="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
+              Historical weather data analysis
+              <span class="w-1.5 h-1.5 bg-gray-500 rounded-full"></span>
+            </span>
+          </p>
+
+          <!-- Decorative Lines -->
+          <div class="flex items-center justify-center gap-3 mt-6">
+            <div class="h-px w-16 bg-gradient-to-r from-transparent via-gray-600 to-transparent"></div>
+            <div class="w-1.5 h-1.5 bg-gray-500 rounded-full"></div>
+            <div class="h-px w-24 bg-gray-600"></div>
+            <div class="w-1.5 h-1.5 bg-gray-500 rounded-full"></div>
+            <div class="h-px w-16 bg-gradient-to-r from-transparent via-gray-600 to-transparent"></div>
+          </div>
         </div>
 
         <!-- Loading State -->
@@ -158,130 +199,225 @@
         </div>
 
         <!-- Error State -->
-        <div v-else-if="error" class="bg-red-900/50 backdrop-blur-sm border border-red-700 rounded-xl p-6 text-center mx-4">
-          <div class="text-red-400 text-lg mb-2">⚠️ Error Loading Data</div>
-          <p class="text-red-300">{{ error }}</p>
+        <div v-else-if="error"
+          class="bg-red-900/50 backdrop-blur-sm border border-red-700 rounded-xl p-6 text-center mx-4">
+          <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold text-white mb-2">Unable to Load Data</h3>
+          <p class="text-red-300 text-sm mb-6">{{ error }}</p>
           <button
-            @click="() => fetchSummaryData()"
-            class="mt-4 px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+            @click="() => fetchSummaryData(true)"
+            class="px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-xl hover:from-red-600 hover:to-orange-600 transition-all duration-300 font-medium shadow-lg hover:shadow-xl"
           >
-            Retry
+            Try Again
           </button>
         </div>
 
         <!-- Summary Data -->
         <div v-else-if="summaryData.length > 0" class="space-y-6">
-          <!-- Current Station Info -->
-          <div class="bg-gray-800/60 backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-gray-700/50 text-center">
-            <h2 class="text-xl sm:text-2xl font-bold text-white mb-2">
-              {{ currentStation?.name }}
-            </h2>
-            <p class="text-gray-300 text-sm">7-day weather analysis</p>
-          </div>
-
-          <!-- Summary Cards -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-            <div class="bg-slate-800/60 backdrop-blur-lg rounded-2xl p-4 text-center border border-slate-700/50 card-hover card-transition">
-              <div class="text-2xl mb-1">🌡️</div>
-              <div class="text-sm text-gray-300">Avg Temp</div>
-              <div class="text-lg font-bold text-blue-400">{{ averageTemp }}°C</div>
-            </div>
-            <div class="bg-slate-800/60 backdrop-blur-lg rounded-2xl p-4 text-center border border-slate-700/50 card-hover card-transition">
-              <div class="text-2xl mb-1">💧</div>
-              <div class="text-sm text-gray-300">Avg Humidity</div>
-              <div class="text-lg font-bold text-green-400">{{ averageHumidity }}%</div>
-            </div>
-            <div class="bg-slate-800/60 backdrop-blur-lg rounded-2xl p-4 text-center border border-slate-700/50 card-hover card-transition">
-              <div class="text-2xl mb-1">💨</div>
-              <div class="text-sm text-gray-300">Avg Wind</div>
-              <div class="text-lg font-bold text-blue-400">{{ averageWindSpeed }} m/s</div>
-            </div>
-            <div class="bg-slate-800/60 backdrop-blur-lg rounded-2xl p-4 text-center border border-slate-700/50 card-hover card-transition">
-              <div class="text-2xl mb-1">🌧️</div>
-              <div class="text-sm text-gray-300">Total Rain</div>
-              <div class="text-lg font-bold text-blue-400">{{ totalRainfall }} mm</div>
-            </div>
-          </div>
-
-          <!-- Vertical Daily Summary Table -->
-          <div class="space-y-4">
-            <h3 class="text-lg font-semibold text-white mb-4 text-center">Daily Weather Summary</h3>
-
-            <!-- Daily Cards -->
-            <div v-for="(day, index) in summaryData" :key="index"
-                 :class="[
-                   'bg-slate-800/60 backdrop-blur-lg rounded-2xl p-4 sm:p-6 shadow-md border border-slate-700/50 card-hover card-transition',
-                   getCardAnimationClass(index)
-                 ]"
-                 :style="{ animationDelay: `${index * 0.1}s` }">
-
-              <!-- Day Header -->
-              <div class="flex items-center justify-between mb-4">
-                <div class="flex items-center space-x-3">
-                  <div class="text-2xl">{{ getWeatherIcon(day) }}</div>
-                  <div>
-                    <h4 class="text-lg font-bold text-white">{{ formatDate(day.date) }}</h4>
-                    <p class="text-sm text-gray-300">{{ getDayName(day.date) }}</p>
+          
+          <!-- Key Metrics Dashboard -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- Temperature Card -->
+            <div class="group relative overflow-hidden bg-gradient-to-br from-orange-500/10 to-red-500/10 backdrop-blur-lg rounded-2xl p-5 border border-orange-500/20 hover:border-orange-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/20">
+              <div class="absolute top-0 right-0 w-24 h-24 bg-orange-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500"></div>
+              <div class="relative">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="p-2 bg-orange-500/20 rounded-lg">
+                    <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
                   </div>
+                  <span class="text-xs font-medium text-orange-400 uppercase tracking-wide">Avg</span>
                 </div>
-                <div class="text-right">
-                  <div class="text-xl font-bold text-white">{{ day.temperature.toFixed(2) }}°C</div>
-                  <div class="text-xs text-gray-400">High</div>
+                <div class="mb-1">
+                  <span class="text-3xl font-bold text-white">{{ averageTemp }}</span>
+                  <span class="text-lg text-orange-300">°C</span>
+                </div>
+                <div class="text-sm text-gray-400">Temperature</div>
+                <div class="mt-3 h-1.5 bg-gray-800/50 rounded-full overflow-hidden">
+                  <div class="h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full transition-all duration-1000" 
+                       :style="{ width: `${Math.min(100, (parseFloat(String(averageTemp)) / 40) * 100)}%` }"></div>
                 </div>
               </div>
+            </div>
 
-              <!-- Weather Metrics Grid -->
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <!-- Temperature -->
-                <div class="bg-slate-700/50 rounded-xl p-3 text-center">
-                  <div class="text-lg font-bold text-blue-400 mb-1">{{ day.temperature.toFixed(2) }}°</div>
-                  <div class="text-xs text-gray-300">Temperature</div>
-                  <!-- Temperature Bar -->
-                  <div class="w-full h-2 bg-slate-600/50 rounded-full mt-2 overflow-hidden">
-                    <div class="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-1000"
-                         :style="{ width: getTemperatureBarWidth(day.temperature) }"></div>
+            <!-- Humidity Card -->
+            <div class="group relative overflow-hidden bg-gradient-to-br from-blue-500/10 to-cyan-500/10 backdrop-blur-lg rounded-2xl p-5 border border-blue-500/20 hover:border-blue-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/20">
+              <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500"></div>
+              <div class="relative">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="p-2 bg-blue-500/20 rounded-lg">
+                    <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+                    </svg>
                   </div>
+                  <span class="text-xs font-medium text-blue-400 uppercase tracking-wide">Avg</span>
                 </div>
+                <div class="mb-1">
+                  <span class="text-3xl font-bold text-white">{{ averageHumidity }}</span>
+                  <span class="text-lg text-blue-300">%</span>
+                </div>
+                <div class="text-sm text-gray-400">Humidity</div>
+                <div class="mt-3 h-1.5 bg-gray-800/50 rounded-full overflow-hidden">
+                  <div class="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full transition-all duration-1000" 
+                       :style="{ width: `${averageHumidity}%` }"></div>
+                </div>
+              </div>
+            </div>
 
-                <!-- Humidity -->
-                <div class="bg-slate-700/50 rounded-xl p-3 text-center">
-                  <div class="text-lg font-bold text-green-400 mb-1">{{ day.humidity.toFixed(2) }}%</div>
-                  <div class="text-xs text-gray-300">Humidity</div>
-                  <!-- Humidity Bar -->
-                  <div class="w-full h-2 bg-slate-600/50 rounded-full mt-2 overflow-hidden">
-                    <div class="h-full bg-gradient-to-r from-green-400 to-green-600 rounded-full transition-all duration-1000"
-                         :style="{ width: `${day.humidity}%` }"></div>
+            <!-- Wind Speed Card -->
+            <div class="group relative overflow-hidden bg-gradient-to-br from-teal-500/10 to-emerald-500/10 backdrop-blur-lg rounded-2xl p-5 border border-teal-500/20 hover:border-teal-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/20">
+              <div class="absolute top-0 right-0 w-24 h-24 bg-teal-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500"></div>
+              <div class="relative">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="p-2 bg-teal-500/20 rounded-lg">
+                    <svg class="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                    </svg>
                   </div>
+                  <span class="text-xs font-medium text-teal-400 uppercase tracking-wide">Avg</span>
                 </div>
+                <div class="mb-1">
+                  <span class="text-3xl font-bold text-white">{{ averageWindSpeed }}</span>
+                  <span class="text-lg text-teal-300">m/s</span>
+                </div>
+                <div class="text-sm text-gray-400">Wind Speed</div>
+                <div class="mt-3 h-1.5 bg-gray-800/50 rounded-full overflow-hidden">
+                  <div class="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full transition-all duration-1000" 
+                       :style="{ width: `${Math.min(100, (parseFloat(String(averageWindSpeed)) / 20) * 100)}%` }"></div>
+                </div>
+              </div>
+            </div>
 
-                <!-- Wind Speed -->
-                <div class="bg-slate-700/50 rounded-xl p-3 text-center">
-                  <div class="text-lg font-bold text-blue-400 mb-1">{{ day.windSpeed.toFixed(2) }}</div>
-                  <div class="text-xs text-gray-300">Wind (m/s)</div>
-                  <!-- Wind Bar -->
-                  <div class="w-full h-2 bg-slate-600/50 rounded-full mt-2 overflow-hidden">
-                    <div class="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-1000"
-                         :style="{ width: getWindBarWidth(day.windSpeed) }"></div>
+            <!-- Rainfall Card -->
+            <div class="group relative overflow-hidden bg-gradient-to-br from-indigo-500/10 to-purple-500/10 backdrop-blur-lg rounded-2xl p-5 border border-indigo-500/20 hover:border-indigo-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/20">
+              <div class="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500"></div>
+              <div class="relative">
+                <div class="flex items-center justify-between mb-3">
+                  <div class="p-2 bg-indigo-500/20 rounded-lg">
+                    <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                    </svg>
                   </div>
+                  <span class="text-xs font-medium text-indigo-400 uppercase tracking-wide">Total</span>
                 </div>
+                <div class="mb-1">
+                  <span class="text-3xl font-bold text-white">{{ totalRainfall }}</span>
+                  <span class="text-lg text-indigo-300">mm</span>
+                </div>
+                <div class="text-sm text-gray-400">Rainfall</div>
+                <div class="mt-3 h-1.5 bg-gray-800/50 rounded-full overflow-hidden">
+                  <div class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-1000" 
+                       :style="{ width: `${Math.min(100, (parseFloat(totalRainfall) / 100) * 100)}%` }"></div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-                <!-- Rainfall -->
-                <div class="bg-slate-700/50 rounded-xl p-3 text-center">
-                  <div class="text-lg font-bold text-blue-400 mb-1">{{ day.rainfall.toFixed(2) }}</div>
-                  <div class="text-xs text-gray-300">Rain (mm)</div>
-                  <!-- Rain Bar -->
-                  <div class="w-full h-2 bg-slate-600/50 rounded-full mt-2 overflow-hidden">
-                    <div class="h-full bg-gradient-to-r from-blue-400 to-blue-600 rounded-full transition-all duration-1000"
-                         :style="{ width: getRainBarWidth(day.rainfall) }"></div>
+          <!-- Daily Weather Timeline -->
+          <div class="bg-gray-800/40 backdrop-blur-lg rounded-2xl border border-gray-700/50 overflow-hidden">
+            <div class="p-6 border-b border-gray-700/50">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-lg font-semibold text-white mb-1">Daily Weather Timeline</h3>
+                  <p class="text-sm text-gray-400">7-day historical analysis</p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-1.5">
+                    <div class="w-3 h-3 rounded-full bg-gradient-to-r from-orange-500 to-red-500"></div>
+                    <span class="text-xs text-gray-400">Temp</span>
+                  </div>
+                  <div class="flex items-center gap-1.5">
+                    <div class="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500"></div>
+                    <span class="text-xs text-gray-400">Humidity</span>
                   </div>
                 </div>
               </div>
+            </div>
+            
+            <div class="p-4 space-y-3">
+              <!-- Daily Cards -->
+              <div v-for="(day, index) in summaryData" :key="index"
+                   :class="[
+                     'group bg-gray-800/60 hover:bg-gray-800/80 backdrop-blur-sm rounded-xl p-4 border border-gray-700/50 hover:border-gray-600/50 transition-all duration-300',
+                     getCardAnimationClass(index)
+                   ]"
+                   :style="{ animationDelay: `${index * 0.05}s` }">
 
-              <!-- Additional Info -->
-              <div class="mt-4 pt-4 border-t border-slate-600/50">
-                <div class="flex justify-between items-center text-sm">
-                  <span class="text-gray-400">Wind Direction:</span>
-                  <span class="text-white font-medium">{{ day.windDirection }}</span>
+                <div class="flex items-center gap-4">
+                  <!-- Date & Icon -->
+                  <div class="flex-shrink-0 text-center min-w-[80px]">
+                    <div class="text-3xl mb-1">{{ getWeatherIcon(day) }}</div>
+                    <div class="text-sm font-semibold text-white">{{ formatDate(day.date) }}</div>
+                    <div class="text-xs text-gray-400">{{ getDayName(day.date).substring(0, 3) }}</div>
+                  </div>
+
+                  <!-- Metrics Grid -->
+                  <div class="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <!-- Temperature -->
+                    <div class="bg-gray-900/40 rounded-lg p-3 border border-orange-500/10 hover:border-orange-500/30 transition-colors">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="text-orange-400 text-xs">🌡️</span>
+                        <span class="text-xs text-gray-400">Temp</span>
+                      </div>
+                      <div class="text-lg font-bold text-white">{{ day.temperature.toFixed(1) }}<span class="text-sm text-orange-300">°C</span></div>
+                      <div class="mt-1.5 h-1 bg-gray-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full transition-all duration-500"
+                             :style="{ width: getTemperatureBarWidth(day.temperature) }"></div>
+                      </div>
+                    </div>
+
+                    <!-- Humidity -->
+                    <div class="bg-gray-900/40 rounded-lg p-3 border border-blue-500/10 hover:border-blue-500/30 transition-colors">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="text-blue-400 text-xs">💧</span>
+                        <span class="text-xs text-gray-400">Humidity</span>
+                      </div>
+                      <div class="text-lg font-bold text-white">{{ day.humidity.toFixed(1) }}<span class="text-sm text-blue-300">%</span></div>
+                      <div class="mt-1.5 h-1 bg-gray-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full transition-all duration-500"
+                             :style="{ width: `${day.humidity}%` }"></div>
+                      </div>
+                    </div>
+
+                    <!-- Wind Speed -->
+                    <div class="bg-gray-900/40 rounded-lg p-3 border border-teal-500/10 hover:border-teal-500/30 transition-colors">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="text-teal-400 text-xs">💨</span>
+                        <span class="text-xs text-gray-400">Wind</span>
+                      </div>
+                      <div class="text-lg font-bold text-white">{{ day.windSpeed.toFixed(1) }}<span class="text-sm text-teal-300">m/s</span></div>
+                      <div class="mt-1.5 h-1 bg-gray-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full transition-all duration-500"
+                             :style="{ width: getWindBarWidth(day.windSpeed) }"></div>
+                      </div>
+                    </div>
+
+                    <!-- Rainfall -->
+                    <div class="bg-gray-900/40 rounded-lg p-3 border border-indigo-500/10 hover:border-indigo-500/30 transition-colors">
+                      <div class="flex items-center gap-2 mb-1">
+                        <span class="text-indigo-400 text-xs">🌧️</span>
+                        <span class="text-xs text-gray-400">Rain</span>
+                      </div>
+                      <div class="text-lg font-bold text-white">{{ day.rainfall.toFixed(1) }}<span class="text-sm text-indigo-300">mm</span></div>
+                      <div class="mt-1.5 h-1 bg-gray-800 rounded-full overflow-hidden">
+                        <div class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500"
+                             :style="{ width: getRainBarWidth(day.rainfall) }"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Wind Direction Badge -->
+                  <div class="hidden sm:flex flex-shrink-0 flex-col items-center justify-center min-w-[60px]">
+                    <div class="text-xs text-gray-400 mb-1">Wind Dir</div>
+                    <div class="px-3 py-1.5 bg-gray-900/60 rounded-lg border border-gray-700/50">
+                      <span class="text-sm font-bold text-white">{{ day.windDirection }}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -289,35 +425,64 @@
         </div>
 
         <!-- No Data State -->
-        <div v-else class="bg-slate-800/60 backdrop-blur-lg rounded-2xl shadow-xl p-8 text-center border border-slate-700/50 mx-4">
-          <div class="text-6xl mb-4">📊</div>
-          <h3 class="text-xl font-semibold text-white mb-2">No Data Available</h3>
-          <p class="text-gray-300 mb-4">Weather data for this station is not available yet.</p>
-          <button
-            @click="() => fetchSummaryData()"
-            class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-          >
-            Refresh Data
-          </button>
+        <div v-else class="max-w-md mx-auto">
+          <div class="bg-gray-800/60 backdrop-blur-lg rounded-2xl shadow-xl p-10 text-center border border-gray-700/50">
+            <div class="w-20 h-20 bg-gray-700/50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-white mb-3">No Data Available</h3>
+            <p class="text-gray-400 mb-6 text-sm">Weather data for this station hasn't been collected yet.</p>
+            <button
+              @click="() => fetchSummaryData(true)"
+              class="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 font-medium shadow-lg hover:shadow-xl"
+            >
+              Refresh Data
+            </button>
+          </div>
         </div>
       </main>
+
+      <!-- Final Fallback: If nothing renders -->
+      <div v-if="!loading && !error && summaryData.length === 0 && currentStation" class="flex flex-col justify-center items-center min-h-screen px-4">
+        <div class="max-w-md w-full bg-gray-800/40 backdrop-blur-lg rounded-2xl border border-gray-700/50 p-12 text-center">
+          <div class="w-24 h-24 bg-gradient-to-br from-gray-700/50 to-gray-800/50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+            </svg>
+          </div>
+          <h2 class="text-2xl font-bold text-white mb-3">
+            {{ isOffline() ? 'Offline Mode' : 'No Data Available' }}
+          </h2>
+          <p class="text-gray-400 mb-8 leading-relaxed">
+            {{ isOffline() ? 'You are currently offline. No cached data is available for this station.' : 'Weather data for this station hasn\'t been collected yet. Please try refreshing.' }}
+          </p>
+          <button
+            @click="() => fetchSummaryData(true)"
+            class="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 font-medium shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="isOffline()"
+          >
+            {{ isOffline() ? 'Waiting for Connection...' : 'Refresh Data' }}
+          </button>
+        </div>
+      </div>
     </div>
   </IonContent>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick, onUnmounted } from 'vue';
-import { getDatabase, ref as dbRef, get, query, orderByKey, limitToLast, startAt, endAt } from 'firebase/database';
+import { getDatabase, ref as dbRef, get, query, orderByKey, startAt, endAt } from 'firebase/database';
 import { IonContent, IonRefresher, IonRefresherContent } from '@ionic/vue';
+import { wasDataFetchedToday, saveToCache, loadFromCache } from '@/services/offlineStorage';
+import { isOnline, isOffline } from '@/services/offlineDetection';
 
 // Reactive state
 const selectedStation = ref('station1');
-const loading = ref(false);
+const loading = ref(true);
 const error = ref('');
 const summaryData = ref<any[]>([]);
-
-// Loading animation state
-let loadingInterval: number | null = null;
 
 // Station configuration
 const stations = ref([
@@ -375,64 +540,66 @@ const totalRainfall = computed(() => {
 async function fetchSummaryData(forceRefresh = false) {
   if (!currentStation.value) return;
 
-  const stationId = selectedStation.value;
-  const cacheKey = `summaryData_${stationId}`;
-  const cacheExpiry = 60 * 60 * 1000; // 1 hour in milliseconds
-
-  // Always start with loading animation for fresh data fetch
-  startLoadingAnimation();
   loading.value = true;
   error.value = '';
-
-  // Try to load from cache first (but don't show it yet)
-  let hasCachedData = false;
-  if (!forceRefresh) {
-    const cached = loadFromCache(cacheKey, cacheExpiry);
-    if (cached && cached.data.length > 0) {
-      hasCachedData = true;
-      console.log('📱 SummaryPage: Cache available:', cached.data.length, 'records');
-    } else {
-      console.log('📱 SummaryPage: No valid cache found, fetching from Firebase');
-    }
-  }
+  const stationId = selectedStation.value;
+  const cacheKey = `summaryData_${stationId}`;
 
   try {
-    // Fetch fresh data
+    // If not forcing a refresh, try to load from cache
+    if (!forceRefresh) {
+      const cachedData = loadFromCache<any[]>(cacheKey);
+      if (cachedData) {
+        console.log('📱 SummaryPage: Displaying cached data.');
+        summaryData.value = cachedData.map((item: any) => ({
+          ...item,
+          date: new Date(item.date) // Ensure date is a Date object
+        }));
+        // If data was fetched today, don't re-fetch unless forced
+        if (wasDataFetchedToday(cacheKey)) {
+          console.log('📱 SummaryPage: Data was already fetched today. No network request needed.');
+          loading.value = false;
+          return;
+        }
+      }
+    }
+
+    // If offline and no cached data, show error
+    if (!isOnline()) {
+      if (summaryData.value.length > 0) {
+        console.log('📱 SummaryPage: Offline, but using already loaded cached data.');
+        loading.value = false;
+        return;
+      }
+      throw new Error("You are offline. Please connect to the internet to fetch new data.");
+    }
+
+    // Fetch fresh data from Firebase
+    console.log('🔍 SummaryPage: Fetching fresh data for station:', stationId);
     await fetchFreshData();
 
-    // If we had cached data but fresh fetch returned empty, keep cached data
-    if (hasCachedData && summaryData.value.length === 0) {
-      const cached = loadFromCache(cacheKey, cacheExpiry);
-      if (cached) {
-        console.log('📱 SummaryPage: Fresh data empty, keeping cached data');
-        summaryData.value = cached.data;
-      }
+  } catch (err: any) {
+    console.error('Error in fetchSummaryData:', err);
+    // Only set error if there's no data to display
+    if (summaryData.value.length === 0) {
+      error.value = err.message || 'Failed to load weather data.';
     }
-  } catch (err) {
-    // If fresh fetch fails and we have cached data, use cached data
-    if (hasCachedData) {
-      const cached = loadFromCache(cacheKey, cacheExpiry);
-      if (cached) {
-        console.log('📱 SummaryPage: Fresh fetch failed, using cached data');
-        summaryData.value = cached.data;
-        error.value = ''; // Clear any error
-      }
-    }
-    // If no cached data, error will be set by fetchFreshData
+  } finally {
+    // Add a small delay for a smoother UI experience
+    setTimeout(() => {
+      loading.value = false;
+    }, 500);
   }
 }
 
 async function fetchFreshData() {
   if (!currentStation.value) return;
 
+  const stationId = selectedStation.value;
+  const cacheKey = `summaryData_${stationId}`;
+
   try {
     const db = getDatabase();
-    const stationId = selectedStation.value;
-    const cacheKey = `summaryData_${stationId}`;
-
-    console.log('🔍 SummaryPage: Fetching fresh data for station:', stationId);
-
-    // Define sensor types like in HomePage.vue
     const sensorTypes = [
       { key: 'TEM', label: 'temperature' },
       { key: 'HUM', label: 'humidity' },
@@ -443,92 +610,52 @@ async function fetchFreshData() {
 
     const allSensorData: any[] = [];
 
-    // Fetch data for each sensor type
+    const now = new Date();
+    const sevenDaysAgoLocal = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+    const sevenDaysAgoLocalStart = new Date(sevenDaysAgoLocal.getFullYear(), sevenDaysAgoLocal.getMonth(), sevenDaysAgoLocal.getDate());
+    const startTimestamp = Math.floor(sevenDaysAgoLocalStart.getTime() / 1000);
+
+    const yesterdayLocal = new Date(now.getTime() - (1 * 24 * 60 * 60 * 1000));
+    const yesterdayLocalEnd = new Date(yesterdayLocal.getFullYear(), yesterdayLocal.getMonth(), yesterdayLocal.getDate(), 23, 59, 59);
+    const endTimestamp = Math.floor(yesterdayLocalEnd.getTime() / 1000);
+
     for (const sensor of sensorTypes) {
-      try {
-        const sensorRef = dbRef(db, `${stationId}/data/sensors/${sensor.key}`);
-        console.log(`🔍 SummaryPage: Fetching ${sensor.key} from path:`, `${stationId}/data/sensors/${sensor.key}`);
+      const sensorRef = dbRef(db, `${stationId}/data/sensors/${sensor.key}`);
+      const sensorQuery = query(sensorRef, orderByKey(), startAt(String(startTimestamp)), endAt(String(endTimestamp)));
+      const snapshot = await get(sensorQuery);
 
-        // Get data from the last 7 days (October 10 to 16 for October 17)
-        // Handle timezone conversion (Firebase stores in UTC, we need Philippines time UTC+8)
-        const now = new Date()
-        const sevenDaysAgoLocal = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000))
-        const sevenDaysAgoLocalStart = new Date(sevenDaysAgoLocal.getFullYear(), sevenDaysAgoLocal.getMonth(), sevenDaysAgoLocal.getDate())
-        const sevenDaysAgoUTC = Math.floor(sevenDaysAgoLocalStart.getTime() / 1000) + (8 * 60 * 60) // Convert to UTC timestamp
-
-        // Calculate yesterday's end time
-        const yesterdayLocal = new Date(now.getTime() - (1 * 24 * 60 * 60 * 1000))
-        const yesterdayLocalEnd = new Date(yesterdayLocal.getFullYear(), yesterdayLocal.getMonth(), yesterdayLocal.getDate(), 23, 59, 59)
-        const yesterdayEndUTC = Math.floor(yesterdayLocalEnd.getTime() / 1000) + (8 * 60 * 60) // Convert to UTC timestamp
-
-        const sensorQuery = query(sensorRef, orderByKey(), startAt(sevenDaysAgoUTC.toString()), endAt(yesterdayEndUTC.toString()))
-
-        const snapshot = await get(sensorQuery);
-
-        if (snapshot.exists()) {
-          const sensorData = snapshot.val();
-          console.log(`✅ SummaryPage: Found ${sensor.key} data:`, sensorData);
-
-          // Process each timestamp for this sensor
-          Object.entries(sensorData).forEach(([timestamp, value]: [string, any]) => {
-            // Handle nested Firebase structure like HomePage.vue
-            let finalValue: any = value?.val ?? value ?? 0;
-            if (sensor.key !== 'WD' && typeof finalValue === 'string') {
-              finalValue = parseFloat(finalValue) || 0;
-            }
-
-            // Convert timestamp from UTC to local time (subtract 8 hours for Philippines UTC+8)
-            const utcTimestamp = parseInt(timestamp);
-            const localTimestamp = utcTimestamp - (8 * 60 * 60); // Convert from UTC to Philippines time
-            const localDate = new Date(localTimestamp * 1000);
-
-            allSensorData.push({
-              timestamp: localDate.getTime(), // Store as milliseconds for JavaScript Date
-              sensor: sensor.key,
-              value: finalValue
-            });
+      if (snapshot.exists()) {
+        const sensorData = snapshot.val();
+        Object.entries(sensorData).forEach(([timestamp, value]: [string, any]) => {
+          let finalValue: any = value?.val ?? value ?? 0;
+          if (sensor.key !== 'WD' && typeof finalValue === 'string') {
+            finalValue = parseFloat(finalValue) || 0;
+          }
+          allSensorData.push({
+            timestamp: parseInt(timestamp) * 1000,
+            sensor: sensor.key,
+            value: finalValue
           });
-        } else {
-          console.log(`⚠️ SummaryPage: No ${sensor.key} data found`);
-        }
-      } catch (sensorError) {
-        console.error(`Error fetching ${sensor.key}:`, sensorError);
+        });
       }
     }
 
-    console.log('🔍 SummaryPage: All sensor data collected:', allSensorData);
-
     if (allSensorData.length === 0) {
-      console.log('❌ SummaryPage: No sensor data found at all');
       summaryData.value = [];
-      saveToCache(cacheKey, []);
+      saveToCache(cacheKey, []); // Cache the empty result
+      console.log('❌ SummaryPage: No sensor data found. Cached empty array.');
       return;
     }
 
-    // Group data by date and sensor type
     const dailyData: { [key: string]: { [sensor: string]: any[] } } = {};
-
     allSensorData.forEach(data => {
-      const date = new Date(data.timestamp).toDateString(); // timestamp is already in milliseconds (local time)
-      console.log(`🔍 SummaryPage: Processing timestamp ${data.timestamp} -> date: ${date} (local time)`);
-
-      if (!dailyData[date]) {
-        dailyData[date] = {};
-      }
-
-      if (!dailyData[date][data.sensor]) {
-        dailyData[date][data.sensor] = [];
-      }
-
+      const date = new Date(data.timestamp).toDateString();
+      if (!dailyData[date]) dailyData[date] = {};
+      if (!dailyData[date][data.sensor]) dailyData[date][data.sensor] = [];
       dailyData[date][data.sensor].push(data.value);
     });
 
-    console.log('🔍 SummaryPage: Daily data grouped by sensor:', dailyData);
-
-    // Calculate daily averages for each sensor
-    const processedData: any[] = [];
-
-    Object.entries(dailyData).forEach(([date, sensorData]) => {
+    const processedData: any[] = Object.entries(dailyData).map(([date, sensorData]) => {
       const dayData: any = {
         date: new Date(date),
         temperature: 0,
@@ -537,95 +664,34 @@ async function fetchFreshData() {
         windSpeed: 0,
         windDirection: 'N'
       };
-
-      // Calculate averages for each sensor
       Object.entries(sensorData).forEach(([sensor, values]: [string, any[]]) => {
-        if (sensor === 'TEM' && values.length > 0) {
-          dayData.temperature = parseFloat((values.reduce((sum, val) => sum + val, 0) / values.length).toFixed(2));
-        } else if (sensor === 'HUM' && values.length > 0) {
-          dayData.humidity = parseFloat((values.reduce((sum, val) => sum + val, 0) / values.length).toFixed(2));
-        } else if (sensor === 'RR' && values.length > 0) {
-          dayData.rainfall = parseFloat(values.reduce((sum, val) => sum + val, 0).toFixed(2)); // Sum rainfall
-        } else if (sensor === 'WSP' && values.length > 0) {
-          dayData.windSpeed = parseFloat((values.reduce((sum, val) => sum + val, 0) / values.length).toFixed(2));
-        } else if (sensor === 'WD' && values.length > 0) {
-          // Get most common wind direction
-          const windDirs = values.filter(v => v && v !== 'N');
-          dayData.windDirection = windDirs.length > 0 ? windDirs[0] : 'N';
+        if (values.length > 0) {
+          if (sensor === 'TEM') dayData.temperature = parseFloat((values.reduce((s, v) => s + v, 0) / values.length).toFixed(2));
+          else if (sensor === 'HUM') dayData.humidity = parseFloat((values.reduce((s, v) => s + v, 0) / values.length).toFixed(2));
+          else if (sensor === 'RR') dayData.rainfall = parseFloat(values.reduce((s, v) => s + v, 0).toFixed(2));
+          else if (sensor === 'WSP') dayData.windSpeed = parseFloat((values.reduce((s, v) => s + v, 0) / values.length).toFixed(2));
+          else if (sensor === 'WD') {
+            const windDirs = values.filter(v => v && v !== 'N');
+            dayData.windDirection = windDirs.length > 0 ? windDirs[0] : 'N';
+          }
         }
       });
-
-      processedData.push(dayData);
+      return dayData;
     });
 
-    // Sort by date (oldest first)
     processedData.sort((a, b) => a.date.getTime() - b.date.getTime());
-
     summaryData.value = processedData;
     saveToCache(cacheKey, processedData);
-
-    console.log('✅ SummaryPage: Final processed data:', processedData);
-    console.log('✅ SummaryPage: Summary data length:', processedData.length);
-    console.log('💾 SummaryPage: Data cached for station:', stationId);
+    console.log('✅ SummaryPage: Fresh data fetched and cached.');
 
   } catch (err: any) {
-    console.error('Error fetching summary data:', err);
-    error.value = err.message || 'Failed to load weather data';
-    summaryData.value = [];
-  } finally {
-    // Add a small delay to ensure loading animation is visible
-    setTimeout(() => {
-      loading.value = false;
-      stopLoadingAnimation();
-    }, 500);
+    console.error('Error fetching fresh data:', err);
+    throw err; // Re-throw to be caught by the main fetch function
   }
-}
-
-// Cache helper functions
-function saveToCache(key: string, data: any) {
-  try {
-    const cacheData = {
-      data,
-      timestamp: Date.now()
-    };
-    localStorage.setItem(key, JSON.stringify(cacheData));
-  } catch (e) {
-    console.warn('Failed to save to cache:', e);
-  }
-}
-
-function loadFromCache(key: string, expiryMs: number): { data: any, timestamp: number } | null {
-  try {
-    const cached = localStorage.getItem(key);
-    if (!cached) return null;
-
-    const cacheData = JSON.parse(cached);
-    const now = Date.now();
-
-    if (now - cacheData.timestamp > expiryMs) {
-      localStorage.removeItem(key);
-      return null;
-    }
-
-    return cacheData;
-  } catch (e) {
-    console.warn('Failed to load from cache:', e);
-    return null;
-  }
-}
-
-// Loading animation functions
-function startLoadingAnimation() {
-  // CSS handles all animations now
-}
-
-function stopLoadingAnimation() {
-  // CSS handles all animations now
 }
 
 // Helper functions for styling
 function getTemperatureBarWidth(temp: number): string {
-  // Scale temperature bar based on typical range (15°C to 40°C)
   const minTemp = 15;
   const maxTemp = 40;
   const normalizedTemp = Math.max(0, Math.min(100, ((temp - minTemp) / (maxTemp - minTemp)) * 100));
@@ -648,26 +714,46 @@ function getRainBarWidth(rainfall: number): string {
 
 // Weather icon based on conditions
 function getWeatherIcon(day: any): string {
-  if (day.rainfall > 10) return '🌧️';
-  if (day.temperature > 30) return '☀️';
-  if (day.temperature < 20) return '❄️';
-  return '⛅';
+  try {
+    const rainfall = day?.rainfall || 0;
+    const temperature = day?.temperature || 0;
+    
+    if (rainfall > 10) return '🌧️';
+    if (temperature > 30) return '☀️';
+    if (temperature < 20) return '❄️';
+    return '⛅';
+  } catch (err) {
+    console.warn('⚠️ Error getting weather icon:', err);
+    return '⛅';
+  }
 }
 
 // Date formatting
-function formatDate(date: Date): string {
-  const options: Intl.DateTimeFormatOptions = {
-    month: 'short',
-    day: 'numeric'
-  };
-  return date.toLocaleDateString('en-US', options);
+function formatDate(date: Date | string): string {
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    const options: Intl.DateTimeFormatOptions = {
+      month: 'short',
+      day: 'numeric'
+    };
+    return dateObj.toLocaleDateString('en-US', options);
+  } catch (err) {
+    console.warn('⚠️ Error formatting date:', err);
+    return 'N/A';
+  }
 }
 
-function getDayName(date: Date): string {
-  const options: Intl.DateTimeFormatOptions = {
-    weekday: 'long'
-  };
-  return date.toLocaleDateString('en-US', options);
+function getDayName(date: Date | string): string {
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    const options: Intl.DateTimeFormatOptions = {
+      weekday: 'long'
+    };
+    return dateObj.toLocaleDateString('en-US', options);
+  } catch (err) {
+    console.warn('⚠️ Error getting day name:', err);
+    return 'Unknown';
+  }
 }
 
 // Station change with parallax transition
@@ -829,7 +915,8 @@ onMounted(() => {
 
 // Cleanup on unmount
 onUnmounted(() => {
-  stopLoadingAnimation();
+  // Note: We don't destroy the offline detection service here as it's a singleton
+  // and may be used by other components
 });
 
 // Placeholder functions for navigation (can be implemented later)
@@ -909,10 +996,12 @@ function openMapModal() {
     transform: translateX(0) scale(1);
     opacity: 1;
   }
+
   50% {
     transform: translateX(-10px) scale(0.98);
     opacity: 0.8;
   }
+
   100% {
     transform: translateX(0) scale(1);
     opacity: 1;
@@ -924,10 +1013,12 @@ function openMapModal() {
     transform: translateX(0) scale(1);
     opacity: 1;
   }
+
   50% {
     transform: translateX(10px) scale(0.98);
     opacity: 0.8;
   }
+
   100% {
     transform: translateX(0) scale(1);
     opacity: 1;
@@ -973,6 +1064,7 @@ function openMapModal() {
     transform: translateX(-200px) translateY(-200px) rotate(-360deg) scale(0.1);
     opacity: 0;
   }
+
   100% {
     transform: translateX(0) translateY(0) rotate(0deg) scale(1);
     opacity: 1;
@@ -984,6 +1076,7 @@ function openMapModal() {
     transform: translateY(-100px) rotateX(90deg);
     opacity: 0;
   }
+
   100% {
     transform: translateY(0) rotateX(0deg);
     opacity: 1;
@@ -995,6 +1088,7 @@ function openMapModal() {
     transform: scale(0.1) rotate(-180deg);
     opacity: 0;
   }
+
   100% {
     transform: scale(1) rotate(0deg);
     opacity: 1;
@@ -1006,6 +1100,7 @@ function openMapModal() {
     transform: translate(-100vw, -100vh) scale(0.8) rotate(-15deg);
     opacity: 0;
   }
+
   100% {
     transform: translate(0, 0) scale(1) rotate(0deg);
     opacity: 1;
@@ -1017,10 +1112,12 @@ function openMapModal() {
     transform: translateX(-50px) scale(0.9);
     opacity: 0;
   }
+
   50% {
     transform: translateX(25px) scale(1.05);
     opacity: 0.7;
   }
+
   100% {
     transform: translateX(0) scale(1);
     opacity: 1;
@@ -1032,6 +1129,7 @@ function openMapModal() {
     transform: translateZ(-100px) scale(0.8);
     opacity: 0;
   }
+
   100% {
     transform: translateZ(0) scale(1);
     opacity: 1;
@@ -1039,14 +1137,37 @@ function openMapModal() {
 }
 
 /* Animation Delay Classes */
-.animation-delay-0 { animation-delay: 0ms; }
-.animation-delay-80 { animation-delay: 80ms; }
-.animation-delay-160 { animation-delay: 160ms; }
-.animation-delay-240 { animation-delay: 240ms; }
-.animation-delay-320 { animation-delay: 320ms; }
-.animation-delay-400 { animation-delay: 400ms; }
-.animation-delay-480 { animation-delay: 480ms; }
-.animation-delay-500 { animation-delay: 500ms; }
+.animation-delay-0 {
+  animation-delay: 0ms;
+}
+
+.animation-delay-80 {
+  animation-delay: 80ms;
+}
+
+.animation-delay-160 {
+  animation-delay: 160ms;
+}
+
+.animation-delay-240 {
+  animation-delay: 240ms;
+}
+
+.animation-delay-320 {
+  animation-delay: 320ms;
+}
+
+.animation-delay-400 {
+  animation-delay: 400ms;
+}
+
+.animation-delay-480 {
+  animation-delay: 480ms;
+}
+
+.animation-delay-500 {
+  animation-delay: 500ms;
+}
 
 /* Card Transition Out */
 .card-transition-out {
@@ -1058,6 +1179,7 @@ function openMapModal() {
     transform: scale(1) translateY(0);
     opacity: 1;
   }
+
   100% {
     transform: scale(0.95) translateY(-10px);
     opacity: 0;
@@ -1124,11 +1246,6 @@ function openMapModal() {
   }
 }
 
-/* Custom gradient for sun animation */
-.bg-gradient-radial {
-  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
-}
-
 /* Weather Radar Loader Styles */
 .weather-radar-loader {
   position: relative;
@@ -1183,8 +1300,13 @@ function openMapModal() {
 }
 
 @keyframes radarSweep {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .weather-icons {
@@ -1236,10 +1358,13 @@ function openMapModal() {
 }
 
 @keyframes weatherIconFloat {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0px) scale(1);
     opacity: 0.6;
   }
+
   50% {
     transform: translateY(-10px) scale(1.1);
     opacity: 1;
@@ -1259,10 +1384,13 @@ function openMapModal() {
 }
 
 @keyframes radarPulse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translate(-50%, -50%) scale(1);
     opacity: 0.8;
   }
+
   50% {
     transform: translate(-50%, -50%) scale(1.5);
     opacity: 0.3;
@@ -1292,10 +1420,12 @@ function openMapModal() {
     width: 0%;
     background-position: 0% 50%;
   }
+
   50% {
     width: 70%;
     background-position: 100% 50%;
   }
+
   100% {
     width: 100%;
     background-position: 200% 50%;

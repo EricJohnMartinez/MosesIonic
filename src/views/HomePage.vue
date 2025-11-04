@@ -611,6 +611,8 @@ import { useFCM } from '../utils/useFCM';
 import { useNativeFCM } from '../utils/useNativeFCM';
 import { ref as vueRef, toRef } from 'vue';
 import { weatherAlertSystem } from '../utils/weatherAlerts';
+import { saveToCache, loadFromCache, updateStorageMetadata } from '@/services/offlineStorage';
+import { getOfflineDetectionService, isOffline } from '@/services/offlineDetection';
 
 // @ts-ignore
 declare global { interface Window { L: any } }
@@ -684,23 +686,38 @@ const cardsDarkened = ref(false);
 // Load cached data with optimized performance
 async function loadCachedData() {
   try {
+    // First try to load from new offline storage service (2-hour expiry)
+    const cachedFromStorage = loadFromCache<any>('latestStationData_localStorage');
+    if (cachedFromStorage && Object.keys(cachedFromStorage).length > 0) {
+      stationDataMap.value = cachedFromStorage;
+      syncStatus.value = 'synced';
+      lastSyncTime.value = new Date();
+      console.log('✅ Loaded cached station data from localStorage');
+      return true;
+    }
+
+    // Fall back to Preferences API for backward compatibility
     const { value } = await Preferences.get({ key: 'latestStationData' });
     if (value) {
       const cachedData = JSON.parse(value);
       const lastUpdated = cachedData.lastUpdated;
 
-      // Check if cache is still valid (not expired - increased to 2 hours)
+      // Check if cache is still valid (not expired - 2 hours)
       if (!isCacheExpired(lastUpdated)) {
         stationDataMap.value = cachedData;
-        syncStatus.value = 'synced'; // Set sync status when loading from cache
+        syncStatus.value = 'synced';
         lastSyncTime.value = new Date(lastUpdated);
-        console.log('✅ Loaded cached station data');
-        return true; // Return success indicator
+        
+        // Migrate old cache to new storage format
+        saveToCache('latestStationData_localStorage', cachedData, 2 * 60 * 60 * 1000);
+        
+        console.log('✅ Loaded cached station data from Preferences (migrated to localStorage)');
+        return true;
       } else {
         console.log('📅 Cached data expired, will fetch fresh data');
       }
     }
-    return false; // No valid cache found
+    return false;
   } catch (error) {
     console.warn('Failed to load cached data:', error);
     return false;
@@ -839,12 +856,16 @@ async function loadSensorsByPriority(sensorList: any[], delay: number = 0, onDat
           // Cache the updated station data locally (throttled)
           if (Math.random() < 0.1) { // Only cache 10% of updates to reduce I/O
             try {
+              // Save to new offline storage
+              saveToCache('latestStationData_localStorage', stationDataMap.value, 2 * 60 * 60 * 1000);
+              
+              // Also keep Preferences API backup for backward compatibility
               Preferences.set({
                 key: 'latestStationData',
                 value: JSON.stringify(stationDataMap.value)
               });
             } catch (cacheError) {
-              console.warn('Failed to cache station data locally:', cacheError);
+              console.warn('Failed to cache station data:', cacheError);
             }
           }
 
@@ -1507,8 +1528,39 @@ const connectionStatus = ref<'online' | 'offline' | 'slow'>('online');
 
 // Monitor network connectivity
 function setupConnectionMonitoring() {
-  window.addEventListener('online', handleOnline);
-  window.addEventListener('offline', handleOffline);
+  // Set up offline detection service with auto-sync
+  const offlineDetectionService = getOfflineDetectionService({
+    onlineCallback: async () => {
+      console.log('🌐 [HomePage] Connection restored, syncing data...');
+      isOnline.value = true;
+      connectionStatus.value = 'online';
+      syncStatus.value = 'syncing';
+      
+      // Update storage metadata
+      updateStorageMetadata(true);
+      
+      // Retry sync when connection is restored
+      setTimeout(async () => {
+        await fetchAllStationsLatestSensors();
+      }, 1000);
+    },
+    offlineCallback: () => {
+      console.log('📴 [HomePage] Connection lost, using cached data');
+      isOnline.value = false;
+      connectionStatus.value = 'offline';
+      syncStatus.value = 'idle';
+      
+      // Update storage metadata
+      updateStorageMetadata(false);
+    },
+    enableLogging: true
+  });
+
+  // Add listener for status changes
+  offlineDetectionService.addListener((online) => {
+    isOnline.value = online;
+    connectionStatus.value = online ? 'online' : 'offline';
+  });
 
   // Monitor connection quality
   if ('connection' in navigator) {
@@ -1518,27 +1570,6 @@ function setupConnectionMonitoring() {
       updateConnectionStatus(connection);
     }
   }
-}
-
-function handleOnline() {
-  isOnline.value = true;
-  connectionStatus.value = 'online';
-  syncStatus.value = 'syncing';
-
-  console.log('🌐 Connection restored, syncing data...');
-
-  // Retry sync when connection is restored
-  setTimeout(async () => {
-    await fetchAllStationsLatestSensors();
-  }, 1000);
-}
-
-function handleOffline() {
-  isOnline.value = false;
-  connectionStatus.value = 'offline';
-  syncStatus.value = 'idle';
-
-  console.log('📴 Connection lost, using cached data');
 }
 
 function handleConnectionChange() {
@@ -1654,16 +1685,16 @@ onUnmounted(() => {
   // Clean up auto-refresh
   stopAutoRefresh();
 
-  // Clean up connection monitoring
-  window.removeEventListener('online', handleOnline);
-  window.removeEventListener('offline', handleOffline);
-
+  // Clean up connection quality monitoring only
   if ('connection' in navigator) {
     const connection = (navigator as any).connection;
     if (connection) {
       connection.removeEventListener('change', handleConnectionChange);
     }
   }
+  
+  // Note: Offline detection service is a singleton and persists across components
+  // It will be destroyed only when the app is closed
 });
 
 watch(selectedStation, (newStation) => {
@@ -1734,6 +1765,21 @@ async function fetchTodayRainfallTotal(stationId: string) {
   try {
     // Reset the daily total
     dailyRainfallTotal.value = 0;
+    
+    const cacheKey = `dailyRainfall_${stationId}`;
+
+    // Check if offline - try to use cached data first
+    if (isOffline()) {
+      console.log('📵 Offline - attempting to load cached daily rainfall for station:', stationId);
+      const cachedRainfall = loadFromCache<number>(cacheKey);
+      if (cachedRainfall !== null && cachedRainfall > 0) {
+        console.log('💾 Using cached daily rainfall:', cachedRainfall);
+        dailyRainfallTotal.value = cachedRainfall;
+        return;
+      }
+      console.log('⚠️ No cached rainfall data available offline');
+      return;
+    }
 
     // Use the correct Firebase path (matching working RainfallTable component)
     const rainfallRef = dbRef(db, `${stationId}/data/sensors/RR`);
@@ -1779,11 +1825,27 @@ async function fetchTodayRainfallTotal(stationId: string) {
 
       // Update the daily total
       dailyRainfallTotal.value = Math.round(accumulatedTotal * 100) / 100;
+      
+      // Cache the daily rainfall total (24-hour expiry)
+      try {
+        saveToCache(cacheKey, dailyRainfallTotal.value, 24 * 60 * 60 * 1000);
+        console.log('💾 Cached daily rainfall total:', dailyRainfallTotal.value);
+      } catch (cacheError) {
+        console.warn('⚠️ Failed to cache daily rainfall:', cacheError);
+      }
     }
 
   } catch (error) {
     console.error('Error fetching daily rainfall total:', error);
-    dailyRainfallTotal.value = 0;
+    // Try to use cached data as fallback if fetch fails
+    const cacheKey = `dailyRainfall_${stationId}`;
+    const cachedRainfall = loadFromCache<number>(cacheKey);
+    if (cachedRainfall !== null && cachedRainfall > 0) {
+      console.log('💾 Using cached rainfall as fallback:', cachedRainfall);
+      dailyRainfallTotal.value = cachedRainfall;
+    } else {
+      dailyRainfallTotal.value = 0;
+    }
   }
 }
 
