@@ -57,70 +57,111 @@
 
             <!-- Scrollable Navigation Content -->
             <div class="flex-1 overflow-y-auto">
-              <!-- Station List -->
+              <!-- Active Stations Section -->
               <div class="p-4">
-                <div class="space-y-3">
-                  <div v-for="(station, index) in stations" :key="station.id" @click="changeStation(station.id, index)"
-                    :class="[
-                      'group relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg station-card',
-                      selectedStation === station.id
-                        ? 'active bg-blue-600/20 border-blue-500 shadow-blue-500/20'
-                        : 'bg-gray-800/50 border-gray-600 hover:border-gray-500 hover:bg-gray-700/50'
-                    ]">
+                <div class="mb-6">
+                  <h3 class="text-xs font-bold uppercase text-gray-400 mb-3 px-2">Active Stations</h3>
+                  <div class="space-y-3">
+                    <div v-for="(station, index) in visibleStations" :key="station.id" @click="changeStation(station.id, index)"
+                      :class="[
+                        'group relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 hover:scale-105 hover:shadow-lg station-card',
+                        selectedStation === station.id
+                          ? 'active bg-blue-600/20 border-blue-500 shadow-blue-500/20'
+                          : 'bg-gray-800/50 border-gray-600 hover:border-gray-500 hover:bg-gray-700/50'
+                      ]">
 
-                    <!-- Station Icon and Status -->
-                    <div class="flex items-center space-x-3 mb-3">
-                      <div :class="[
-                        'w-4 h-4 rounded-full transition-all duration-300',
-                        selectedStation === station.id ? 'bg-green-400 animate-pulse' : 'bg-gray-500'
-                      ]"></div>
-                      <span class="text-lg">📍</span>
-                      <span :class="[
-                        'font-semibold transition-colors duration-200',
-                        selectedStation === station.id ? 'text-blue-300' : 'text-white group-hover:text-blue-200'
-                      ]">{{ station.name }}</span>
+                      <!-- Station Icon and Status -->
+                      <div class="flex items-center space-x-3 mb-3">
+                        <div :class="[
+                          'w-4 h-4 rounded-full transition-all duration-300',
+                          selectedStation === station.id ? 'bg-green-400 animate-pulse' : 'bg-gray-500'
+                        ]"></div>
+                        <span class="text-lg">📍</span>
+                        <span :class="[
+                          'font-semibold transition-colors duration-200 flex-1',
+                          selectedStation === station.id ? 'text-blue-300' : 'text-white group-hover:text-blue-200'
+                        ]">{{ station.name }}</span>
 
-                      <!-- Selected Badge -->
-                      <div v-if="selectedStation === station.id"
-                        class="ml-auto bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                        Active
+                        <!-- Remove Station Button -->
+                        <button 
+                          @click.stop="toggleStationVisibility(station.id)"
+                          v-if="visibleStations.length > 1"
+                          type="button"
+                          class="p-1 rounded-lg bg-red-500/20 hover:bg-red-500/40 text-red-400 transition-all duration-200"
+                          title="Remove from home page">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                          </svg>
+                        </button>
+
+                        <!-- Selected Badge -->
+                        <div v-if="selectedStation === station.id"
+                          class="ml-2 bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap">
+                          Active
+                        </div>
+                      </div>
+
+                      <!-- Station Preview Data (if it's the selected station) -->
+                      <div v-if="selectedStation === station.id && currentStation" class="grid grid-cols-2 gap-3 text-sm">
+                        <div class="bg-gray-800/60 rounded-lg p-3">
+                          <div class="text-gray-400 text-xs mb-1">Temperature</div>
+                          <div class="text-white font-bold">{{ currentStation.data.temperature }}°C</div>
+                        </div>
+                        <div class="bg-gray-800/60 rounded-lg p-3">
+                          <div class="text-gray-400 text-xs mb-1">Humidity</div>
+                          <div class="text-white font-bold">{{ currentStation.data.humidity }}%</div>
+                        </div>
+                        <div class="bg-gray-800/60 rounded-lg p-3">
+                          <div class="text-gray-400 text-xs mb-1">Wind Speed</div>
+                          <div class="text-white font-bold">{{ currentStation.data.windSpeed }} m/s</div>
+                        </div>
+                        <div class="bg-gray-800/60 rounded-lg p-3">
+                          <div class="text-gray-400 text-xs mb-1">Rainfall</div>
+                          <div class="text-white font-bold">{{ currentStation.data.rainfall }} mm</div>
+                        </div>
+                      </div>
+
+                      <!-- Coordinates for non-selected stations -->
+                      <div v-else class="text-gray-400 text-sm">
+                        <div class="flex items-center space-x-2">
+                          <span>📍</span>
+                          <span>{{ station.lat.toFixed(4) }}, {{ station.lng.toFixed(4) }}</span>
+                        </div>
+                      </div>
+
+                      <!-- Hover Arrow -->
+                      <div
+                        class="absolute right-4 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
                       </div>
                     </div>
+                  </div>
+                </div>
 
-                    <!-- Station Preview Data (if it's the selected station) -->
-                    <div v-if="selectedStation === station.id && currentStation" class="grid grid-cols-2 gap-3 text-sm">
-                      <div class="bg-gray-800/60 rounded-lg p-3">
-                        <div class="text-gray-400 text-xs mb-1">Temperature</div>
-                        <div class="text-white font-bold">{{ currentStation.data.temperature }}°C</div>
+                <!-- Available Stations Section (for adding) -->
+                <div v-if="visibleStations.length < stations.length" class="mb-6">
+                  <h3 class="text-xs font-bold uppercase text-gray-400 mb-3 px-2">Add Stations</h3>
+                  <div class="space-y-2">
+                    <div v-for="station in stations.filter(s => !visibleStationIds.includes(s.id))" :key="station.id"
+                      class="group relative p-3 rounded-xl border-2 border-dashed border-gray-600 bg-gray-900/30 hover:border-gray-500 hover:bg-gray-900/50 cursor-pointer transition-all duration-200">
+                      
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2 flex-1">
+                          <span class="text-lg opacity-60">📍</span>
+                          <span class="text-gray-400 text-sm group-hover:text-gray-300 transition-colors">{{ station.name }}</span>
+                        </div>
+                        <button 
+                          @click.stop="toggleStationVisibility(station.id)"
+                          type="button"
+                          class="p-1 rounded-lg bg-green-500/20 hover:bg-green-500/40 text-green-400 transition-all duration-200 opacity-0 group-hover:opacity-100"
+                          title="Add to home page">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                          </svg>
+                        </button>
                       </div>
-                      <div class="bg-gray-800/60 rounded-lg p-3">
-                        <div class="text-gray-400 text-xs mb-1">Humidity</div>
-                        <div class="text-white font-bold">{{ currentStation.data.humidity }}%</div>
-                      </div>
-                      <div class="bg-gray-800/60 rounded-lg p-3">
-                        <div class="text-gray-400 text-xs mb-1">Wind Speed</div>
-                        <div class="text-white font-bold">{{ currentStation.data.windSpeed }} m/s</div>
-                      </div>
-                      <div class="bg-gray-800/60 rounded-lg p-3">
-                        <div class="text-gray-400 text-xs mb-1">Rainfall</div>
-                        <div class="text-white font-bold">{{ currentStation.data.rainfall }} mm</div>
-                      </div>
-                    </div>
-
-                    <!-- Coordinates for non-selected stations -->
-                    <div v-else class="text-gray-400 text-sm">
-                      <div class="flex items-center space-x-2">
-                        <span>📍</span>
-                        <span>{{ station.lat.toFixed(4) }}, {{ station.lng.toFixed(4) }}</span>
-                      </div>
-                    </div>
-
-                    <!-- Hover Arrow -->
-                    <div
-                      class="absolute right-4 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                      </svg>
                     </div>
                   </div>
                 </div>
@@ -585,6 +626,9 @@
         <!-- Interactive Map Component -->
         <InteractiveMap :is-open="isMapModalOpen" :stations="stationsWithData" :current-station="currentStation"
           :selected-station="selectedStation" @close="closeMapModal" @station-selected="handleMapStationSelection" />
+
+        <!-- Chat Bot Component -->
+        <ChatBot />
       </div>
     </div>
   </IonContent>
@@ -601,6 +645,7 @@ import RainAnimation from '../components/RainAnimation.vue';
 import SunnyAnimation from '../components/SunnyAnimation.vue';
 import NotificationSettings from '../components/NotificationSettings.vue';
 import WaterLevel from '../components/WaterLevel.vue';
+import ChatBot from '../components/ChatBot.vue';
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { Preferences } from '@capacitor/preferences';
 import { IonContent, IonRefresher, IonRefresherContent } from '@ionic/vue';
@@ -663,7 +708,62 @@ const stations = ref([
   { id: 'station2', name: 'San Andres Station', lat: 13.142357, lng: 121.156572 }
 ]);
 
+// Visible stations state - default to only first station
+const visibleStationIds = ref<string[]>(['station1']);
+
 const selectedStation = ref('station1');
+
+// Load visible stations from storage on mount
+async function loadVisibleStations() {
+  try {
+    const { value } = await Preferences.get({ key: 'visibleStations' });
+    if (value) {
+      const savedIds = JSON.parse(value);
+      if (Array.isArray(savedIds) && savedIds.length > 0) {
+        visibleStationIds.value = savedIds;
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to load visible stations preference:', error);
+    // Keep default of just first station
+  }
+}
+
+// Save visible stations to storage
+async function saveVisibleStations() {
+  try {
+    await Preferences.set({
+      key: 'visibleStations',
+      value: JSON.stringify(visibleStationIds.value)
+    });
+  } catch (error) {
+    console.warn('Failed to save visible stations preference:', error);
+  }
+}
+
+// Toggle visibility of a station
+function toggleStationVisibility(stationId: string) {
+  const index = visibleStationIds.value.indexOf(stationId);
+  if (index > -1) {
+    // Remove station (but keep at least one visible)
+    if (visibleStationIds.value.length > 1) {
+      visibleStationIds.value.splice(index, 1);
+      // If removed station was selected, switch to first visible one
+      if (selectedStation.value === stationId) {
+        selectedStation.value = visibleStationIds.value[0];
+      }
+    }
+  } else {
+    // Add station
+    visibleStationIds.value.push(stationId);
+  }
+  saveVisibleStations();
+}
+
+// Computed property for filtered stations (only visible ones)
+const visibleStations = computed(() => {
+  return stations.value.filter(station => visibleStationIds.value.includes(station.id));
+});
 // Heat alert component ref (SweetAlert2)
 const heatAlertRef = ref<any>(null);
 // Map modal state
@@ -898,7 +998,7 @@ async function loadSensorsByPriority(sensorList: any[], delay: number = 0, onDat
   console.log(`✅ Finished setting up listeners for ${sensorList.length} sensors`);
 }// Computed property for stations with their own data
 const stationsWithData = computed(() => {
-  return stations.value.map(station => ({
+  return visibleStations.value.map(station => ({
     ...station,
     data: stationDataMap.value[station.id] || null
   }));
@@ -1268,17 +1368,21 @@ function handleTouchEnd(event: TouchEvent) {
 }
 
 function switchToNextStation() {
-  const currentIndex = stations.value.findIndex(s => s.id === selectedStation.value);
-  const nextIndex = (currentIndex + 1) % stations.value.length;
-  const nextStation = stations.value[nextIndex];
-  changeStation(nextStation.id, nextIndex);
+  const currentIndex = visibleStations.value.findIndex(s => s.id === selectedStation.value);
+  if (currentIndex === -1) return; // Station not visible
+  const nextIndex = (currentIndex + 1) % visibleStations.value.length;
+  const nextStation = visibleStations.value[nextIndex];
+  const fullStationIndex = stations.value.findIndex(s => s.id === nextStation.id);
+  changeStation(nextStation.id, fullStationIndex);
 }
 
 function switchToPreviousStation() {
-  const currentIndex = stations.value.findIndex(s => s.id === selectedStation.value);
-  const prevIndex = currentIndex === 0 ? stations.value.length - 1 : currentIndex - 1;
-  const prevStation = stations.value[prevIndex];
-  changeStation(prevStation.id, prevIndex);
+  const currentIndex = visibleStations.value.findIndex(s => s.id === selectedStation.value);
+  if (currentIndex === -1) return; // Station not visible
+  const prevIndex = currentIndex === 0 ? visibleStations.value.length - 1 : currentIndex - 1;
+  const prevStation = visibleStations.value[prevIndex];
+  const fullStationIndex = stations.value.findIndex(s => s.id === prevStation.id);
+  changeStation(prevStation.id, fullStationIndex);
 }
 
 // function onScroll() {
@@ -2030,6 +2134,9 @@ watch(() => {
 onMounted(async () => {
   // Initialize Weather Alert System
   weatherAlertSystem.initialize();
+
+  // Load visible stations preference from storage
+  await loadVisibleStations();
 
   // Auto-initialize FCM for push notifications (no user interaction required)
   try {

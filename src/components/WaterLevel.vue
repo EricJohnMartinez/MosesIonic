@@ -1,22 +1,74 @@
 <template>
   <div class="p-0">
-    <!-- Header -->
-    <div class="bg-slate-800/60 backdrop-blur-xl border border-white/10 rounded-2xl p-5 mb-6 shadow-2xl shadow-black/20">
-      <div class="flex items-center gap-3">
-        <div class="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 p-3 rounded-xl border border-blue-500/30">
-          <span class="text-3xl">💧</span>
-        </div>
-        <div>
-          <h2 class="text-xl font-bold text-white">Water Level Monitoring</h2>
-          <p class="text-sm text-gray-400">Real-time river and coastal levels</p>
+    <!-- Header with Controls -->
+    <div class="flex items-center justify-between gap-4 mb-6 flex-wrap">
+      <div class="bg-slate-800/60 backdrop-blur-xl border border-white/10 rounded-2xl p-5 flex-1 min-w-[250px] shadow-2xl shadow-black/20">
+        <div class="flex items-center gap-3">
+          <div class="bg-gradient-to-br from-blue-500/20 to-cyan-500/20 p-3 rounded-xl border border-blue-500/30">
+            <span class="text-3xl">💧</span>
+          </div>
+          <div>
+            <h2 class="text-xl font-bold text-white">Water Level Monitoring</h2>
+            <p class="text-sm text-gray-400">{{ visibleWaterStations.length }}/{{ waterLevelData.length }} stations</p>
+          </div>
         </div>
       </div>
+
+      <!-- Station Count Toggle Button -->
+      <button 
+        @click="toggleStationSettings"
+        type="button"
+        class="bg-slate-800/60 backdrop-blur-xl border border-white/10 hover:border-blue-500/30 rounded-2xl p-5 transition-all duration-300 shadow-2xl shadow-black/20 hover:shadow-blue-500/20 text-white font-semibold flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+        </svg>
+        <span>Manage Stations</span>
+      </button>
     </div>
+
+    <!-- Station Settings Panel -->
+    <transition name="slide-down">
+      <div v-if="showStationSettings" class="mb-6 bg-slate-800/60 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl shadow-black/20">
+        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+          </svg>
+          Select Water Stations to Display
+        </h3>
+
+        <div class="space-y-3">
+          <div v-for="station in waterLevelData" :key="station.id" class="flex items-center gap-3 p-3 bg-slate-900/50 rounded-xl border border-white/10 hover:border-white/20 transition-all">
+            <input 
+              type="checkbox" 
+              :id="`station-${station.id}`"
+              :checked="visibleWaterStationIds.includes(station.id)"
+              @change="toggleWaterStationVisibility(station.id)"
+              class="w-5 h-5 rounded border-gray-500 text-blue-500 focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            />
+            <label :for="`station-${station.id}`" class="flex-1 cursor-pointer">
+              <div class="font-semibold text-white">{{ station.name }}</div>
+              <div class="text-xs text-gray-400">{{ station.location }}</div>
+            </label>
+            <div class="text-right">
+              <div class="text-sm font-bold text-blue-400">{{ station.level.toFixed(2) }}m</div>
+              <div class="text-xs text-gray-500">Current</div>
+            </div>
+          </div>
+        </div>
+
+        <button 
+          @click="toggleStationSettings"
+          type="button"
+          class="mt-4 w-full py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-all">
+          Done
+        </button>
+      </div>
+    </transition>
 
     <!-- Water Level Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
       <div 
-        v-for="station in waterLevelData" 
+        v-for="station in visibleWaterStations" 
         :key="station.id"
         class="relative bg-slate-800/50 backdrop-blur-2xl border border-white/10 rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-black/30 hover:border-white/20 overflow-hidden flex flex-col"
       >
@@ -180,7 +232,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { Preferences } from '@capacitor/preferences';
 
 interface WaterLevelStation {
   id: number;
@@ -237,6 +290,68 @@ const waterLevelData = ref<WaterLevelStation[]>([
   }
 ]);
 
+// Visible water stations state - default to only first station
+const visibleWaterStationIds = ref<number[]>([1]);
+const showStationSettings = ref(false);
+
+// Load visible water stations from storage on mount
+async function loadVisibleWaterStations() {
+  try {
+    const { value } = await Preferences.get({ key: 'visibleWaterStations' });
+    if (value) {
+      const savedIds = JSON.parse(value);
+      if (Array.isArray(savedIds) && savedIds.length > 0) {
+        visibleWaterStationIds.value = savedIds;
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to load visible water stations preference:', error);
+    // Keep default of just first station
+  }
+}
+
+// Save visible water stations to storage
+async function saveVisibleWaterStations() {
+  try {
+    await Preferences.set({
+      key: 'visibleWaterStations',
+      value: JSON.stringify(visibleWaterStationIds.value)
+    });
+  } catch (error) {
+    console.warn('Failed to save visible water stations preference:', error);
+  }
+}
+
+// Toggle visibility of a water station
+function toggleWaterStationVisibility(stationId: number) {
+  const index = visibleWaterStationIds.value.indexOf(stationId);
+  if (index > -1) {
+    // Remove station (but keep at least one visible)
+    if (visibleWaterStationIds.value.length > 1) {
+      visibleWaterStationIds.value.splice(index, 1);
+    }
+  } else {
+    // Add station
+    visibleWaterStationIds.value.push(stationId);
+  }
+  saveVisibleWaterStations();
+}
+
+// Toggle settings panel visibility
+function toggleStationSettings() {
+  showStationSettings.value = !showStationSettings.value;
+}
+
+// Computed property for filtered visible water stations
+const visibleWaterStations = computed(() => {
+  return waterLevelData.value.filter(station => visibleWaterStationIds.value.includes(station.id));
+});
+
+// Load preferences on mount
+onMounted(async () => {
+  await loadVisibleWaterStations();
+});
+
 function getStatusText(level: number, criticalLevel: number): string {
   if (level >= criticalLevel) return '⚠️ Critical';
   if (level >= criticalLevel * 0.8) return '⚡ Warning';
@@ -245,6 +360,24 @@ function getStatusText(level: number, criticalLevel: number): string {
 </script>
 
 <style scoped>
+/* Slide down animation for settings panel */
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-down-enter-from {
+  opacity: 0;
+  transform: translateY(-10px);
+  max-height: 0;
+}
+
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+  max-height: 0;
+}
+
 /* Bubble styles */
 .bubble {
   position: absolute;
