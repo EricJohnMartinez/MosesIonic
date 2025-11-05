@@ -1,19 +1,22 @@
 <template>
   <IonModal ref="mapModal" :is-open="isOpen" @willDismiss="handleDismiss">
     <IonHeader class="ion-no-border">
-      <IonToolbar class="map-toolbar">
-        <IonTitle class="map-title">
-          <div class="flex items-center space-x-3">
-            <span class="text-2xl">🗺️</span>
+      <IonToolbar class="simple-modern-toolbar">
+        <IonTitle class="simple-modern-title">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
+              <span class="text-lg">🗺️</span>
+            </div>
             <div>
-              <div class="text-lg font-bold text-white">Weather Stations Map</div>
-              <div class="text-sm text-gray-300">{{ stations.length }} stations available</div>
+              <h1 class="text-lg font-semibold text-white">Weather Stations</h1>
+              <p class="text-xs text-white/70">{{ stations.length }} stations</p>
             </div>
           </div>
         </IonTitle>
+
         <IonButtons slot="end">
-          <IonButton @click="closeModal" class="close-button">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <IonButton @click="closeModal" class="simple-close-button">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
           </IonButton>
@@ -23,69 +26,177 @@
     
     <IonContent class="bg-gray-100">
       <!-- Map Container -->
-      <div class="w-full h-full relative overflow-hidden">
+      <div class="w-full h-full relative overflow-hidden" @click="closeDropdownOnMapClick">
         <div ref="mapContainer" id="interactive-weather-map" class="w-full h-full"></div>
         
         <!-- Map Controls Panel - Fixed positioning to prevent disappearing -->
-        <div class="absolute top-4 left-4 z-[1000] flex flex-col gap-3 max-w-[250px] max-h-[calc(100vh-200px)] overflow-y-auto">
-          <!-- Layer Toggle -->
-          <div class="bg-white/95 backdrop-blur-[12px] rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] border border-white/20 p-4 transition-all duration-300 hover:bg-white/98 hover:shadow-[0_12px_40px_rgba(0,0,0,0.15)]">
-            <div class="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">Map Style</div>
-            <div class="flex flex-col gap-2">
-              <button 
-                v-for="layer in mapLayers" 
-                :key="layer.name"
-                @click="changeMapLayer(layer)"
-                :class="[
-                  'px-4 py-2.5 rounded-lg text-xs font-medium border-none cursor-pointer transition-all duration-200',
-                  currentLayer.name === layer.name
-                    ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-[0_4px_12px_rgba(59,130,246,0.3)]'
-                    : 'bg-slate-50 text-slate-600 hover:bg-slate-200 hover:-translate-y-0.5'
-                ]">
-                {{ layer.name }}
-              </button>
-            </div>
+        <div class="absolute top-4 left-4 z-[1000] flex flex-col gap-3 max-w-[280px]">
+          <!-- Modern Layer Toggle Button -->
+          <div class="relative" ref="layerDropdownRef">
+            <button 
+              @click.stop="toggleLayerDropdown"
+              type="button"
+              class="group w-full bg-white/90 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200/50 px-4 py-3.5 transition-all duration-300 hover:shadow-xl hover:bg-white flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                  </svg>
+                </div>
+                <div class="text-left">
+                  <div class="text-xs font-medium text-gray-500">Map Style</div>
+                  <div class="text-sm font-bold text-gray-900">{{ currentLayer.name }}</div>
+                </div>
+              </div>
+              <svg 
+                class="w-5 h-5 text-gray-400 transition-transform duration-300" 
+                :class="{ 'rotate-180': isLayerDropdownOpen }"
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            
+            <!-- Modern Dropdown Menu with Transition -->
+            <transition name="dropdown">
+              <div 
+                v-if="isLayerDropdownOpen"
+                @click.stop
+                class="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 overflow-hidden z-[1001]">
+                <div class="p-2">
+                  <button 
+                    v-for="layer in mapLayers" 
+                    :key="layer.name"
+                    type="button"
+                    @click.stop="changeMapLayer(layer)"
+                    :class="[
+                      'w-full px-4 py-3 rounded-xl text-left text-sm font-semibold transition-all duration-200 flex items-center justify-between group',
+                      currentLayer.name === layer.name
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    ]">
+                    <span>{{ layer.name }}</span>
+                    <svg 
+                      v-if="currentLayer.name === layer.name"
+                      class="w-5 h-5 text-white" 
+                      fill="currentColor" 
+                      viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg 
+                      v-else
+                      class="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </transition>
           </div>
 
-          <!-- Station Info Panel -->
-          <div v-if="selectedMapStation" class="bg-white/98 backdrop-blur-[16px] rounded-2xl shadow-[0_16px_48px_rgba(0,0,0,0.15)] border border-white/30 p-5 max-w-[280px] animate-[slideInLeft_0.3s_ease] max-h-[400px] overflow-y-auto">
-            <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center gap-2">
-                <span class="text-xl">📍</span>
-                <span class="font-bold text-gray-800 text-base">{{ selectedMapStation.name }}</span>
+          <!-- Modern Station Info Panel -->
+          <transition name="slide-fade">
+            <div v-if="selectedMapStation" class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200/50 overflow-hidden max-h-[calc(100vh-200px)]">
+              <!-- Station Header -->
+              <div class="relative bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-600 p-5 text-white">
+                <button 
+                  @click="selectedMapStation = null" 
+                  type="button"
+                  class="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                </button>
+                
+                <div class="flex items-start gap-3 pr-8">
+                  <div class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center text-2xl">
+                    {{ getWeatherIcon(selectedMapStation.data) }}
+                  </div>
+                  <div>
+                    <h3 class="text-lg font-bold mb-1">{{ selectedMapStation.name }}</h3>
+                    <div class="flex items-center gap-2 text-white/80 text-xs">
+                      <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                      </svg>
+                      <span>{{ selectedMapStation.lat.toFixed(4) }}, {{ selectedMapStation.lng.toFixed(4) }}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <button @click="selectedMapStation = null" class="bg-none border-none text-gray-400 cursor-pointer p-1 rounded-md transition-all duration-200 hover:text-gray-600 hover:bg-gray-100">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-              </button>
+              
+              <!-- Weather Metrics -->
+              <div v-if="selectedMapStation.data" class="p-4">
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                  <!-- Temperature Card -->
+                  <div class="group relative overflow-hidden bg-gradient-to-br from-orange-50 to-red-50 rounded-xl p-4 border border-orange-100 hover:shadow-lg transition-all duration-300">
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-orange-200/30 rounded-full -mr-8 -mt-8"></div>
+                    <div class="relative">
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-2xl">🌡️</span>
+                        <span class="text-xs font-medium text-orange-600 uppercase tracking-wide">Temp</span>
+                      </div>
+                      <div class="text-2xl font-bold text-orange-700">{{ selectedMapStation.data.temperature }}<span class="text-sm">°C</span></div>
+                      <div class="text-xs text-orange-600 mt-1">Temperature</div>
+                    </div>
+                  </div>
+
+                  <!-- Humidity Card -->
+                  <div class="group relative overflow-hidden bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-100 hover:shadow-lg transition-all duration-300">
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-blue-200/30 rounded-full -mr-8 -mt-8"></div>
+                    <div class="relative">
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-2xl">💧</span>
+                        <span class="text-xs font-medium text-blue-600 uppercase tracking-wide">Humid</span>
+                      </div>
+                      <div class="text-2xl font-bold text-blue-700">{{ selectedMapStation.data.humidity }}<span class="text-sm">%</span></div>
+                      <div class="text-xs text-blue-600 mt-1">Humidity</div>
+                    </div>
+                  </div>
+
+                  <!-- Wind Speed Card -->
+                  <div class="group relative overflow-hidden bg-gradient-to-br from-teal-50 to-emerald-50 rounded-xl p-4 border border-teal-100 hover:shadow-lg transition-all duration-300">
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-teal-200/30 rounded-full -mr-8 -mt-8"></div>
+                    <div class="relative">
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-2xl">💨</span>
+                        <span class="text-xs font-medium text-teal-600 uppercase tracking-wide">Wind</span>
+                      </div>
+                      <div class="text-2xl font-bold text-teal-700">{{ selectedMapStation.data.windSpeed }}<span class="text-sm">m/s</span></div>
+                      <div class="text-xs text-teal-600 mt-1">Wind Speed</div>
+                    </div>
+                  </div>
+
+                  <!-- Rainfall Card -->
+                  <div class="group relative overflow-hidden bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-100 hover:shadow-lg transition-all duration-300">
+                    <div class="absolute top-0 right-0 w-16 h-16 bg-indigo-200/30 rounded-full -mr-8 -mt-8"></div>
+                    <div class="relative">
+                      <div class="flex items-center justify-between mb-2">
+                        <span class="text-2xl">🌧️</span>
+                        <span class="text-xs font-medium text-indigo-600 uppercase tracking-wide">Rain</span>
+                      </div>
+                      <div class="text-2xl font-bold text-indigo-700">{{ selectedMapStation.data.rainfall }}<span class="text-sm">mm</span></div>
+                      <div class="text-xs text-indigo-600 mt-1">Rainfall</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Action Button -->
+                <button 
+                  @click="selectStationAndClose(selectedMapStation.id)"
+                  type="button"
+                  class="w-full py-3.5 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] flex items-center justify-center gap-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                  </svg>
+                  Switch to This Station
+                </button>
+              </div>
             </div>
-            
-            <div v-if="selectedMapStation.data" class="grid grid-cols-2 gap-3 mb-4">
-              <div class="p-3 rounded-xl text-center transition-all duration-200 hover:-translate-y-0.5 bg-gradient-to-br from-blue-50 to-blue-100">
-                <div class="text-xs text-gray-600 mb-1 font-medium">Temperature</div>
-                <div class="font-bold text-sm text-blue-700">{{ selectedMapStation.data.temperature }}°C</div>
-              </div>
-              <div class="p-3 rounded-xl text-center transition-all duration-200 hover:-translate-y-0.5 bg-gradient-to-br from-green-50 to-green-100">
-                <div class="text-xs text-gray-600 mb-1 font-medium">Humidity</div>
-                <div class="font-bold text-sm text-green-700">{{ selectedMapStation.data.humidity }}%</div>
-              </div>
-              <div class="p-3 rounded-xl text-center transition-all duration-200 hover:-translate-y-0.5 bg-gradient-to-br from-indigo-50 to-indigo-100">
-                <div class="text-xs text-gray-600 mb-1 font-medium">Wind Speed</div>
-                <div class="font-bold text-sm text-indigo-700">{{ selectedMapStation.data.windSpeed }} m/s</div>
-              </div>
-              <div class="p-3 rounded-xl text-center transition-all duration-200 hover:-translate-y-0.5 bg-gradient-to-br from-orange-50 to-orange-100">
-                <div class="text-xs text-gray-600 mb-1 font-medium">Rainfall</div>
-                <div class="font-bold text-sm text-orange-700">{{ selectedMapStation.data.rainfall }} mm</div>
-              </div>
-            </div>
-            
-            <button 
-              @click="selectStationAndClose(selectedMapStation.id)"
-              class="w-full py-3 px-4 bg-gradient-to-br from-blue-500 to-blue-700 text-white border-none rounded-2xl font-semibold text-sm cursor-pointer transition-all duration-300 shadow-[0_4px_12px_rgba(59,130,246,0.3)] hover:from-blue-600 hover:to-blue-800 hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(59,130,246,0.4)]">
-              Switch to This Station
-            </button>
-          </div>
+          </transition>
         </div>
 
           <!-- Map Legend - Fixed positioning -->
@@ -162,12 +273,14 @@ const isMapLoading = ref(true);
 const selectedMapStation = ref<Station | null>(null);
 const userLocation = ref<{ lat: number; lng: number } | null>(null);
 const userLocationMarker = ref<any>(null);
+const isLayerDropdownOpen = ref(false);
 
 // Map instances
 let map: any = null;
 let currentBaseLayer: any = null; // Track current base layer
 const markerMap: { [key: string]: any } = {};
 let weatherLayer: any = null;
+let locationWatchId: string | null = null; // For real-time location tracking
 
 // Map layers configuration
 const mapLayers = ref<MapLayer[]>([
@@ -183,13 +296,8 @@ const mapLayers = ref<MapLayer[]>([
   },
   {
     name: 'Terrain',
-    url: 'https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}.png',
-    attribution: '© Stadia Maps © Stamen Design © OpenMapTiles'
-  },
-  {
-    name: 'Dark',
-    url: 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png',
-    attribution: '© CartoDB'
+    url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+    attribution: '© OpenTopoMap contributors'
   }
 ]);
 
@@ -209,10 +317,21 @@ function selectStationAndClose(stationId: string) {
   emit('close');
 }
 
+function toggleLayerDropdown() {
+  isLayerDropdownOpen.value = !isLayerDropdownOpen.value;
+}
+
+function closeDropdownOnMapClick() {
+  if (isLayerDropdownOpen.value) {
+    isLayerDropdownOpen.value = false;
+  }
+}
+
 function changeMapLayer(layer: MapLayer) {
   if (!map) return;
   
   currentLayer.value = layer;
+  isLayerDropdownOpen.value = false; // Close dropdown after selection
   
   // Remove current base layer if it exists
   if (currentBaseLayer) {
@@ -353,6 +472,61 @@ async function getUserLocation() {
   }
 }
 
+async function startLocationTracking() {
+  try {
+    const permissions = await Geolocation.checkPermissions();
+    
+    if (permissions.location === 'denied') {
+      const requestPermissions = await Geolocation.requestPermissions();
+      if (requestPermissions.location === 'denied') {
+        console.warn('Location permission denied');
+        return;
+      }
+    }
+    
+    // Get initial position
+    const initialPosition = await getUserLocation();
+    if (initialPosition) {
+      userLocation.value = initialPosition;
+      addUserLocationMarker(initialPosition);
+    }
+    
+    // Start watching position for real-time updates
+    locationWatchId = await Geolocation.watchPosition(
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      },
+      (position, err) => {
+        if (err) {
+          console.error('Error watching position:', err);
+          return;
+        }
+        
+        if (position) {
+          const newLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          
+          userLocation.value = newLocation;
+          updateUserLocationMarker(newLocation);
+        }
+      }
+    );
+  } catch (error) {
+    console.error('Error starting location tracking:', error);
+  }
+}
+
+function stopLocationTracking() {
+  if (locationWatchId) {
+    Geolocation.clearWatch({ id: locationWatchId });
+    locationWatchId = null;
+  }
+}
+
 function addUserLocationMarker(location: { lat: number; lng: number }) {
   if (!map || !window.L) return;
   
@@ -405,6 +579,29 @@ function addUserLocationMarker(location: { lat: number; lng: number }) {
   }).addTo(map);
 }
 
+function updateUserLocationMarker(location: { lat: number; lng: number }) {
+  if (!map || !window.L) return;
+  
+  if (userLocationMarker.value) {
+    // Update existing marker position with smooth animation
+    userLocationMarker.value.setLatLng([location.lat, location.lng]);
+    
+    // Update popup content
+    userLocationMarker.value.setPopupContent(`
+      <div class="user-location-popup">
+        <div class="popup-header">
+          <span class="popup-icon">📍</span>
+          <div class="popup-title">Your Location</div>
+        </div>
+        <div class="popup-coords">${location.lat.toFixed(6)}, ${location.lng.toFixed(6)}</div>
+      </div>
+    `);
+  } else {
+    // If marker doesn't exist, create it
+    addUserLocationMarker(location);
+  }
+}
+
 function initializeMap() {
   if (!window.L || !mapContainer.value) return;
   
@@ -432,13 +629,8 @@ function initializeMap() {
     // Add station markers
     updateMarkers();
     
-    // Get and add user location
-    getUserLocation().then(location => {
-      if (location) {
-        userLocation.value = location;
-        addUserLocationMarker(location);
-      }
-    });
+    // Start real-time location tracking
+    startLocationTracking();
     
     // Map loaded
     map.whenReady(() => {
@@ -475,6 +667,9 @@ function updateMarkers() {
 }
 
 function cleanupMap() {
+  // Stop location tracking
+  stopLocationTracking();
+  
   if (map) {
     try {
       map.remove();
@@ -489,6 +684,7 @@ function cleanupMap() {
   weatherLayer = null;
   userLocationMarker.value = null;
   userLocation.value = null;
+  isLayerDropdownOpen.value = false;
   
   // Clear markers
   Object.keys(markerMap).forEach(key => {
@@ -530,6 +726,63 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.simple-modern-toolbar {
+  --background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --color: white;
+  --padding-start: 16px;
+  --padding-end: 16px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  --min-height: 64px;
+}
+
+.simple-modern-title {
+  --color: white;
+}
+
+.simple-close-button {
+  --background: rgba(255, 255, 255, 0.1);
+  --background-hover: rgba(255, 255, 255, 0.2);
+  --background-activated: rgba(255, 255, 255, 0.15);
+  --color: white;
+  --border-radius: 8px;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --padding-top: 8px;
+  --padding-bottom: 8px;
+  --ripple-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Remove old styles */
+.modern-map-toolbar {
+  --background: transparent;
+  --color: white;
+  --padding-start: 20px;
+  --padding-end: 20px;
+  --padding-top: 16px;
+  --padding-bottom: 16px;
+  --min-height: 80px;
+}
+
+.modern-map-title {
+  --color: white;
+  text-align: left;
+}
+
+.modern-close-button {
+  --background: transparent;
+  --background-hover: transparent;
+  --background-activated: transparent;
+  --color: white;
+  --border-radius: 12px;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --ripple-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Remove old styles */
 .map-toolbar {
   --background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
   --color: white;
@@ -777,6 +1030,52 @@ onUnmounted(() => {
     opacity: 0;
     transform: translate(-50%, -50%) scale(2);
   }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dropdown Animation */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dropdown-enter-from {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.95);
+}
+
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-5px) scale(0.98);
+}
+
+/* Slide Fade Animation for Station Panel */
+.slide-fade-enter-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-fade-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-fade-enter-from {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.slide-fade-leave-to {
+  opacity: 0;
+  transform: translateX(-10px);
 }
 
 /* Responsive adjustments */
