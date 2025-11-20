@@ -132,6 +132,7 @@
 
 <script setup lang="ts">
 import { ref, nextTick } from 'vue';
+import { Capacitor, CapacitorHttp } from '@capacitor/core';
 
 interface Message {
   sender: 'user' | 'bot';
@@ -143,7 +144,77 @@ const userMessage = ref('');
 const messages = ref<Message[]>([]);
 const isLoading = ref(false);
 
-const CHAT_API_URL = 'http://152.42.220.20:82/api/weather-chat';
+// Try multiple API endpoints for better mobile compatibility
+const CHAT_API_URLS = [
+  'http://152.42.220.20:82/api/weather-chat',
+  'https://152.42.220.20:82/api/weather-chat', // HTTPS fallback
+];
+
+// Diagnostic endpoints to test connectivity
+const DIAGNOSTIC_URLS = [
+  'http://152.42.220.20:82/api/weather-chat',
+  'http://152.42.220.20:82', // Base URL
+  'https://152.42.220.20:82', // HTTPS base
+];
+
+let CHAT_API_URL = CHAT_API_URLS[0]; // Default to first URL
+
+// Detect if running on a native platform (Android/iOS)
+const isNative = typeof Capacitor !== 'undefined' && Capacitor.getPlatform() !== 'web';
+
+// Unified HTTP helper to use native HTTP on device and fetch on web
+async function httpRequest(
+  method: 'GET' | 'POST' | 'HEAD',
+  url: string,
+  options?: {
+    headers?: Record<string, string>;
+    json?: any;
+    timeoutMs?: number;
+    signal?: AbortSignal;
+  }
+) {
+  const headers = options?.headers ?? {};
+  const timeoutMs = options?.timeoutMs ?? 10000;
+
+  if (isNative) {
+    // Use Capacitor native HTTP to bypass CORS/preflight in WebView
+    const response = await CapacitorHttp.request({
+      method,
+      url,
+      headers,
+      data: options?.json,
+      connectTimeout: timeoutMs,
+      readTimeout: timeoutMs
+    });
+
+    return {
+      status: response.status,
+      ok: response.status >= 200 && response.status < 300,
+      json: async () => response.data,
+      statusText: String(response.status),
+    } as const;
+  }
+
+  // Web fallback using fetch
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const resp = await fetch(url, {
+    method,
+    headers,
+    body: options?.json ? JSON.stringify(options.json) : undefined,
+    mode: 'cors',
+    credentials: 'omit',
+    signal: options?.signal ?? controller.signal
+  });
+  clearTimeout(timeoutId);
+
+  return {
+    status: resp.status,
+    ok: resp.ok,
+    json: async () => resp.json(),
+    statusText: resp.statusText,
+  } as const;
+}
 
 function toggleChat() {
   isChatOpen.value = !isChatOpen.value;
@@ -170,63 +241,115 @@ async function sendMessage() {
   await nextTick();
   scrollToBottom();
 
+  // Check for diagnostic command
+  if (message === '/diag') {
+    await runDiagnostics();
+    isLoading.value = false;
+    return;
+  }
+
   try {
-    // Send to API
-    const response = await fetch(CHAT_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify({
-        message: message,
-        timestamp: new Date().toISOString()
-      })
-    });
+    // Send to API with retry logic and multiple URL attempts
+    let lastError: Error | null = null;
+    let success = false;
 
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
-    }
+    for (let urlIndex = 0; urlIndex < CHAT_API_URLS.length && !success; urlIndex++) {
+      const testUrl = CHAT_API_URLS[urlIndex];
+      
+      // HTTP gets 3 attempts, HTTPS gets 2 (since HTTP is primary)
+      const maxAttempts = testUrl.includes('https') ? 2 : 3;
+      
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          const response = await httpRequest('POST', testUrl, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            json: {
+              message: message,
+              timestamp: new Date().toISOString(),
+            },
+            timeoutMs: 10000,
+          });
 
-    const data = await response.json();
-    
-    console.log('API Response:', data); // Debug log
-    
-    // Extract bot response from API
-    // The API returns response in data.reply.response
-    let botResponse = data.reply?.response || data.response || data.reply || data.message || data.text;
-    
-    // If response is a string that looks like JSON, try to parse it
-    if (typeof botResponse === 'string') {
-      try {
-        const parsed = JSON.parse(botResponse);
-        console.log('Parsed response:', parsed); // Debug log
-        botResponse = parsed.response || parsed.message || parsed.text || botResponse;
-      } catch (e) {
-        // If it's not JSON, use as is
-        console.log('Response is not JSON, using as string:', botResponse); // Debug log
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+
+          const data = await response.json();
+          
+          // Extract bot response from API - try multiple possible paths
+          let botResponse = data.reply?.response || 
+                           data.response || 
+                           data.reply || 
+                           data.message || 
+                           data.text ||
+                           data.data?.response ||
+                           data.data?.reply;
+          
+          // If response is a string that looks like JSON, try to parse it
+          if (typeof botResponse === 'string') {
+            try {
+              const parsed = JSON.parse(botResponse);
+              botResponse = parsed.response || parsed.message || parsed.text || botResponse;
+            } catch (e) {
+            }
+          }
+          
+          // Fallback if no response found
+          if (!botResponse || (typeof botResponse === 'string' && botResponse.trim() === '')) {
+            botResponse = 'I received your message but the response was empty. Please try again.';
+          }
+          
+          // Add bot response
+          messages.value.push({
+            sender: 'bot',
+            text: botResponse
+          });
+          
+          success = true;
+          CHAT_API_URL = testUrl; // Update to working URL
+          break; // Exit retry loop
+        } catch (error) {
+          lastError = error as Error;
+          const errorMsg = error instanceof Error ? error.message : String(error);
+          
+          if (attempt < maxAttempts - 1) {
+            // Wait before retry
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        }
+      }
+
+      if (!success && urlIndex < CHAT_API_URLS.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
     }
+
+    // If all attempts failed, show detailed error
+    if (!success) {
+      throw new Error(`All API endpoints failed. Last error: ${lastError?.message || 'Unknown'}`);
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     
-    // Fallback if no response found
-    if (!botResponse || (typeof botResponse === 'string' && botResponse.trim() === '')) {
-      botResponse = 'Sorry, I could not understand that. Please try again.';
+    // Add detailed error message for debugging
+    let displayError = '⚠️ Connection Error: The weather service is currently unreachable.';
+    
+    if (errorMessage.includes('timeout') || errorMessage.includes('Timeout')) {
+      displayError += '\n\n📡 Issue: Request timed out (service taking too long to respond)\n• Check if the server at 152.42.220.20:82 is running\n• Check your network connection';
+    } else if (errorMessage.includes('abort') || errorMessage.includes('Abort')) {
+      displayError += '\n\n📡 Issue: Request was aborted (slow/unstable connection)\n• Try again with a stable internet connection';
+    } else if (errorMessage.includes('HTTP')) {
+      displayError += `\n\n📡 Issue: ${errorMessage}\n• The server returned an error\n• Contact support if this persists`;
+    } else {
+      displayError += '\n\n📡 Issue: Network unreachable or CORS blocked\n• Check your internet connection\n• Ensure the server is online\n\n🔴 SERVER API ISSUE: The weather chat API endpoint may be unavailable\n• Contact server administrator\n• API endpoint may have changed\n• Try again later\n\nType `/diag` for detailed diagnostics.';
     }
     
-    console.log('Final bot response:', botResponse); // Debug log
-    
-    // Add bot response
     messages.value.push({
       sender: 'bot',
-      text: botResponse
-    });
-  } catch (error) {
-    console.error('Chat error:', error);
-    
-    // Add error message
-    messages.value.push({
-      sender: 'bot',
-      text: 'Sorry, I\'m having trouble connecting. Please try again later.'
+      text: displayError
     });
   } finally {
     isLoading.value = false;
@@ -241,6 +364,137 @@ function scrollToBottom() {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }
 }
+
+// Test API connectivity - SKIPPED because server doesn't support OPTIONS
+// The API responds to POST directly, so we'll test during actual message send
+async function testAPIConnectivity(): Promise<boolean> {
+  // This function is kept for future use but not called
+  // The server doesn't support OPTIONS preflight requests, so we skip testing
+  // and go straight to POST which works fine
+  return true;
+}
+
+// Run comprehensive diagnostics to help debug connectivity issues
+async function runDiagnostics() {
+  const diagResults: string[] = [];
+  
+  diagResults.push('🔍 GENI DIAGNOSTIC TEST');
+  diagResults.push('='.repeat(50));
+  diagResults.push('');
+  
+  // Test device info
+  diagResults.push('📱 Device Information:');
+  diagResults.push(`User Agent: ${navigator.userAgent}`);
+  diagResults.push(`Language: ${navigator.language}`);
+  diagResults.push(`Online: ${navigator.onLine}`);
+  diagResults.push('');
+  
+  // Test each diagnostic URL
+  diagResults.push('🌐 Testing Connectivity to Each Endpoint:');
+  diagResults.push('');
+  
+  for (let i = 0; i < DIAGNOSTIC_URLS.length; i++) {
+    const url = DIAGNOSTIC_URLS[i];
+    diagResults.push(`Test ${i + 1}: ${url}`);
+    
+    // Test with HEAD request
+    try {
+      const response = await httpRequest('HEAD', url, { timeoutMs: 5000 });
+      diagResults.push(`  ✅ HEAD request: ${response.status} ${response.statusText}`);
+      
+      // If we get a 404, that's actually GOOD - it means we can reach the server!
+      if (response.status === 404) {
+        diagResults.push(`     📡 Server reachable! API endpoint not found (server-side issue)`);
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      diagResults.push(`  ❌ HEAD request: ${errorMsg}`);
+    }
+    
+    // Test with GET request
+    try {
+      const response = await httpRequest('GET', url, { timeoutMs: 5000 });
+      diagResults.push(`  ✅ GET request: ${response.status} ${response.statusText}`);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      diagResults.push(`  ❌ GET request: ${errorMsg}`);
+    }
+    
+    diagResults.push('');
+  }
+  
+  // Test base server connectivity
+  diagResults.push('🏠 Testing Base Server Connectivity:');
+  try {
+    const response = await httpRequest('GET', 'http://152.42.220.20:82/', { timeoutMs: 5000 });
+    diagResults.push(`  ✅ Base server: ${response.status} ${response.statusText}`);
+    
+    if (response.status === 404) {
+      diagResults.push(`     📡 Server reachable! No root endpoint (normal for API servers)`);
+    }
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    diagResults.push(`  ❌ Base server: ${errorMsg}`);
+  }
+  diagResults.push('');
+  
+  // Test with POST to actual endpoint
+  diagResults.push('📡 Testing POST to Weather Chat API:');
+  try {
+    const response = await httpRequest('POST', CHAT_API_URLS[0], {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      json: {
+        message: 'test',
+        timestamp: new Date().toISOString(),
+      },
+      timeoutMs: 8000,
+    });
+    const data = await response.json();
+    diagResults.push(`  ✅ POST successful: ${response.status}`);
+    diagResults.push(`  Response: ${JSON.stringify(data).substring(0, 100)}...`);
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    diagResults.push(`  ❌ POST failed: ${errorMsg}`);
+  }
+  
+  diagResults.push('');
+  diagResults.push('='.repeat(50));
+  diagResults.push('📋 Troubleshooting Steps:');
+  diagResults.push('');
+  diagResults.push('If all tests show ❌:');
+  diagResults.push('1. Check if device has internet connection');
+  diagResults.push('2. Try switching between WiFi and mobile data');
+  diagResults.push('3. Verify the server at 152.42.220.20:82 is running');
+  diagResults.push('4. Check if device can ping the server IP');
+  diagResults.push('5. Try opening the URL in device browser directly');
+  diagResults.push('');
+  diagResults.push('🔴 SERVER ISSUE DETECTED:');
+  diagResults.push('• If you see 404 errors: Server is reachable! API not deployed');
+  diagResults.push('• Contact server administrator to deploy weather chat API');
+  diagResults.push('• API endpoint `/api/weather-chat` needs to be created');
+  diagResults.push('• Check server logs for incoming requests');
+  diagResults.push('');
+  diagResults.push('If tests show ✅ but chat fails:');
+  diagResults.push('1. The API might have response format issues');
+  diagResults.push('2. Check the actual API response in console');
+  diagResults.push('3. Report the response format to developer');
+  diagResults.push('');
+  
+  const fullDiagnostics = diagResults.join('\n');
+  
+  // Show in chat
+  messages.value.push({
+    sender: 'bot',
+    text: `🔍 Diagnostic Report:\n\n${fullDiagnostics}`
+  });
+  
+  await nextTick();
+  scrollToBottom();
+}
+
 </script>
 
 <style scoped>

@@ -28,7 +28,7 @@
 
     <!-- Station Settings Panel -->
     <transition name="slide-down">
-      <div v-if="showStationSettings" class="mb-6 bg-slate-800/60 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl shadow-black/20">
+      <div v-if="showStationSettings" class="mb-6 bg-slate-800/60 backdrop-blur-xl border border-white/10 rounded-2xl p-5 shadow-2xl shadow-black/20 relative z-30">
         <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
@@ -36,22 +36,86 @@
           Select Water Stations to Display
         </h3>
 
-        <div class="space-y-3">
-          <div v-for="station in waterLevelData" :key="station.id" class="flex items-center gap-3 p-3 bg-slate-900/50 rounded-xl border border-white/10 hover:border-white/20 transition-all">
-            <input 
-              type="checkbox" 
-              :id="`station-${station.id}`"
-              :checked="visibleWaterStationIds.includes(station.id)"
-              @change="toggleWaterStationVisibility(station.id)"
-              class="w-5 h-5 rounded border-gray-500 text-blue-500 focus:ring-2 focus:ring-blue-500 cursor-pointer"
+        <!-- Searchable Dropdown -->
+        <div class="relative mb-4" ref="dropdownContainer">
+          <div class="relative">
+            <input
+              v-model="searchQuery"
+              @focus="openDropdown"
+              @input="openDropdown"
+              @click="openDropdown"
+              type="text"
+              placeholder="Search or select stations..."
+              class="w-full px-4 py-3 bg-slate-900/50 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
-            <label :for="`station-${station.id}`" class="flex-1 cursor-pointer">
-              <div class="font-semibold text-white">{{ station.name }}</div>
-              <div class="text-xs text-gray-400">{{ station.location }}</div>
-            </label>
-            <div class="text-right">
-              <div class="text-sm font-bold text-blue-400">{{ station.level.toFixed(2) }}m</div>
-              <div class="text-xs text-gray-500">Current</div>
+            <button
+              @click.stop="toggleDropdown"
+              type="button"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+            >
+              <svg class="w-5 h-5 transition-transform duration-200" :class="{ 'rotate-180': isDropdownOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Dropdown List -->
+          <transition name="dropdown">
+            <div v-if="isDropdownOpen" class="absolute z-[100] w-full mt-2 bg-slate-800/95 backdrop-blur-xl border border-white/20 rounded-xl shadow-2xl max-h-80 overflow-y-auto">
+              <div v-if="filteredStations.length === 0" class="p-4 text-center text-gray-400">
+                No stations found
+              </div>
+              <div v-else class="py-2">
+                <div
+                  v-for="station in filteredStations"
+                  :key="station.id"
+                  @click.stop="toggleStationVisibilityFromDropdown(station.id)"
+                  class="flex items-center gap-3 px-4 py-3 hover:bg-slate-700/50 cursor-pointer transition-all"
+                >
+                  <div 
+                    class="w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all"
+                    :class="visibleWaterStationIds.includes(station.id) 
+                      ? 'bg-blue-500 border-blue-500' 
+                      : 'border-gray-500 bg-slate-900/50'"
+                  >
+                    <svg v-if="visibleWaterStationIds.includes(station.id)" class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+                    </svg>
+                  </div>
+                  <div class="flex-1">
+                    <div class="font-semibold text-white">{{ station.name }}</div>
+                    <div class="text-xs text-gray-400">{{ station.location }}</div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-sm font-bold text-blue-400">{{ station.level.toFixed(2) }}m</div>
+                    <div class="text-xs text-gray-500">Current</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </transition>
+        </div>
+
+        <!-- Selected Stations Summary -->
+        <div v-if="visibleWaterStationIds.length > 0" class="mb-4">
+          <div class="text-xs text-gray-400 mb-2">Selected Stations ({{ visibleWaterStationIds.length }})</div>
+          <div class="flex flex-wrap gap-2">
+            <div
+              v-for="stationId in visibleWaterStationIds"
+              :key="stationId"
+              class="flex items-center gap-2 px-3 py-1.5 bg-blue-500/20 border border-blue-500/30 rounded-lg text-sm text-white"
+            >
+              <span>{{ getStationById(stationId)?.name }}</span>
+              <button
+                @click="toggleWaterStationVisibility(stationId)"
+                type="button"
+                :disabled="visibleWaterStationIds.length === 1"
+                class="hover:text-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -232,7 +296,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Preferences } from '@capacitor/preferences';
 
 interface WaterLevelStation {
@@ -294,6 +358,66 @@ const waterLevelData = ref<WaterLevelStation[]>([
 const visibleWaterStationIds = ref<number[]>([1]);
 const showStationSettings = ref(false);
 
+// Searchable dropdown state
+const searchQuery = ref('');
+const isDropdownOpen = ref(false);
+const dropdownContainer = ref<HTMLElement | null>(null);
+
+// Computed filtered stations based on search
+const filteredStations = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return waterLevelData.value;
+  }
+  
+  const query = searchQuery.value.toLowerCase();
+  return waterLevelData.value.filter(station => 
+    station.name.toLowerCase().includes(query) ||
+    station.location.toLowerCase().includes(query)
+  );
+});
+
+// Get station by ID
+function getStationById(id: number) {
+  return waterLevelData.value.find(station => station.id === id);
+}
+
+// Open dropdown
+function openDropdown() {
+  isDropdownOpen.value = true;
+}
+
+// Toggle dropdown
+function toggleDropdown() {
+  isDropdownOpen.value = !isDropdownOpen.value;
+}
+
+// Close dropdown
+function closeDropdown() {
+  isDropdownOpen.value = false;
+}
+
+// Handle click outside to close dropdown
+function handleClickOutside(event: MouseEvent) {
+  if (dropdownContainer.value && !dropdownContainer.value.contains(event.target as Node)) {
+    closeDropdown();
+  }
+}
+
+// Toggle station visibility from dropdown (don't close dropdown)
+function toggleStationVisibilityFromDropdown(stationId: number) {
+  const index = visibleWaterStationIds.value.indexOf(stationId);
+  if (index > -1) {
+    // Remove station (but keep at least one visible)
+    if (visibleWaterStationIds.value.length > 1) {
+      visibleWaterStationIds.value.splice(index, 1);
+    }
+  } else {
+    // Add station
+    visibleWaterStationIds.value.push(stationId);
+  }
+  saveVisibleWaterStations();
+}
+
 // Load visible water stations from storage on mount
 async function loadVisibleWaterStations() {
   try {
@@ -350,6 +474,13 @@ const visibleWaterStations = computed(() => {
 // Load preferences on mount
 onMounted(async () => {
   await loadVisibleWaterStations();
+  // Add click outside listener
+  document.addEventListener('click', handleClickOutside);
+});
+
+// Cleanup on unmount
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
 });
 
 function getStatusText(level: number, criticalLevel: number): string {
@@ -376,6 +507,22 @@ function getStatusText(level: number, criticalLevel: number): string {
   opacity: 0;
   transform: translateY(-10px);
   max-height: 0;
+}
+
+/* Dropdown animation */
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dropdown-enter-from {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 
 /* Bubble styles */
