@@ -362,9 +362,13 @@
                     <div class="bg-gray-900/40 rounded-lg p-3 border border-orange-500/10 hover:border-orange-500/30 transition-colors">
                       <div class="flex items-center gap-2 mb-1">
                         <span class="text-orange-400 text-xs">🌡️</span>
-                        <span class="text-xs text-gray-400">Temp</span>
+                        <span class="text-xs text-gray-400">Temperature</span>
                       </div>
                       <div class="text-lg font-bold text-white">{{ day.temperature.toFixed(1) }}<span class="text-sm text-orange-300">°C</span></div>
+                      <div class="flex justify-between text-[10px] text-gray-400 mt-1">
+                        <span>↓ {{ day.temperatureMin?.toFixed(1) || '--' }}°</span>
+                        <span>↑ {{ day.temperatureMax?.toFixed(1) || '--' }}°</span>
+                      </div>
                       <div class="mt-1.5 h-1 bg-gray-800 rounded-full overflow-hidden">
                         <div class="h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full transition-all duration-500"
                              :style="{ width: getTemperatureBarWidth(day.temperature) }"></div>
@@ -600,94 +604,175 @@ async function fetchFreshData() {
 
   try {
     const db = getDatabase();
-    const sensorTypes = [
-      { key: 'TEM', label: 'temperature' },
-      { key: 'HUM', label: 'humidity' },
-      { key: 'RR', label: 'rainfall' },
-      { key: 'WSP', label: 'windSpeed' },
-      { key: 'WD', label: 'windDirection' }
-    ];
-
-    const allSensorData: any[] = [];
-
+    const sensorTypes = ['TEM', 'HUM', 'RR', 'LUX', 'WSP'];
+    
+    // Calculate date range: 7 days ending yesterday (not including today)
     const now = new Date();
-    const sevenDaysAgoLocal = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
-    const sevenDaysAgoLocalStart = new Date(sevenDaysAgoLocal.getFullYear(), sevenDaysAgoLocal.getMonth(), sevenDaysAgoLocal.getDate());
-    const startTimestamp = Math.floor(sevenDaysAgoLocalStart.getTime() / 1000);
-
-    const yesterdayLocal = new Date(now.getTime() - (1 * 24 * 60 * 60 * 1000));
-    const yesterdayLocalEnd = new Date(yesterdayLocal.getFullYear(), yesterdayLocal.getMonth(), yesterdayLocal.getDate(), 23, 59, 59);
-    const endTimestamp = Math.floor(yesterdayLocalEnd.getTime() / 1000);
-
+    // Get end of yesterday in local time, then add 8 hours for PH timezone (UTC+8)
+    const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59);
+    const yesterdayUnix = Math.floor(yesterday.getTime() / 1000) + (8 * 3600); // Add 8 hours for timezone
+    
+    // Store data by day (using start of day unix as key)
+    const datum: { [key: number]: { [sensor: string]: any } } = {};
+    
+    // Fetch data for each sensor for each of the 7 days
+    const promises: Promise<void>[] = [];
+    
     for (const sensor of sensorTypes) {
-      const sensorRef = dbRef(db, `${stationId}/data/sensors/${sensor.key}`);
-      const sensorQuery = query(sensorRef, orderByKey(), startAt(String(startTimestamp)), endAt(String(endTimestamp)));
-      const snapshot = await get(sensorQuery);
-
-      if (snapshot.exists()) {
-        const sensorData = snapshot.val();
-        Object.entries(sensorData).forEach(([timestamp, value]: [string, any]) => {
-          let finalValue: any = value?.val ?? value ?? 0;
-          if (sensor.key !== 'WD' && typeof finalValue === 'string') {
-            finalValue = parseFloat(finalValue) || 0;
-          }
-          allSensorData.push({
-            timestamp: parseInt(timestamp) * 1000,
-            sensor: sensor.key,
-            value: finalValue
-          });
-        });
+      for (let i = 0; i < 7; i++) {
+        const endUnix = yesterdayUnix - (86400 * i);
+        const startUnix = endUnix - 86400 + 1;
+        
+        if (!datum[startUnix]) datum[startUnix] = {};
+        
+        promises.push(
+          getDailyData(db, stationId, sensor, String(startUnix), String(endUnix))
+            .then(data => {
+              datum[startUnix][sensor] = data;
+            })
+        );
       }
     }
-
-    if (allSensorData.length === 0) {
+    
+    await Promise.all(promises);
+    
+    // Process the data into the format we need
+    const days = Object.keys(datum).sort((a, b) => parseInt(a) - parseInt(b)); // Sort oldest to newest
+    
+    if (days.length === 0) {
       summaryData.value = [];
-      saveToCache(cacheKey, []); // Cache the empty result
+      saveToCache(cacheKey, []);
       console.log('❌ SummaryPage: No sensor data found. Cached empty array.');
       return;
     }
-
-    const dailyData: { [key: string]: { [sensor: string]: any[] } } = {};
-    allSensorData.forEach(data => {
-      const date = new Date(data.timestamp).toDateString();
-      if (!dailyData[date]) dailyData[date] = {};
-      if (!dailyData[date][data.sensor]) dailyData[date][data.sensor] = [];
-      dailyData[date][data.sensor].push(data.value);
-    });
-
-    const processedData: any[] = Object.entries(dailyData).map(([date, sensorData]) => {
-      const dayData: any = {
-        date: new Date(date),
-        temperature: 0,
-        humidity: 0,
-        rainfall: 0,
-        windSpeed: 0,
+    
+    const processedData: any[] = days.map(dayKey => {
+      const dayUnix = parseInt(dayKey);
+      const date = new Date(dayUnix * 1000);
+      const weather = datum[dayUnix];
+      
+      // Get temperature data (has average, lowestTemp, highestTemp)
+      const tempData = weather.TEM || { average: 0, lowestTemp: 0, highestTemp: 0 };
+      
+      return {
+        date: date,
+        temperature: parseFloat(tempData.average) || 0,
+        temperatureMin: parseFloat(tempData.lowestTemp) || 0,
+        temperatureMax: parseFloat(tempData.highestTemp) || 0,
+        humidity: parseFloat(weather.HUM) || 0,
+        rainfall: parseFloat(weather.RR) || 0,
+        lux: parseFloat(weather.LUX) || 0,
+        windSpeed: parseFloat(weather.WSP) || 0,
         windDirection: 'N'
       };
-      Object.entries(sensorData).forEach(([sensor, values]: [string, any[]]) => {
-        if (values.length > 0) {
-          if (sensor === 'TEM') dayData.temperature = parseFloat((values.reduce((s, v) => s + v, 0) / values.length).toFixed(2));
-          else if (sensor === 'HUM') dayData.humidity = parseFloat((values.reduce((s, v) => s + v, 0) / values.length).toFixed(2));
-          else if (sensor === 'RR') dayData.rainfall = parseFloat(values.reduce((s, v) => s + v, 0).toFixed(2));
-          else if (sensor === 'WSP') dayData.windSpeed = parseFloat((values.reduce((s, v) => s + v, 0) / values.length).toFixed(2));
-          else if (sensor === 'WD') {
-            const windDirs = values.filter(v => v && v !== 'N');
-            dayData.windDirection = windDirs.length > 0 ? windDirs[0] : 'N';
-          }
-        }
-      });
-      return dayData;
     });
-
-    processedData.sort((a, b) => a.date.getTime() - b.date.getTime());
+    
     summaryData.value = processedData;
     saveToCache(cacheKey, processedData);
-    console.log('✅ SummaryPage: Fresh data fetched and cached.');
+    console.log('✅ SummaryPage: Fresh data fetched and cached.', processedData);
 
   } catch (err: any) {
     console.error('Error fetching fresh data:', err);
-    throw err; // Re-throw to be caught by the main fetch function
+    throw err;
   }
+}
+
+// Fetch daily data for a specific sensor
+async function getDailyData(db: any, stationId: string, sensor: string, startUnix: string, endUnix: string): Promise<any> {
+  try {
+    const sensorRef = dbRef(db, `${stationId}/data/sensors/${sensor}/`);
+    const sensorQuery = query(sensorRef, orderByKey(), startAt(startUnix), endAt(endUnix));
+    const snapshot = await get(sensorQuery);
+    const data = snapshot.val();
+    
+    if (!data) {
+      // Return appropriate fallback based on sensor type
+      if (sensor === 'RR') return 0;
+      if (sensor === 'TEM') return { average: 0, lowestTemp: 0, highestTemp: 0 };
+      return 0;
+    }
+    
+    // For rainfall, sum all values (total)
+    if (sensor === 'RR') {
+      return getDailyTotal(data);
+    }
+    
+    // For other sensors, calculate average (and min/max for temperature)
+    return getDailyDataAverage(data, sensor);
+  } catch (error) {
+    console.error(`Error fetching data for sensor ${sensor}:`, error);
+    if (sensor === 'RR') return 0;
+    if (sensor === 'TEM') return { average: 0, lowestTemp: 0, highestTemp: 0 };
+    return 0;
+  }
+}
+
+// Calculate daily average (and min/max for temperature)
+function getDailyDataAverage(data: any, sensor: string): any {
+  if (!data || data === 0) {
+    if (sensor === 'TEM') {
+      return { average: 0, lowestTemp: 0, highestTemp: 0 };
+    }
+    return 0;
+  }
+  
+  const values = Object.values(data);
+  let total = 0;
+  let count = 0;
+  let lowestTemp = Infinity;
+  let highestTemp = -Infinity;
+  
+  values.forEach((el: any) => {
+    if (el && el.val !== undefined) {
+      const value = parseFloat(el.val);
+      if (!isNaN(value)) {
+        if (sensor === 'TEM') {
+          lowestTemp = Math.min(lowestTemp, value);
+          highestTemp = Math.max(highestTemp, value);
+        }
+        total += value;
+        count++;
+      }
+    }
+  });
+  
+  if (count === 0) {
+    if (sensor === 'TEM') {
+      return { average: 0, lowestTemp: 0, highestTemp: 0 };
+    }
+    return 0;
+  }
+  
+  if (sensor === 'TEM') {
+    return {
+      average: (total / count).toFixed(2),
+      lowestTemp: lowestTemp === Infinity ? 0 : lowestTemp.toFixed(2),
+      highestTemp: highestTemp === -Infinity ? 0 : highestTemp.toFixed(2)
+    };
+  }
+  
+  return (total / count).toFixed(2);
+}
+
+// Calculate daily total (for rainfall)
+function getDailyTotal(data: any): number {
+  if (!data || data === 0) {
+    return 0;
+  }
+  
+  let total = 0;
+  const values = Object.values(data);
+  
+  values.forEach((val: any) => {
+    if (val && val.val !== undefined) {
+      const value = parseFloat(val.val);
+      if (!isNaN(value)) {
+        total += value;
+      }
+    }
+  });
+  
+  return parseFloat(total.toFixed(2));
 }
 
 // Helper functions for styling
