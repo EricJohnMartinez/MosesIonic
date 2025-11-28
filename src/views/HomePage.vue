@@ -17,8 +17,25 @@
           <!-- Station selector button - positioned responsively -->
           <div class="fixed top-4 right-4 z-50" :style="{ top: 'calc(env(safe-area-inset-top) + 1rem)' }">
             <div class="flex items-center space-x-2">
-              <!-- Sync Status Indicator -->
-           
+              <!-- Language Selector -->
+              <div class="relative">
+                <button type="button" aria-label="Change Language" @click="toggleLanguageDropdown"
+                  class="bg-gray-800/90 backdrop-blur-md text-white p-3 rounded-xl shadow-lg border border-gray-700 hover:bg-gray-700/90 transition-all duration-200 flex items-center space-x-1 min-h-[44px]">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+                  </svg>
+                  <span class="text-xs font-medium">{{ language === 'en' ? 'EN' : 'TL' }}</span>
+                </button>
+                <!-- Language Dropdown -->
+                <div v-if="showLanguageDropdown" class="absolute top-full right-0 mt-2 bg-slate-800/95 backdrop-blur-lg rounded-lg shadow-xl border border-slate-700/50 overflow-hidden z-50 min-w-[120px]">
+                  <button @click="setLanguage('en'); showLanguageDropdown = false" :class="['w-full px-4 py-3 text-left hover:bg-slate-700/50 transition-colors text-sm flex items-center gap-2', language === 'en' ? 'bg-blue-600/30 text-blue-300' : 'text-white']">
+                    <span>🇺🇸</span> English
+                  </button>
+                  <button @click="setLanguage('tl'); showLanguageDropdown = false" :class="['w-full px-4 py-3 text-left hover:bg-slate-700/50 transition-colors text-sm flex items-center gap-2', language === 'tl' ? 'bg-blue-600/30 text-blue-300' : 'text-white']">
+                    <span>🇵🇭</span> Tagalog
+                  </button>
+                </div>
+              </div>
 
               <button type="button" aria-label="Open Stations Menu" @click="toggleNav"
                 class="bg-gray-800/90 backdrop-blur-md text-white p-3 rounded-xl shadow-lg border border-gray-700 hover:bg-gray-700/90 transition-all duration-200 flex items-center space-x-2 min-h-[44px]">
@@ -276,7 +293,7 @@
                       <!-- Heat Index Warning Card -->
                       <div v-if="currentHeatWarning" class="bg-white/10 backdrop-blur-xl rounded-2xl p-4 border border-white/20 shadow-2xl" style="box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);">
                         <!-- Row 1: Title -->
-                        <div class="text-lg font-bold text-white mb-3">Heat Index</div>
+                        <div class="text-lg font-bold text-white mb-3">{{ t('heat_index') }}</div>
 
                         <!-- Row 2: Icon (left) + Feels like value & Progress bar (right) -->
                         <div class="flex items-start gap-4 mb-3">
@@ -289,7 +306,7 @@
                           <div class="flex-1">
                             <!-- Feels like -->
                             <div class="mb-2">
-                              <span class="text-sm text-white/80 block">Feels like :</span>
+                              <span class="text-sm text-white/80 block">{{ t('feels_like') }} :</span>
                               <span class="text-4xl sm:text-5xl font-bold text-orange-400">{{ formatTemp(currentStation.data.heatIndex) }}<sup class="text-base">{{ tempUnitSymbol }}</sup></span>
                             </div>
                             
@@ -298,7 +315,7 @@
                               <!-- Cool/LOW RISK (Blue) - Only shows when below 27°C -->
                               <div v-if="currentStation.data.heatIndex < 27" class="flex items-center justify-center rounded-lg relative overflow-hidden bg-blue-500 w-full">
                                 <p class="absolute inset-0 flex items-center justify-center font-bold text-xs text-white drop-shadow">
-                                  LOW RISK
+                                  {{ t('low_risk') }}
                                 </p>
                               </div>
                               
@@ -308,7 +325,7 @@
                                    :style="{ width: getHeatWarningBarWidth('caution') }">
                                 <p class="absolute inset-0 flex items-center justify-center font-bold text-xs text-white drop-shadow"
                                    :class="currentHeatWarning.level === 'caution' ? 'opacity-100' : 'opacity-0'">
-                                  CAUTION
+                                  {{ t('caution') }}
                                 </p>
                               </div>
 
@@ -318,7 +335,7 @@
                                    :style="{ width: getHeatWarningBarWidth('extremeCaution') }">
                                 <p class="absolute inset-0 flex items-center justify-center font-bold text-xs text-white drop-shadow"
                                    :class="currentHeatWarning.level === 'extremeCaution' ? 'opacity-100' : 'opacity-0'">
-                                  EXTREME
+                                  {{ t('extreme') }}
                                 </p>
                               </div>
 
@@ -328,7 +345,7 @@
                                    :style="{ width: getHeatWarningBarWidth('danger') }">
                                 <p class="absolute inset-0 flex items-center justify-center font-bold text-xs text-white drop-shadow"
                                    :class="currentHeatWarning.level === 'danger' ? 'opacity-100' : 'opacity-0'">
-                                  DANGER
+                                  {{ t('danger') }}
                                 </p>
                               </div>
 
@@ -338,7 +355,7 @@
                                    :style="{ width: getHeatWarningBarWidth('extremeDanger') }">
                                 <p class="absolute inset-0 flex items-center justify-center font-bold text-xs text-white drop-shadow"
                                    :class="currentHeatWarning.level === 'extremeDanger' ? 'opacity-100' : 'opacity-0'">
-                                  EXTREME
+                                  {{ t('extreme') }}
                                 </p>
                               </div>
                             </div>
@@ -347,7 +364,7 @@
 
                         <!-- Row 3: Warning message (centered) -->
                         <div class="text-center text-sm font-medium text-white/80 uppercase tracking-wide">
-                          {{ currentHeatWarning.label }}: {{ currentHeatWarning.message.split('.')[0] }}
+                          {{ getHeatWarningLabel(currentHeatWarning.level) }}: {{ getHeatWarningMessage(currentHeatWarning.level) }}
                         </div>
                       </div>
                     </div>
@@ -386,7 +403,7 @@
             <section class="lg:mt-1 md:mt-8 mt-10">
               <!-- Weather Index Header -->
               <div class="flex items-center gap-2 mb-4 sm:mb-5 md:mb-6 w-full justify-center lg:justify-start">
-                <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-white">Weather Index</h2>
+                <h2 class="text-lg sm:text-xl md:text-2xl font-bold text-white">{{ t('weather_index') }}</h2>
               </div>
               
               <!-- Weather Index Grid -->
@@ -405,7 +422,7 @@
                     getCardAnimationClass(0)
                   ]">
                     <div class="flex items-center justify-between mb-3 md:mb-4">
-                      <h3 class="text-sm font-semibold text-white">Rainfall Intensity & Warnings</h3>
+                      <h3 class="text-sm font-semibold text-white">{{ t('rainfall_intensity') }}</h3>
                       <img src="/images/rainfall.png" class="w-8 h-8 md:w-10 md:h-10 object-contain" alt="Rainfall" />
                     </div>
 
@@ -416,7 +433,7 @@
                           <div class="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-1">
                             {{ currentStation.data.rainfall }}<span class="text-sm md:text-base">mm</span>
                           </div>
-                          <div class="text-xs md:text-sm text-white/80">Current Intensity</div>
+                          <div class="text-xs md:text-sm text-white/80">{{ t('current_intensity') }}</div>
                         </div>
                       </div>
 
@@ -424,18 +441,18 @@
                       <div class="sm:col-span-2 space-y-3">
                         <div class="grid grid-cols-2 gap-2 sm:gap-4">
                           <div>
-                            <p class="text-xs md:text-sm text-white/80">Daily Total</p>
+                            <p class="text-xs md:text-sm text-white/80">{{ t('daily_total') }}</p>
                             <h1 class="text-lg md:text-xl font-bold text-white">{{ todayTotalRain.toFixed(2) }} mm</h1>
                           </div>
                           <div>
-                            <p class="text-xs md:text-sm text-white/80">Category</p>
+                            <p class="text-xs md:text-sm text-white/80">{{ t('category') }}</p>
                             <h1 class="text-lg md:text-xl text-white font-semibold">{{ getRainfallCategory() }}</h1>
                           </div>
                         </div>
 
                         <!-- Rainfall Warning Levels -->
                         <div class="space-y-2">
-                          <p class="text-xs text-white/80">Warning Levels</p>
+                          <p class="text-xs text-white/80">{{ t('warning_levels') }}</p>
                           <div class="flex gap-1">
                             <!-- Yellow Warning -->
                             <div class="h-4 flex items-center justify-center rounded-l-lg rounded-r-sm relative overflow-hidden"
@@ -473,223 +490,223 @@
                   </div>
 
                   <!-- 2-Column Grid Layout -->
-                  <div class="grid grid-cols-2 gap-4 sm:gap-5 md:gap-6">
+                  <div class="grid grid-cols-2 gap-3 sm:gap-4 md:gap-5">
                     
                     <!-- Temperature Card -->
                     <div data-card-id="Temperature" :class="[
-                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-4 cursor-pointer select-none card-hover card-transition touch-manipulation',
+                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-3 sm:p-4 cursor-pointer select-none card-hover card-transition touch-manipulation min-h-[88px]',
                       cardsDarkened ? 'card-dark' : '',
                       getCardAnimationClass(1)
                     ]" @click="toggleTemperatureTable">
-                      <div class="flex items-center gap-3">
-                        <div class="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-slate-600/50 rounded-xl flex items-center justify-center">
-                          <svg class="w-6 h-6 sm:w-7 sm:h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div class="flex items-center gap-2 sm:gap-3 h-full">
+                        <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-slate-600/50 rounded-xl flex items-center justify-center">
+                          <svg class="w-5 h-5 sm:w-6 sm:h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a3 3 0 016 0v6m-6 0a3 3 0 006 0m-6 0H7m8 0h2M12 3v2"></path>
                           </svg>
                         </div>
-                        <div>
+                        <div class="min-w-0 flex-1">
                           <div class="flex items-baseline gap-1">
-                            <span class="text-2xl sm:text-3xl font-bold text-white">{{ formatTemp(currentStation.data.temperature) }}</span>
-                            <span class="text-sm sm:text-base text-white/70">{{ tempUnitSymbol }}</span>
+                            <span class="text-xl sm:text-2xl font-bold text-white">{{ formatTemp(currentStation.data.temperature) }}</span>
+                            <span class="text-xs sm:text-sm text-white/70">{{ tempUnitSymbol }}</span>
                           </div>
-                          <p class="text-xs sm:text-sm text-white/60">Temperature</p>
+                          <p class="text-[10px] sm:text-xs text-white/60 truncate">{{ t('temperature') }}</p>
                         </div>
                       </div>
                     </div>
 
                     <!-- Humidity Card -->
                     <div data-card-id="Humidity" :class="[
-                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-4 card-hover card-transition touch-manipulation',
+                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-3 sm:p-4 card-hover card-transition touch-manipulation min-h-[88px]',
                       cardsDarkened ? 'card-dark' : '',
                       getCardAnimationClass(1)
                     ]">
-                      <div class="flex items-center gap-3">
-                        <div class="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-slate-600/50 rounded-xl flex items-center justify-center">
-                          <svg class="w-6 h-6 sm:w-7 sm:h-7 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div class="flex items-center gap-2 sm:gap-3 h-full">
+                        <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-slate-600/50 rounded-xl flex items-center justify-center">
+                          <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"></path>
                           </svg>
                         </div>
-                        <div>
+                        <div class="min-w-0 flex-1">
                           <div class="flex items-baseline gap-1">
-                            <span class="text-2xl sm:text-3xl font-bold text-white">{{ currentStation.data.humidity || '--' }}</span>
-                            <span class="text-sm sm:text-base text-white/70">%</span>
+                            <span class="text-xl sm:text-2xl font-bold text-white">{{ currentStation.data.humidity || '--' }}</span>
+                            <span class="text-xs sm:text-sm text-white/70">%</span>
                           </div>
-                          <p class="text-xs sm:text-sm text-white/60">Humidity</p>
+                          <p class="text-[10px] sm:text-xs text-white/60 truncate">{{ t('humidity') }}</p>
                         </div>
                       </div>
                     </div>
 
                     <!-- Wind Card -->
                     <div data-card-id="Wind" :class="[
-                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-4 cursor-pointer select-none card-hover card-transition touch-manipulation',
+                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-3 sm:p-4 cursor-pointer select-none card-hover card-transition touch-manipulation min-h-[88px]',
                       cardsDarkened ? 'card-dark' : '',
                       getCardAnimationClass(2)
                     ]" @click="toggleWindChart">
-                      <div class="flex items-center gap-3">
-                        <div class="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-slate-600/50 rounded-xl flex items-center justify-center">
-                          <svg class="w-6 h-6 sm:w-7 sm:h-7 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div class="flex items-center gap-2 sm:gap-3 h-full">
+                        <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-slate-600/50 rounded-xl flex items-center justify-center">
+                          <svg class="w-5 h-5 sm:w-6 sm:h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
                           </svg>
                         </div>
-                        <div>
+                        <div class="min-w-0 flex-1">
                           <div class="flex items-baseline gap-1">
-                            <span class="text-2xl sm:text-3xl font-bold text-white">{{ currentStation.data.windSpeed }}</span>
-                            <span class="text-sm sm:text-base text-white/70">m/s</span>
+                            <span class="text-xl sm:text-2xl font-bold text-white">{{ currentStation.data.windSpeed }}</span>
+                            <span class="text-xs sm:text-sm text-white/70">m/s</span>
                           </div>
-                          <p class="text-xs sm:text-sm text-white/60">Wind Speed</p>
+                          <p class="text-[10px] sm:text-xs text-white/60 truncate">{{ t('wind_speed') }}</p>
                         </div>
                       </div>
                     </div>
 
                     <!-- Wind Direction Card -->
                     <div data-card-id="WindDirection" :class="[
-                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-4 card-hover card-transition touch-manipulation',
+                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-3 sm:p-4 card-hover card-transition touch-manipulation min-h-[88px]',
                       cardsDarkened ? 'card-dark' : '',
                       getCardAnimationClass(3)
                     ]">
-                      <div class="flex items-center gap-3">
-                        <div class="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-slate-600/50 rounded-xl flex items-center justify-center">
+                      <div class="flex items-center gap-2 sm:gap-3 h-full">
+                        <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-slate-600/50 rounded-xl flex items-center justify-center">
                           <WindCompass :windDirection="currentStation.data.windAngle || 0" :windSpeed="currentStation.data.windSpeed || 0" />
                         </div>
-                        <div>
+                        <div class="min-w-0 flex-1">
                           <div class="flex items-baseline gap-1">
-                            <span class="text-2xl sm:text-3xl font-bold text-white">{{ currentStation.data.windDirection }}</span>
+                            <span class="text-xl sm:text-2xl font-bold text-white">{{ currentStation.data.windDirection }}</span>
                           </div>
-                          <p class="text-xs sm:text-sm text-white/60">Wind Direction</p>
+                          <p class="text-[10px] sm:text-xs text-white/60 leading-tight">{{ t('wind_direction') }}</p>
                         </div>
                       </div>
                     </div>
 
                     <!-- Precipitation Card -->
                     <div data-card-id="Precipitation" :class="[
-                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-4 cursor-pointer select-none card-hover card-transition touch-manipulation',
+                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-3 sm:p-4 cursor-pointer select-none card-hover card-transition touch-manipulation min-h-[88px]',
                       cardsDarkened ? 'card-dark' : '',
                       getCardAnimationClass(4)
                     ]" @click="toggleRainfallChart">
-                      <div class="flex items-center gap-3">
-                        <div class="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-slate-600/50 rounded-xl flex items-center justify-center">
-                          <svg class="w-6 h-6 sm:w-7 sm:h-7 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div class="flex items-center gap-2 sm:gap-3 h-full">
+                        <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-slate-600/50 rounded-xl flex items-center justify-center">
+                          <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 19v2m4-2v2m4-2v2"></path>
                           </svg>
                         </div>
-                        <div>
+                        <div class="min-w-0 flex-1">
                           <div class="flex items-baseline gap-1">
-                            <span class="text-2xl sm:text-3xl font-bold text-white">{{ currentStation.data.rainfall }}</span>
-                            <span class="text-sm sm:text-base text-white/70">mm</span>
+                            <span class="text-xl sm:text-2xl font-bold text-white">{{ currentStation.data.rainfall }}</span>
+                            <span class="text-xs sm:text-sm text-white/70">mm</span>
                           </div>
-                          <p class="text-xs sm:text-sm text-white/60">Rain Rate</p>
+                          <p class="text-[10px] sm:text-xs text-white/60 truncate">{{ t('rain_rate') }}</p>
                         </div>
                       </div>
                     </div>
 
                     <!-- Air Pressure Card -->
                     <div data-card-id="AirPressure" :class="[
-                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-4 card-hover card-transition touch-manipulation',
+                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-3 sm:p-4 card-hover card-transition touch-manipulation min-h-[88px]',
                       cardsDarkened ? 'card-dark' : '',
                       getCardAnimationClass(5)
                     ]">
-                      <div class="flex items-center gap-3">
-                        <div class="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-slate-600/50 rounded-xl flex items-center justify-center">
-                          <svg class="w-6 h-6 sm:w-7 sm:h-7 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div class="flex items-center gap-2 sm:gap-3 h-full">
+                        <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-slate-600/50 rounded-xl flex items-center justify-center">
+                          <svg class="w-5 h-5 sm:w-6 sm:h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                           </svg>
                         </div>
-                        <div>
+                        <div class="min-w-0 flex-1">
                           <div class="flex items-baseline gap-1">
-                            <span class="text-2xl sm:text-3xl font-bold text-white">{{ currentStation.data.pressure || '--' }}</span>
-                            <span class="text-sm sm:text-base text-white/70">hPa</span>
+                            <span class="text-xl sm:text-2xl font-bold text-white">{{ currentStation.data.pressure || '--' }}</span>
+                            <span class="text-xs sm:text-sm text-white/70">hPa</span>
                           </div>
-                          <p class="text-xs sm:text-sm text-white/60">Air Pressure</p>
+                          <p class="text-[10px] sm:text-xs text-white/60 leading-tight">{{ t('air_pressure') }}</p>
                         </div>
                       </div>
                     </div>
 
                     <!-- Solar Card -->
                     <div data-card-id="Solar" :class="[
-                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-4 card-hover card-transition touch-manipulation',
+                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-3 sm:p-4 card-hover card-transition touch-manipulation min-h-[88px]',
                       cardsDarkened ? 'card-dark' : '',
                       getCardAnimationClass(6)
                     ]">
-                      <div class="flex items-center gap-3">
-                        <div class="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-slate-600/50 rounded-xl flex items-center justify-center">
-                          <svg class="w-6 h-6 sm:w-7 sm:h-7 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div class="flex items-center gap-2 sm:gap-3 h-full">
+                        <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-slate-600/50 rounded-xl flex items-center justify-center">
+                          <svg class="w-5 h-5 sm:w-6 sm:h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
                           </svg>
                         </div>
-                        <div>
+                        <div class="min-w-0 flex-1">
                           <div class="flex items-baseline gap-1">
-                            <span class="text-2xl sm:text-3xl font-bold text-white">{{ currentStation.data.solar }}</span>
-                            <span class="text-sm sm:text-base text-white/70">W/m²</span>
+                            <span class="text-xl sm:text-2xl font-bold text-white">{{ currentStation.data.solar }}</span>
+                            <span class="text-xs sm:text-sm text-white/70">W/m²</span>
                           </div>
-                          <p class="text-xs sm:text-sm text-white/60">Solar</p>
+                          <p class="text-[10px] sm:text-xs text-white/60 truncate">{{ t('solar') }}</p>
                         </div>
                       </div>
                     </div>
 
                     <!-- Soil Moisture Card -->
                     <div data-card-id="SoilMoisture" :class="[
-                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-4 card-hover card-transition touch-manipulation',
+                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-3 sm:p-4 card-hover card-transition touch-manipulation min-h-[88px]',
                       cardsDarkened ? 'card-dark' : '',
                       getCardAnimationClass(7)
                     ]">
-                      <div class="flex items-center gap-3">
-                        <div class="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-slate-600/50 rounded-xl flex items-center justify-center">
-                          <svg class="w-6 h-6 sm:w-7 sm:h-7 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div class="flex items-center gap-2 sm:gap-3 h-full">
+                        <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-slate-600/50 rounded-xl flex items-center justify-center">
+                          <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                           </svg>
                         </div>
-                        <div>
+                        <div class="min-w-0 flex-1">
                           <div class="flex items-baseline gap-1">
-                            <span class="text-2xl sm:text-3xl font-bold text-white">{{ currentStation.data.soilMoisture }}</span>
-                            <span class="text-sm sm:text-base text-white/70">%</span>
+                            <span class="text-xl sm:text-2xl font-bold text-white">{{ currentStation.data.soilMoisture }}</span>
+                            <span class="text-xs sm:text-sm text-white/70">%</span>
                           </div>
-                          <p class="text-xs sm:text-sm text-white/60">Soil Moisture</p>
+                          <p class="text-[10px] sm:text-xs text-white/60 leading-tight">{{ t('soil_moisture') }}</p>
                         </div>
                       </div>
                     </div>
 
                     <!-- Soil Temperature Card -->
                     <div data-card-id="SoilTemp" :class="[
-                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-4 card-hover card-transition touch-manipulation',
+                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-3 sm:p-4 card-hover card-transition touch-manipulation min-h-[88px]',
                       cardsDarkened ? 'card-dark' : '',
                       getCardAnimationClass(8)
                     ]">
-                      <div class="flex items-center gap-3">
-                        <div class="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-slate-600/50 rounded-xl flex items-center justify-center">
-                          <svg class="w-6 h-6 sm:w-7 sm:h-7 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div class="flex items-center gap-2 sm:gap-3 h-full">
+                        <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-slate-600/50 rounded-xl flex items-center justify-center">
+                          <svg class="w-5 h-5 sm:w-6 sm:h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                           </svg>
                         </div>
-                        <div>
+                        <div class="min-w-0 flex-1">
                           <div class="flex items-baseline gap-1">
-                            <span class="text-2xl sm:text-3xl font-bold text-white">{{ formatTemp(currentStation.data.soilTemp) }}</span>
-                            <span class="text-sm sm:text-base text-white/70">{{ tempUnitSymbol }}</span>
+                            <span class="text-xl sm:text-2xl font-bold text-white">{{ formatTemp(currentStation.data.soilTemp) }}</span>
+                            <span class="text-xs sm:text-sm text-white/70">{{ tempUnitSymbol }}</span>
                           </div>
-                          <p class="text-xs sm:text-sm text-white/60">Soil Temp</p>
+                          <p class="text-[10px] sm:text-xs text-white/60 truncate">{{ t('soil_temp') }}</p>
                         </div>
                       </div>
                     </div>
 
                     <!-- Light Intensity Card -->
                     <div data-card-id="LightIntensity" :class="[
-                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-4 card-hover card-transition touch-manipulation',
+                      'bg-slate-700/50 backdrop-blur-lg rounded-2xl p-3 sm:p-4 card-hover card-transition touch-manipulation min-h-[88px]',
                       cardsDarkened ? 'card-dark' : '',
                       getCardAnimationClass(9)
                     ]">
-                      <div class="flex items-center gap-3">
-                        <div class="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-slate-600/50 rounded-xl flex items-center justify-center">
-                          <svg class="w-6 h-6 sm:w-7 sm:h-7 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div class="flex items-center gap-2 sm:gap-3 h-full">
+                        <div class="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-slate-600/50 rounded-xl flex items-center justify-center">
+                          <svg class="w-5 h-5 sm:w-6 sm:h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
                           </svg>
                         </div>
-                        <div>
+                        <div class="min-w-0 flex-1">
                           <div class="flex items-baseline gap-1">
-                            <span class="text-2xl sm:text-3xl font-bold text-white">{{ currentStation.data.illumination }}</span>
-                            <span class="text-sm sm:text-base text-white/70">lux</span>
+                            <span class="text-xl sm:text-2xl font-bold text-white">{{ currentStation.data.illumination }}</span>
+                            <span class="text-xs sm:text-sm text-white/70">lux</span>
                           </div>
-                          <p class="text-xs sm:text-sm text-white/60">Light Intensity</p>
+                          <p class="text-[10px] sm:text-xs text-white/60 leading-tight">{{ t('light_intensity') }}</p>
                         </div>
                       </div>
                     </div>
@@ -767,6 +784,7 @@ import { ref as vueRef, toRef } from 'vue';
 import { weatherAlertSystem } from '../utils/weatherAlerts';
 import { saveToCache, loadFromCache, updateStorageMetadata } from '@/services/offlineStorage';
 import { getOfflineDetectionService, isOffline } from '@/services/offlineDetection';
+import { useLanguage } from '@/utils/useLanguage';
 
 // @ts-ignore
 declare global { interface Window { L: any } }
@@ -788,6 +806,14 @@ const tempUnitSymbol = computed(() => tempUnit.value === 'C' ? '°C' : '°F');
 const showUnitDropdown = ref(false);
 const weatherIndexExpanded = ref(true);
 
+// Language preference
+const { t, language, setLanguage, loadLanguage, isEnglish } = useLanguage();
+const showLanguageDropdown = ref(false);
+
+function toggleLanguageDropdown() {
+  showLanguageDropdown.value = !showLanguageDropdown.value;
+}
+
 function toggleUnitDropdown() {
   showUnitDropdown.value = !showUnitDropdown.value;
 }
@@ -799,6 +825,8 @@ onMounted(async () => {
   } catch (e) {
     // ignore and keep default
   }
+  // Load language preference
+  await loadLanguage();
 });
 
 async function setTempUnit(unit: 'C'|'F') {
@@ -937,6 +965,30 @@ function getHeatWarningBarWidth(level: string): string {
     return '50%';
   }
   return '16.67%';
+}
+
+// Helper function to get translated heat warning label
+function getHeatWarningLabel(level: string): string {
+  const labels: Record<string, string> = {
+    'cool': t('low_risk'),
+    'caution': t('caution'),
+    'extremeCaution': t('extreme_caution'),
+    'danger': t('danger'),
+    'extremeDanger': t('extreme_danger')
+  };
+  return labels[level] || level;
+}
+
+// Helper function to get translated heat warning message
+function getHeatWarningMessage(level: string): string {
+  const messages: Record<string, string> = {
+    'cool': t('low_risk_msg'),
+    'caution': t('caution_msg'),
+    'extremeCaution': t('extreme_caution_msg'),
+    'danger': t('danger_msg'),
+    'extremeDanger': t('extreme_danger_msg')
+  };
+  return messages[level] || '';
 }
 
 // FCM Test function for debugging
@@ -1732,7 +1784,20 @@ function getWeatherDescription(): string {
   if (!currentStation.value || !currentStation.value.data) return 'Loading weather data...';
 
   const weatherCondition = determineWeatherCondition(currentStation.value.data);
-  return weatherCondition.wType;
+  // Translate weather condition
+  const weatherTranslations: Record<string, string> = {
+    'Sunny': t('sunny'),
+    'Cloudy': t('cloudy'),
+    'Partly Cloudy': t('partly_cloudy'),
+    'Rainy': t('rainy'),
+    'Light Rain': t('light_rain'),
+    'Moderate Rain': t('moderate_rain'),
+    'Heavy Rain': t('heavy_rain'),
+    'Intense Rain': t('intense_rain'),
+    'Torrential Rain': t('torrential_rain'),
+    'Unknown': t('unknown')
+  };
+  return weatherTranslations[weatherCondition.wType] || weatherCondition.wType;
 }
 
 function determineWeatherCondition(weather: any) {
