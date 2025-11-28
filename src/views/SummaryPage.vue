@@ -221,50 +221,52 @@
           
           <!-- Key Metrics Dashboard -->
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- Temperature Card -->
+            <!-- Heat Index Card (6AM-6PM Average) -->
             <div class="group relative overflow-hidden bg-gradient-to-br from-orange-500/10 to-red-500/10 backdrop-blur-lg rounded-2xl p-5 border border-orange-500/20 hover:border-orange-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-orange-500/20">
               <div class="absolute top-0 right-0 w-24 h-24 bg-orange-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500"></div>
               <div class="relative">
                 <div class="flex items-center justify-between mb-3">
                   <div class="p-2 bg-orange-500/20 rounded-lg">
                     <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
                     </svg>
                   </div>
-                  <span class="text-xs font-medium text-orange-400 uppercase tracking-wide">Avg</span>
+                  <span class="text-xs font-medium text-orange-400 uppercase tracking-wide">6AM-6PM</span>
                 </div>
                 <div class="mb-1">
-                  <span class="text-3xl font-bold text-white">{{ averageTemp }}</span>
+                  <span class="text-3xl font-bold text-white">{{ averageHeatIndex }}</span>
                   <span class="text-lg text-orange-300">°C</span>
                 </div>
-                <div class="text-sm text-gray-400">Temperature</div>
+                <div class="text-sm text-gray-400">Heat Index</div>
                 <div class="mt-3 h-1.5 bg-gray-800/50 rounded-full overflow-hidden">
-                  <div class="h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full transition-all duration-1000" 
-                       :style="{ width: `${Math.min(100, (parseFloat(String(averageTemp)) / 40) * 100)}%` }"></div>
+                  <div class="h-full rounded-full transition-all duration-1000" 
+                       :class="getHeatIndexBarColor(parseFloat(String(averageHeatIndex)))"
+                       :style="{ width: `${Math.min(100, (parseFloat(String(averageHeatIndex)) / 55) * 100)}%` }"></div>
                 </div>
               </div>
             </div>
 
-            <!-- Humidity Card -->
-            <div class="group relative overflow-hidden bg-gradient-to-br from-blue-500/10 to-cyan-500/10 backdrop-blur-lg rounded-2xl p-5 border border-blue-500/20 hover:border-blue-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/20">
-              <div class="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500"></div>
+            <!-- Air Quality Card (Mock Data) -->
+            <div class="group relative overflow-hidden bg-gradient-to-br from-green-500/10 to-emerald-500/10 backdrop-blur-lg rounded-2xl p-5 border border-green-500/20 hover:border-green-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-green-500/20">
+              <div class="absolute top-0 right-0 w-24 h-24 bg-green-500/10 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-500"></div>
               <div class="relative">
                 <div class="flex items-center justify-between mb-3">
-                  <div class="p-2 bg-blue-500/20 rounded-lg">
-                    <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/>
+                  <div class="p-2 bg-green-500/20 rounded-lg">
+                    <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                     </svg>
                   </div>
-                  <span class="text-xs font-medium text-blue-400 uppercase tracking-wide">Avg</span>
+                  <span class="text-xs font-medium text-green-400 uppercase tracking-wide">AQI</span>
                 </div>
                 <div class="mb-1">
-                  <span class="text-3xl font-bold text-white">{{ averageHumidity }}</span>
-                  <span class="text-lg text-blue-300">%</span>
+                  <span class="text-3xl font-bold text-white">{{ mockAirQuality.value }}</span>
+                  <span class="text-lg text-green-300"></span>
                 </div>
-                <div class="text-sm text-gray-400">Humidity</div>
+                <div class="text-sm" :class="mockAirQuality.color">{{ mockAirQuality.label }}</div>
                 <div class="mt-3 h-1.5 bg-gray-800/50 rounded-full overflow-hidden">
-                  <div class="h-full bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full transition-all duration-1000" 
-                       :style="{ width: `${averageHumidity}%` }"></div>
+                  <div class="h-full rounded-full transition-all duration-1000" 
+                       :class="mockAirQuality.barColor"
+                       :style="{ width: `${Math.min(100, (mockAirQuality.value / 300) * 100)}%` }"></div>
                 </div>
               </div>
             </div>
@@ -516,6 +518,35 @@ const currentStation = computed(() =>
   stations.value.find(s => s.id === selectedStation.value)
 );
 
+// Average Heat Index (calculated from daytime data only: 6AM-6PM)
+const averageHeatIndex = computed(() => {
+  if (summaryData.value.length === 0) return 0;
+  const sum = summaryData.value.reduce((acc, day) => acc + (day.heatIndexDaytime || 0), 0);
+  return (sum / summaryData.value.length).toFixed(2);
+});
+
+// Mock Air Quality data (since no real data is available yet)
+const mockAirQuality = computed(() => {
+  // Generate a pseudo-random but consistent AQI value based on the date
+  const today = new Date();
+  const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+  const baseValue = ((seed * 9301 + 49297) % 233280) / 233280; // Pseudo-random 0-1
+  const aqi = Math.floor(baseValue * 80) + 25; // Range: 25-105 (mostly Good to Moderate)
+  
+  // AQI categories
+  if (aqi <= 50) {
+    return { value: aqi, label: 'Good', color: 'text-green-400', barColor: 'bg-gradient-to-r from-green-500 to-emerald-500' };
+  } else if (aqi <= 100) {
+    return { value: aqi, label: 'Moderate', color: 'text-yellow-400', barColor: 'bg-gradient-to-r from-yellow-500 to-amber-500' };
+  } else if (aqi <= 150) {
+    return { value: aqi, label: 'Unhealthy for Sensitive', color: 'text-orange-400', barColor: 'bg-gradient-to-r from-orange-500 to-red-500' };
+  } else if (aqi <= 200) {
+    return { value: aqi, label: 'Unhealthy', color: 'text-red-400', barColor: 'bg-gradient-to-r from-red-500 to-red-600' };
+  } else {
+    return { value: aqi, label: 'Very Unhealthy', color: 'text-purple-400', barColor: 'bg-gradient-to-r from-purple-500 to-purple-700' };
+  }
+});
+
 const averageTemp = computed(() => {
   if (summaryData.value.length === 0) return 0;
   const sum = summaryData.value.reduce((acc, day) => acc + day.temperature, 0);
@@ -605,37 +636,37 @@ async function fetchFreshData() {
   try {
     const db = getDatabase();
     const sensorTypes = ['TEM', 'HUM', 'RR', 'LUX', 'WSP'];
-    
-    // Calculate date range: 7 days ending yesterday (not including today)
+
+    // Build 7 exact daily windows using local day starts, then convert
+    // to the database time basis (UTC+8 offset baked into keys).
     const now = new Date();
-    // Get end of yesterday in local time, then add 8 hours for PH timezone (UTC+8)
-    const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59);
-    const yesterdayUnix = Math.floor(yesterday.getTime() / 1000) + (8 * 3600); // Add 8 hours for timezone
-    
-    // Store data by day (using start of day unix as key)
+    const dayWindows: Array<{ startLocal: number; startDB: number; endDB: number }> = [];
+    for (let i = 6; i >= 0; i--) {
+      const dayStartLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1 - i, 0, 0, 0);
+      const startLocal = Math.floor(dayStartLocal.getTime() / 1000);
+      const startDB = startLocal + 8 * 3600; // convert to DB timezone basis (UTC+8)
+      const endDB = startDB + 86400 - 1;
+      dayWindows.push({ startLocal, startDB, endDB });
+    }
+
+    // Store data by local day start as key (stable for UI)
     const datum: { [key: number]: { [sensor: string]: any } } = {};
-    
+
     // Fetch data for each sensor for each of the 7 days
     const promises: Promise<void>[] = [];
-    
     for (const sensor of sensorTypes) {
-      for (let i = 0; i < 7; i++) {
-        const endUnix = yesterdayUnix - (86400 * i);
-        const startUnix = endUnix - 86400 + 1;
-        
-        if (!datum[startUnix]) datum[startUnix] = {};
-        
+      for (const w of dayWindows) {
+        if (!datum[w.startLocal]) datum[w.startLocal] = {};
         promises.push(
-          getDailyData(db, stationId, sensor, String(startUnix), String(endUnix))
-            .then(data => {
-              datum[startUnix][sensor] = data;
-            })
+          getDailyData(db, stationId, sensor, String(w.startDB), String(w.endDB)).then(data => {
+            datum[w.startLocal][sensor] = data;
+          })
         );
       }
     }
-    
+
     await Promise.all(promises);
-    
+
     // Process the data into the format we need
     const days = Object.keys(datum).sort((a, b) => parseInt(a) - parseInt(b)); // Sort oldest to newest
     
@@ -646,24 +677,39 @@ async function fetchFreshData() {
       return;
     }
     
+    // Fetch daytime (6AM-6PM) heat index for each day - sequential to avoid overloading
+    const heatIndexData: { [key: number]: number } = {};
+    for (const w of dayWindows) {
+      try {
+        const heatIndex = await getDaytimeHeatIndex(db, stationId, w.startDB, w.endDB);
+        heatIndexData[w.startLocal] = heatIndex;
+      } catch (e) {
+        console.error(`Failed to get heat index for window starting ${w.startLocal}:`, e);
+        heatIndexData[w.startLocal] = 0;
+      }
+    }
+    
     const processedData: any[] = days.map(dayKey => {
-      const dayUnix = parseInt(dayKey);
+      const dayUnix = parseInt(dayKey); // local day start seconds
       const date = new Date(dayUnix * 1000);
       const weather = datum[dayUnix];
       
       // Get temperature data (has average, lowestTemp, highestTemp)
       const tempData = weather.TEM || { average: 0, lowestTemp: 0, highestTemp: 0 };
+      const avgTemp = parseFloat(tempData.average) || 0;
+      const avgHumidity = parseFloat(weather.HUM) || 0;
       
       return {
         date: date,
-        temperature: parseFloat(tempData.average) || 0,
+        temperature: avgTemp,
         temperatureMin: parseFloat(tempData.lowestTemp) || 0,
         temperatureMax: parseFloat(tempData.highestTemp) || 0,
-        humidity: parseFloat(weather.HUM) || 0,
+        humidity: avgHumidity,
         rainfall: parseFloat(weather.RR) || 0,
         lux: parseFloat(weather.LUX) || 0,
         windSpeed: parseFloat(weather.WSP) || 0,
-        windDirection: 'N'
+        windDirection: 'N',
+        heatIndexDaytime: heatIndexData[dayUnix] || 0
       };
     });
     
@@ -773,6 +819,122 @@ function getDailyTotal(data: any): number {
   });
   
   return parseFloat(total.toFixed(2));
+}
+
+// Helper to compute heat index (Celsius) - Same formula as HomePage.vue
+// But with proper handling for low temperatures where the formula doesn't apply
+function calculateHeatIndex(T: number, RH: number): number {
+  if (typeof T !== 'number' || typeof RH !== 'number') {
+    return 0;
+  }
+
+  if (T === 0 || RH === 0) {
+    return 0;
+  }
+
+  if (isNaN(T) || isNaN(RH)) {
+    return 0;
+  }
+
+  const T_F = (T * 9 / 5) + 32;
+  
+  // The Rothfusz formula is only accurate for temps >= 80°F (26.7°C)
+  // For lower temps, heat index approximately equals the air temperature
+  if (T_F < 80) {
+    // Simple heat index approximation for lower temps
+    // HI = 0.5 * {T + 61.0 + [(T-68.0)*1.2] + (RH*0.094)}
+    const simpleHI_F = 0.5 * (T_F + 61.0 + ((T_F - 68.0) * 1.2) + (RH * 0.094));
+    // If the simple calculation is less than 80°F, use it; otherwise use full formula
+    if (simpleHI_F < 80) {
+      return Math.max(T, parseFloat((((simpleHI_F) - 32) * 5 / 9).toFixed(2)));
+    }
+  }
+  
+  const HI_F = -42.379 + 2.04901523 * T_F + 10.14333127 * RH - 0.22475541 * T_F * RH - 0.00683783 * T_F * T_F - 0.05481717 * RH * RH + 0.00122874 * T_F * T_F * RH + 0.00085282 * T_F * RH * RH - 0.00000199 * T_F * T_F * RH * RH;
+  const result = parseFloat((((HI_F) - 32) * 5 / 9).toFixed(2)) || 0;
+
+  // Heat index should never be lower than the actual temperature
+  return Math.max(T, result);
+}
+
+// Get daytime heat index (6AM-6PM only) - calculates heat index for each temp/humidity pair during daytime
+async function getDaytimeHeatIndex(db: any, stationId: string, dayStartUnix: number, dayEndUnix: number): Promise<number> {
+  try {
+    // Fetch ALL temperature data for the day
+    const tempRef = dbRef(db, `${stationId}/data/sensors/TEM/`);
+    const tempQuery = query(tempRef, orderByKey(), startAt(String(dayStartUnix)), endAt(String(dayEndUnix)));
+    const tempSnapshot = await get(tempQuery);
+    const allTempData = tempSnapshot.val();
+    
+    // Fetch ALL humidity data for the day
+    const humRef = dbRef(db, `${stationId}/data/sensors/HUM/`);
+    const humQuery = query(humRef, orderByKey(), startAt(String(dayStartUnix)), endAt(String(dayEndUnix)));
+    const humSnapshot = await get(humQuery);
+    const allHumData = humSnapshot.val();
+    
+    if (!allTempData && !allHumData) {
+      console.log(`   Day ${dayStartUnix}: No data`);
+      return 0;
+    }
+
+    // Aggregate averages over 6AM-6PM separately for temperature and humidity.
+    let tempSum = 0;
+    let tempCount = 0;
+    let humSum = 0;
+    let humCount = 0;
+
+    if (allTempData) {
+      for (const [timestamp, tempEntry] of Object.entries(allTempData)) {
+        const ts = parseInt(timestamp);
+        const hourOfDay = Math.floor((ts - dayStartUnix) / 3600);
+        if (hourOfDay >= 6 && hourOfDay < 18) {
+          const temp = parseFloat((tempEntry as any)?.val);
+          if (!isNaN(temp)) {
+            tempSum += temp;
+            tempCount++;
+          }
+        }
+      }
+    }
+
+    if (allHumData) {
+      for (const [timestamp, humEntry] of Object.entries(allHumData)) {
+        const ts = parseInt(timestamp);
+        const hourOfDay = Math.floor((ts - dayStartUnix) / 3600);
+        if (hourOfDay >= 6 && hourOfDay < 18) {
+          const hum = parseFloat((humEntry as any)?.val);
+          if (!isNaN(hum)) {
+            humSum += hum;
+            humCount++;
+          }
+        }
+      }
+    }
+
+    if (tempCount === 0 || humCount === 0) {
+      console.log(`   Day ${dayStartUnix}: Daytime tempCount=${tempCount}, humCount=${humCount} -> AvgHI=0`);
+      return 0;
+    }
+
+    const avgTemp = tempSum / tempCount;
+    const avgHum = humSum / humCount;
+    const avgHI = calculateHeatIndex(avgTemp, avgHum);
+    console.log(`   Day ${dayStartUnix}: Daytime tempN=${tempCount}, humN=${humCount}, avgT=${avgTemp.toFixed(2)}, avgH=${avgHum.toFixed(2)}, AvgHI=${avgHI.toFixed(2)}°C`);
+
+    return parseFloat(avgHI.toFixed(2));
+  } catch (error) {
+    console.error('Error calculating daytime heat index:', error);
+    return 0;
+  }
+}
+
+// Get heat index bar color based on value
+function getHeatIndexBarColor(heatIndex: number): string {
+  if (heatIndex < 27) return 'bg-gradient-to-r from-green-500 to-emerald-500';
+  if (heatIndex < 32) return 'bg-gradient-to-r from-yellow-500 to-amber-500';
+  if (heatIndex < 41) return 'bg-gradient-to-r from-orange-500 to-orange-600';
+  if (heatIndex < 54) return 'bg-gradient-to-r from-red-500 to-red-600';
+  return 'bg-gradient-to-r from-purple-500 to-purple-700';
 }
 
 // Helper functions for styling
