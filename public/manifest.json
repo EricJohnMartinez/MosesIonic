@@ -1,6 +1,6 @@
 {
-  "name": "Moses Weather Station",
-  "short_name": "Moses Weather",
+  "name": "Project Genesis",
+  "short_name": "Project Genesis",
   "description": "Real-time weather monitoring system for agricultural and meteorological data",
   "start_url": "/",
   "display": "standalone",
